@@ -28,3 +28,18 @@
 ## Concerns
 
 - `npx tsc --noEmit` remains blocked by pre-existing Cloudflare ambient-type errors in `db/index.ts` and `worker/index.ts` (`cloudflare:workers`, `Fetcher`, and `D1Database`), unrelated to this feature. The Vitest suite is green.
+
+## Fix Review
+
+### RED
+
+- Command: `npm test -- tests/action-potential/lab.test.tsx`
+- Output: **3 failed, 6 passed**. The new review tests showed that the step buttons lacked disabled semantics and that the timeline did not clamp a value above `DURATION`. The synchronization test initially also failed after an electrode change.
+- Investigation: the mock electrode range was uncontrolled; its browser default value was already `0.5`, so changing it to `0.5` did not emit a React change event. The double now receives and renders the supplied electrode setting, which accurately exercises the lab boundary.
+
+### GREEN
+
+- Command: `npm test -- tests/action-potential/lab.test.tsx`
+- Output: **9/9 passed**. This covers disabled previous/next controls and clamping; synchronized AxonView, PotentialChart, and stage explanation props; deterministic animation advancement; pause cancellation; and stopping at `DURATION`.
+- Command: `npm test`
+- Output: **19/19 passed across 2 files**.

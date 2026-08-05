@@ -68,7 +68,7 @@ export function ActionPotentialLab() {
         stimulusPosition={settings.stimulusPosition}
         speed={speed}
         onStart={() => { setTime(0); setPlaying(true); }}
-        onTimeChange={(next) => { setPlaying(false); setTime(next); }}
+        onTimeChange={(next) => { setPlaying(false); setTime(clamp(next, 0, DURATION)); }}
         onIntensityChange={(intensity: StimulusIntensity) => changeSetting({ intensity })}
         onStimulusPositionChange={(stimulusPosition) => changeSetting({ stimulusPosition })}
         onSpeedChange={setSpeed}

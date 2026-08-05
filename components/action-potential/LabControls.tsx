@@ -60,8 +60,8 @@ export function LabControls(props: LabControlsProps) {
       <div className="button-row transport-row">
         <button className="control-button primary" onClick={props.onStart}>开始刺激</button>
         <button className="control-button" onClick={props.onTogglePlaying}>{props.playing ? "暂停" : "播放"}</button>
-        <button className="control-button" onClick={() => props.onStep(-0.5)}>上一步</button>
-        <button className="control-button" onClick={() => props.onStep(0.5)}>下一步</button>
+        <button className="control-button" disabled={props.time <= 0} onClick={() => props.onStep(-0.5)}>上一步</button>
+        <button className="control-button" disabled={props.time >= props.duration} onClick={() => props.onStep(0.5)}>下一步</button>
         <button className="control-button" onClick={props.onReset}>重置</button>
       </div>
     </section>
