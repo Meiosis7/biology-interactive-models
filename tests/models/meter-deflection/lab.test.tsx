@@ -1,8 +1,21 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { renderToString } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
+import { AnalogMeter } from "../../../models/04-meter-deflection/AnalogMeter";
 import { MeterDeflectionLab } from "../../../models/04-meter-deflection/MeterDeflectionLab";
 
 describe("MeterDeflectionLab", () => {
+  it("serializes meter coordinates at a fixed precision for hydration", () => {
+    const markup = renderToString(<AnalogMeter differenceMv={12} pointerAngle={17} leadsReversed={false} />);
+    const coordinates = Array.from(markup.matchAll(/(?:x1|y1|x2|y2|x|y)="([^"]+)"/g), ([, value]) => value);
+
+    expect(coordinates).not.toHaveLength(0);
+    expect(coordinates.every((value) => {
+      const decimal = value.split(".")[1];
+      return !decimal || decimal.length <= 4;
+    })).toBe(true);
+  });
+
   it("shows the voltage subtraction rule", () => {
     render(<MeterDeflectionLab />);
 
