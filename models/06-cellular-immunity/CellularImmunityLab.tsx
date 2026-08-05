@@ -66,6 +66,15 @@ const STAGE_COPY: Record<
     result: "二次匹配时反应更快、更强。",
   },
 };
+const STAGE_TITLES: Record<CellularStage, string> = {
+  presentation: "抗原呈递",
+  "helper-activation": "辅助性 T 细胞活化",
+  "cytotoxic-activation": "细胞毒性 T 细胞活化",
+  "clonal-expansion": "克隆增殖",
+  "target-recognition": "特异性识别靶细胞",
+  "target-lysis": "靶细胞裂解",
+  memory: "保留免疫记忆",
+};
 const BLOCKED_COPY: Partial<
   Record<
     CellularCondition,
@@ -132,6 +141,7 @@ export function CellularImmunityLab() {
     recognitionLimited && settings.condition !== "marker-mismatch"
       ? UNMATCHED_TARGET_COPY[settings.target]
       : (BLOCKED_COPY[settings.condition] ?? STAGE_COPY[snapshot.stage]);
+  const announcedStage = `${snapshot.blockedAt && !recognitionLimited ? "过程受阻：" : ""}${STAGE_TITLES[snapshot.stage]}`;
 
   useEffect(() => {
     if (!playing) return;
@@ -180,6 +190,9 @@ export function CellularImmunityLab() {
           T 细胞如何特异性识别并裂解感染靶细胞。
         </p>
       </header>
+      <p className="cellular-sr-only" aria-label={`阶段播报：${announcedStage}`} aria-live="polite" aria-atomic="true">
+        当前阶段：{announcedStage}
+      </p>
       <section className="cellular-grid">
         <CellularProcessView
           settings={settings}
@@ -189,7 +202,6 @@ export function CellularImmunityLab() {
         <CellularChart settings={settings} snapshot={snapshot} time={time} />
         <section
           className="cellular-explanation"
-          aria-live="polite"
           aria-label="当前阶段解释"
         >
           <p className="cellular-kicker">当前阶段解释</p>

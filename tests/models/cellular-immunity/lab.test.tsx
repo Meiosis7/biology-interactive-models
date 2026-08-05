@@ -14,6 +14,13 @@ describe("CellularImmunityLab", () => {
     expect(screen.getByText("靶细胞裂解")).toBeInTheDocument();
   });
 
+  it("describes an early matching target as pending recognition", () => {
+    render(<CellularImmunityLab />);
+
+    expect(screen.getByText(/尚未发生识别或接触/)).toBeInTheDocument();
+    expect(screen.queryByText(/该靶细胞不能特异性识别/)).not.toBeInTheDocument();
+  });
+
   it("protects an unmatched target", () => {
     render(<CellularImmunityLab />);
 
@@ -21,6 +28,7 @@ describe("CellularImmunityLab", () => {
     fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "14" } });
 
     expect(screen.getByText(/不能特异性识别，因此不裂解/)).toBeInTheDocument();
+    expect(screen.queryByText(/尚未发生识别或接触/)).not.toBeInTheDocument();
   });
 
   it.each([
@@ -78,5 +86,21 @@ describe("CellularImmunityLab", () => {
       /@media \(max-width: 720px\)\s*\{[\s\S]*?\.cellular-process-spine\s*\{[\s\S]*?grid-template-columns:\s*1fr;/,
     );
     expect(cellularStyles).toContain("@media (prefers-reduced-motion: reduce)");
+  });
+
+  it("keeps live cell counts outside the polite stage announcer", () => {
+    render(<CellularImmunityLab />);
+
+    const explanation = screen.getByLabelText("当前阶段解释");
+    const liveValues = screen.getByText(/当前：效应 T 细胞/);
+    const announcer = screen.getByLabelText("阶段播报：抗原呈递");
+    expect(explanation).not.toHaveAttribute("aria-live");
+    expect(liveValues).not.toHaveAttribute("aria-live");
+    expect(announcer).toHaveAttribute("aria-live", "polite");
+    expect(announcer).toHaveTextContent("抗原呈递");
+
+    fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "13" } });
+    expect(announcer).toHaveTextContent("靶细胞裂解");
+    expect(announcer).toHaveAccessibleName("阶段播报：靶细胞裂解");
   });
 });

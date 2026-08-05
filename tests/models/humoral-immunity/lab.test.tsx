@@ -86,4 +86,20 @@ describe("HumoralImmunityLab", () => {
     expect(screen.getAllByLabelText(/抗原 B：三角形标记/).length).toBeGreaterThan(0);
     expect(screen.getByText(/时间、浓度和细胞数量均为教学示意/)).toBeInTheDocument();
   });
+
+  it("keeps live quantities outside the polite stage announcer", () => {
+    render(<HumoralImmunityLab />);
+
+    const explanation = screen.getByLabelText("当前阶段解释");
+    const liveValues = within(explanation).getByText(/当前：浆细胞/);
+    const announcer = screen.getByLabelText("阶段播报：抗原进入");
+    expect(explanation).not.toHaveAttribute("aria-live");
+    expect(liveValues).not.toHaveAttribute("aria-live");
+    expect(announcer).toHaveAttribute("aria-live", "polite");
+    expect(announcer).toHaveTextContent("抗原进入");
+
+    fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "11" } });
+    expect(announcer).toHaveTextContent("浆细胞产生抗体");
+    expect(announcer).toHaveAccessibleName("阶段播报：浆细胞产生抗体");
+  });
 });

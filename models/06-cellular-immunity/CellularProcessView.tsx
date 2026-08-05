@@ -39,6 +39,10 @@ export function CellularProcessView({ settings, snapshot, playing }: CellularPro
   const matched = snapshot.targetRecognized || snapshot.targetLysed;
   const separated = !matched;
   const targetLabel = settings.target === "normal" ? "正常细胞" : settings.target === "infected-a" ? "感染细胞 A" : "感染细胞 B";
+  const targetMarker = settings.target === "infected-a" ? "A" : settings.target === "infected-b" ? "B" : null;
+  const targetCanBeRecognized =
+    settings.condition !== "marker-mismatch" &&
+    targetMarker === settings.tCellSpecificity;
 
   return (
     <section className="cellular-process-card" aria-labelledby="cellular-process-title">
@@ -75,8 +79,10 @@ export function CellularProcessView({ settings, snapshot, playing }: CellularPro
           ? "匹配的细胞毒性 T 细胞使感染靶细胞裂解；它不直接吞噬病毒，抗原清除还需要其他免疫步骤参与。"
           : settings.condition === "marker-mismatch"
             ? "受体与展示标志不匹配，停留在识别阶段；不能形成有效接触或裂解。"
-            : separated
+            : !targetCanBeRecognized
               ? "该靶细胞不能特异性识别，因此不裂解；正常细胞或携带不同抗原的感染细胞保持分离。"
+              : separated
+                ? "靶细胞标志与当前受体匹配，但流程尚未发生识别或接触；到达识别阶段后才会形成有效接触。"
               : "受体与靶细胞展示的抗原标志匹配，细胞毒性 T 细胞正在执行特异性杀伤。"}
       </p>
     </section>

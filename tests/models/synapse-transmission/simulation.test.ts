@@ -28,6 +28,20 @@ describe("synapse simulation", () => {
     expect(value.transmitterReleased).toBe(false);
   });
 
+  it("holds a calcium-blocked transmission at the calcium block point", () => {
+    const settings = { ...normal, condition: "calcium-blocked" } as const;
+
+    expect(getSynapseSnapshot(4, settings).stage).toBe("calcium-entry");
+    expect(getSynapseSnapshot(6, settings)).toMatchObject({
+      stage: "calcium-entry",
+      calciumEntering: false,
+      vesiclesFusing: false,
+      transmitterReleased: false,
+      receptorsActive: false,
+      postsynapticMv: -70,
+    });
+  });
+
   it("allows release but prevents response when receptors are blocked", () => {
     const value = getSynapseSnapshot(6, {
       ...normal,
@@ -38,6 +52,18 @@ describe("synapse simulation", () => {
     expect(value.postsynapticMv).toBe(-70);
   });
 
+  it("holds a receptor-blocked transmission at receptor binding", () => {
+    const settings = { ...normal, condition: "receptor-blocked" } as const;
+
+    expect(getSynapseSnapshot(6, settings)).toMatchObject({
+      stage: "receptor-binding",
+      transmitterReleased: true,
+      receptorsActive: false,
+      postsynapticMv: -70,
+    });
+    expect(getSynapseSnapshot(7, settings).stage).toBe("receptor-binding");
+  });
+
   it("extends the response when clearance is inhibited", () => {
     expect(
       getSynapseSnapshot(8, {
@@ -46,5 +72,38 @@ describe("synapse simulation", () => {
       }).postsynapticMv,
     ).toBeGreaterThan(-70);
     expect(getSynapseSnapshot(8, normal).postsynapticMv).toBe(-70);
+  });
+
+  it("returns a clearance-inhibited synapse to rest at the endpoint", () => {
+    expect(
+      getSynapseSnapshot(9, {
+        ...normal,
+        condition: "clearance-inhibited",
+      }),
+    ).toMatchObject({
+      stage: "resting",
+      transmitterReleased: false,
+      receptorsActive: false,
+      postsynapticMv: -70,
+      transmitterLevel: 0,
+    });
+  });
+
+  it("does not carry a postsynaptic stimulus backward across the synapse", () => {
+    expect(
+      getSynapseSnapshot(2, {
+        ...normal,
+        stimulation: "postsynaptic-reverse",
+      }),
+    ).toMatchObject({
+      stage: "reverse-stimulation",
+      presynapticActivated: false,
+      postsynapticStimulated: true,
+      reverseSignalBlocked: true,
+      calciumEntering: false,
+      vesiclesFusing: false,
+      transmitterReleased: false,
+      receptorsActive: false,
+    });
   });
 });

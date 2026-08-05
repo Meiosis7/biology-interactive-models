@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { MembraneCurveLab } from "../../../models/03-membrane-potential-curve/MembraneCurveLab";
 import { canvasContext, resetCanvasContext } from "../../setup";
@@ -12,7 +12,11 @@ describe("MembraneCurveLab", () => {
     });
 
     expect(screen.getByText("Na⁺ 内流")).toBeInTheDocument();
-    expect(screen.getByText(/去极化/)).toBeInTheDocument();
+    expect(
+      within(screen.getByLabelText("当前阶段解释")).getByRole("heading", {
+        name: "去极化",
+      }),
+    ).toBeInTheDocument();
   });
 
   it("overlays equal threshold and strong peaks", () => {
@@ -87,6 +91,19 @@ describe("MembraneCurveLab", () => {
     expect(screen.getByRole("group", { name: "阶段选择" })).toBeInTheDocument();
   });
 
+  it("includes a weak-stimulus local-potential question in the quiz sequence", () => {
+    render(<MembraneCurveLab />);
+    fireEvent.click(screen.getByRole("button", { name: "辨析模式" }));
+    fireEvent.click(screen.getByRole("button", { name: "下一题位置" }));
+
+    expect(screen.getByText(/观察弱刺激曲线/)).toBeInTheDocument();
+    expect(screen.getByLabelText("阶段播报：局部电位")).toHaveTextContent("局部电位");
+
+    fireEvent.click(screen.getByRole("button", { name: "局部电位" }));
+    fireEvent.click(screen.getByRole("button", { name: "提交判断" }));
+    expect(screen.getByText(/判断正确/)).toBeInTheDocument();
+  });
+
   it("grades quiz polarity from the live cursor snapshot", () => {
     render(<MembraneCurveLab />);
     fireEvent.click(screen.getByRole("button", { name: "辨析模式" }));
@@ -113,5 +130,23 @@ describe("MembraneCurveLab", () => {
     fireEvent.click(screen.getByRole("button", { name: "提交判断" }));
 
     expect(screen.getByText(/已答对 1 题/)).toBeInTheDocument();
+  });
+
+  it("announces only stage transitions instead of live voltage and quiz counts", () => {
+    render(<MembraneCurveLab />);
+
+    const explanation = screen.getByLabelText("当前阶段解释");
+    const announcer = screen.getByLabelText("阶段播报：静息期");
+    expect(explanation).not.toHaveAttribute("aria-live");
+    expect(announcer).toHaveAttribute("aria-live", "polite");
+    expect(announcer).toHaveTextContent("静息期");
+
+    fireEvent.click(screen.getByRole("button", { name: "辨析模式" }));
+    const quizPanel = screen.getByText(/辨析模式 · 已答对/).closest("section");
+    expect(quizPanel).not.toHaveAttribute("aria-live");
+
+    fireEvent.change(screen.getByLabelText("曲线游标"), { target: { value: "2.5" } });
+    expect(announcer).toHaveTextContent("去极化");
+    expect(announcer).toHaveAccessibleName("阶段播报：去极化");
   });
 });

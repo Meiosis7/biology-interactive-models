@@ -45,6 +45,13 @@ function getStage(time: number, arrivalA: number, arrivalB: number): MeterStage 
   return "between";
 }
 
+function getTransmembraneStage(time: number, arrivalA: number): MeterStage {
+  if (isExcited(time, arrivalA)) return "at-a";
+  if (time <= 0) return "resting";
+  if (time < arrivalA) return "approaching-a";
+  return "passed";
+}
+
 function getExtracellularVoltage(time: number, arrival: number): number {
   return isExcited(time, arrival) ? EXTRACELLULAR_EXCITED_MV : 0;
 }
@@ -83,7 +90,10 @@ export function getMeterSnapshot(
     : unreversedDifference;
 
   return {
-    stage: getStage(time, arrivalA, arrivalB),
+    stage:
+      settings.mode === "transmembrane"
+        ? getTransmembraneStage(time, arrivalA)
+        : getStage(time, arrivalA, arrivalB),
     voltageA,
     voltageB,
     differenceMv,

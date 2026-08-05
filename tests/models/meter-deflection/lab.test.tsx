@@ -35,9 +35,53 @@ describe("MeterDeflectionLab", () => {
   it("loads an equidistant preset", () => {
     render(<MeterDeflectionLab />);
 
-    fireEvent.click(screen.getByRole("button", { name: "等距同时到达" }));
+    fireEvent.click(screen.getByRole("button", { name: "等距验证" }));
 
     expect(screen.getByText(/同时到达.*接近 0/)).toBeInTheDocument();
+  });
+
+  it("offers four accessible presets and resets time for each", () => {
+    render(<MeterDeflectionLab />);
+    const presets = [
+      "膜外双电极（A 先到）",
+      "膜外双电极（B 先到）",
+      "膜内外跨膜",
+      "等距验证",
+    ];
+
+    for (const preset of presets) {
+      fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "4" } });
+      fireEvent.click(screen.getByRole("button", { name: preset }));
+      expect(screen.getByLabelText("教学时间")).toHaveValue("0");
+    }
+  });
+
+  it("makes B arrive first in the B-first extracellular preset", () => {
+    render(<MeterDeflectionLab />);
+    fireEvent.click(screen.getByRole("button", { name: "膜外双电极（B 先到）" }));
+    fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "3" } });
+
+    expect(within(screen.getByLabelText("四步解释链")).getAllByText(/兴奋到达 B/).length).toBeGreaterThan(0);
+  });
+
+  it("never describes B as changing in transmembrane mode", () => {
+    render(<MeterDeflectionLab />);
+    fireEvent.click(screen.getByRole("button", { name: "膜内外跨膜" }));
+    fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "5.2" } });
+
+    const explanation = within(screen.getByLabelText("四步解释链"));
+    expect(explanation.getByText(/B 是膜外参考电位，始终保持 0 mV/)).toBeInTheDocument();
+    expect(explanation.queryByText(/兴奋到达 B|B 位置发生电位改变/)).not.toBeInTheDocument();
+  });
+
+  it("shows and hides the four-step reasoning chain itself", () => {
+    render(<MeterDeflectionLab />);
+
+    expect(screen.getByRole("list")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "隐藏四步推理" }));
+    expect(screen.queryByRole("list")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "显示四步推理" }));
+    expect(screen.getByRole("list")).toBeInTheDocument();
   });
 
   it("labels the chart with the swapped lead subtraction and its live value", () => {
@@ -56,7 +100,7 @@ describe("MeterDeflectionLab", () => {
   it("shows a passed-wave explanation at the end of the equal-arrival run", () => {
     render(<MeterDeflectionLab />);
 
-    fireEvent.click(screen.getByRole("button", { name: "等距同时到达" }));
+    fireEvent.click(screen.getByRole("button", { name: "等距验证" }));
     fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "10" } });
 
     expect(within(screen.getByLabelText("四步解释链")).getAllByText(/已通过两电极/)).toHaveLength(2);

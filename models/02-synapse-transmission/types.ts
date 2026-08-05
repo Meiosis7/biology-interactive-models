@@ -1,5 +1,7 @@
 export type SynapseKind = "excitatory" | "inhibitory";
 
+export type SynapseStimulation = "presynaptic" | "postsynaptic-reverse";
+
 export type SynapseCondition =
   | "normal"
   | "calcium-blocked"
@@ -14,11 +16,13 @@ export type SynapseStage =
   | "transmitter-release"
   | "receptor-binding"
   | "postsynaptic-response"
-  | "clearance";
+  | "clearance"
+  | "reverse-stimulation";
 
 export interface SynapseSettings {
   kind: SynapseKind;
   condition: SynapseCondition;
+  stimulation?: SynapseStimulation;
 }
 
 export interface SynapseSnapshot {
@@ -29,4 +33,7 @@ export interface SynapseSnapshot {
   receptorsActive: boolean;
   postsynapticMv: number;
   transmitterLevel: number;
+  presynapticActivated: boolean;
+  postsynapticStimulated: boolean;
+  reverseSignalBlocked: boolean;
 }

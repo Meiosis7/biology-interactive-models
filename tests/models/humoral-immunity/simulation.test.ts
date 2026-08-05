@@ -63,6 +63,25 @@ describe("humoral immunity simulation", () => {
     expect(againstB.antigenLevel).toBeLessThan(100);
   });
 
+  it("keeps the primary antigen curve continuous at clearance", () => {
+    const justBeforeClearance = getHumoralSnapshot(13.999, normal).antigenLevel;
+    const atClearance = getHumoralSnapshot(14, normal).antigenLevel;
+
+    expect(atClearance).toBeLessThanOrEqual(justBeforeClearance);
+    expect(Math.abs(atClearance - justBeforeClearance)).toBeLessThanOrEqual(1);
+  });
+
+  it("never increases primary antigen after antibody release begins", () => {
+    const levels = Array.from(
+      { length: 21 },
+      (_, index) => getHumoralSnapshot(11 + index * 0.25, normal).antigenLevel,
+    );
+
+    levels.slice(1).forEach((level, index) => {
+      expect(level).toBeLessThanOrEqual(levels[index]);
+    });
+  });
+
   it.each([
     ["presentation-blocked", "presentation"],
     ["helper-t-blocked", "helper-activation"],

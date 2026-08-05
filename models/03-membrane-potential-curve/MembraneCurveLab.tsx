@@ -9,7 +9,20 @@ import type { CurveAnswer, CurveAnswerCheck, CurveIntensity } from "./types";
 
 type LabMode = "explore" | "compare" | "quiz";
 const DURATION = 6;
-const QUIZ_TIMES = [0.5, 1.5, 2.1, 2.8, 3, 4.1, 4.9, 5.3] as const;
+const QUIZ_QUESTIONS: ReadonlyArray<{
+  intensity: CurveIntensity;
+  time: number;
+}> = [
+  { intensity: "threshold", time: 0.5 },
+  { intensity: "weak", time: 2.5 },
+  { intensity: "threshold", time: 1.5 },
+  { intensity: "threshold", time: 2.1 },
+  { intensity: "threshold", time: 2.8 },
+  { intensity: "threshold", time: 3 },
+  { intensity: "threshold", time: 4.1 },
+  { intensity: "threshold", time: 4.9 },
+  { intensity: "threshold", time: 5.3 },
+];
 
 const STAGE_COPY = {
   resting: { title: "静息期", summary: "膜电位维持在约 −70 mV，膜内相对为负。", channel: "Na⁺、K⁺通道均未大量开放" },
@@ -79,8 +92,8 @@ export function MembraneCurveLab() {
     setHasScoredCurrent(false);
     if (nextMode === "quiz") {
       quizIndex.current = 0;
-      setTime(QUIZ_TIMES[0]);
-      setIntensity("threshold");
+      setTime(QUIZ_QUESTIONS[0].time);
+      setIntensity(QUIZ_QUESTIONS[0].intensity);
       setAnswer(answerForNewQuestion());
     }
   };
@@ -93,8 +106,10 @@ export function MembraneCurveLab() {
     }
   };
   const nextQuiz = () => {
-    quizIndex.current = (quizIndex.current + 1) % QUIZ_TIMES.length;
-    setTime(QUIZ_TIMES[quizIndex.current]);
+    quizIndex.current = (quizIndex.current + 1) % QUIZ_QUESTIONS.length;
+    const question = QUIZ_QUESTIONS[quizIndex.current];
+    setTime(question.time);
+    setIntensity(question.intensity);
     setAnswer(answerForNewQuestion());
     setFeedback(null);
     setHasScoredCurrent(false);
@@ -114,10 +129,14 @@ export function MembraneCurveLab() {
         <button className="membrane-button" aria-pressed={mode === "quiz"} onClick={() => changeMode("quiz")}>辨析模式</button>
       </nav>
 
+      <p className="membrane-sr-only" aria-label={`阶段播报：${copy.title}`} aria-live="polite" aria-atomic="true">
+        当前阶段：{copy.title}
+      </p>
+
       <section className="membrane-grid">
         <CurveCanvas time={time} intensity={intensity} snapshot={snapshot} compare={mode === "compare"} showLabels={showLabels} showThreshold={showThreshold} />
         <MembraneView snapshot={snapshot} playing={playing} showIonHint={showIonHint} />
-        <section className="membrane-explanation" aria-live="polite" aria-label="当前阶段解释">
+        <section className="membrane-explanation" aria-label="当前阶段解释">
           <p className="membrane-kicker">当前阶段</p>
           <h2>{copy.title}</h2>
           <dl><div><dt>主要离子运动</dt><dd>{ION_COPY[snapshot.ionFlow]}</dd></div><div><dt>通道状态</dt><dd>{copy.channel}</dd></div><div><dt>膜电位与电性</dt><dd>{snapshot.mv.toFixed(0)} mV；膜内相对{snapshot.insidePolarity === "positive" ? "正" : "负"}</dd></div></dl>
@@ -126,7 +145,7 @@ export function MembraneCurveLab() {
       </section>
 
       {mode === "compare" && <section className="membrane-compare-note"><h2>全或无：阈刺激与强刺激的峰值相同</h2><p>刺激增强不会提高单个动作电位的峰值；本模型只比较单次动作电位，不模拟频率编码。</p></section>}
-      {mode === "quiz" && <QuizPanel snapshot={snapshot} answer={answer} feedback={feedback} correctCount={correctCount} onChange={(patch) => { setAnswer((current) => ({ ...current, ...patch })); setFeedback(null); }} onSubmit={submitQuiz} onNext={nextQuiz} />}
+      {mode === "quiz" && <QuizPanel snapshot={snapshot} intensity={intensity} answer={answer} feedback={feedback} correctCount={correctCount} onChange={(patch) => { setAnswer((current) => ({ ...current, ...patch })); setFeedback(null); }} onSubmit={submitQuiz} onNext={nextQuiz} />}
 
       <section className="membrane-controls" aria-label="实验控制台">
         {mode === "explore" && <fieldset><legend>刺激强度</legend><div className="membrane-button-row">{([ ["weak", "弱刺激"], ["threshold", "阈刺激"], ["strong", "强刺激"] ] as Array<[CurveIntensity, string]>).map(([value, label]) => <button key={value} className="membrane-button" aria-pressed={intensity === value} onClick={() => { setIntensity(value); changeTime(0); }}>{label}</button>)}</div></fieldset>}

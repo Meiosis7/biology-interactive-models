@@ -46,6 +46,7 @@ export function HumoralImmunityLab() {
   const snapshot = useMemo(() => getHumoralSnapshot(time, settings), [settings, time]);
   const stageCopy = STAGE_COPY[snapshot.stage];
   const blockedCopy = settings.condition === "normal" ? null : BLOCKED_COPY[settings.condition];
+  const announcedStage = blockedCopy?.title ?? stageCopy.title;
 
   useEffect(() => {
     if (!playing) return;
@@ -81,10 +82,14 @@ export function HumoralImmunityLab() {
         <p>选择抗原、免疫次数和受阻环节，沿同一教学时间轴观察抗原呈递、B 细胞应答、抗体特异性结合与免疫记忆。</p>
       </header>
 
+      <p className="humoral-sr-only" aria-label={`阶段播报：${announcedStage}`} aria-live="polite" aria-atomic="true">
+        当前阶段：{announcedStage}
+      </p>
+
       <section className="humoral-grid">
         <HumoralProcessView settings={settings} snapshot={snapshot} playing={playing} />
         <AntibodyChart settings={settings} snapshot={snapshot} time={time} />
-        <section className="humoral-explanation" aria-live="polite" aria-label="当前阶段解释">
+        <section className="humoral-explanation" aria-label="当前阶段解释">
           <p className="humoral-kicker">当前阶段解释</p>
           <h2>{blockedCopy?.title ?? stageCopy.title}</h2>
           {blockedCopy ? <dl><div><dt>缺少什么</dt><dd>{blockedCopy.cause}</dd></div><div><dt>下游结果</dt><dd>{blockedCopy.result}</dd></div></dl> : <dl><div><dt>识别对象</dt><dd>{stageCopy.recognition}</dd></div><div><dt>参与细胞</dt><dd>{stageCopy.cells}</dd></div><div><dt>产生结果</dt><dd>{stageCopy.result}</dd></div><div><dt>形成记忆</dt><dd>{stageCopy.memory}</dd></div></dl>}

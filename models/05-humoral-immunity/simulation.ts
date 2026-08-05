@@ -105,7 +105,7 @@ function getAntigenLevel(time: number, timeline: Timeline): number {
 
   if (time < releaseStart) return 100;
   if (time < clearanceStart) {
-    return Math.round(100 - (60 * (time - releaseStart + 1)) / (clearanceStart - releaseStart));
+    return Math.round(100 - (60 * (time - releaseStart)) / (clearanceStart - releaseStart));
   }
   if (time < memoryStart) {
     return Math.round(40 - (40 * (time - clearanceStart)) / (memoryStart - clearanceStart));

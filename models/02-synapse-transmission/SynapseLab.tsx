@@ -4,9 +4,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { SYNAPSE_DURATION, getSynapseSnapshot } from "./simulation";
 import { SynapseChart } from "./SynapseChart";
 import { SynapseView } from "./SynapseView";
-import type { SynapseCondition, SynapseKind, SynapseSettings } from "./types";
+import type { SynapseCondition, SynapseKind, SynapseSettings, SynapseStimulation } from "./types";
 
-const DEFAULT_SETTINGS: SynapseSettings = { kind: "excitatory", condition: "normal" };
+const DEFAULT_SETTINGS: SynapseSettings = {
+  kind: "excitatory",
+  condition: "normal",
+  stimulation: "presynaptic",
+};
 
 const STAGE_COPY = {
   resting: { title: "静息状态", event: "递质释放前", location: "突触前末梢与突触后膜", cause: "囊泡与受体尚未被激活。", result: "突触后膜维持约 −70 mV。" },
@@ -17,6 +21,24 @@ const STAGE_COPY = {
   "receptor-binding": { title: "受体结合", event: "递质与特异性受体结合", location: "突触后膜", cause: "递质到达并识别受体。", result: "离子通道或信号通路被调节。" },
   "postsynaptic-response": { title: "突触后反应", event: "突触后膜电位改变", location: "突触后膜", cause: "受体被激活并改变离子通透性。", result: "兴奋性突触后膜电位升高；抑制性突触后膜电位降低。" },
   clearance: { title: "递质清除", event: "递质被清除或回收", location: "突触间隙", cause: "转运、降解等过程终止信号。", result: "突触后膜逐渐恢复静息状态。" },
+  "reverse-stimulation": { title: "反向刺激不能跨越化学突触", event: "直接刺激突触后膜", location: "突触后膜一侧", cause: "递质释放装置主要位于突触前膜，而相应受体主要位于突触后膜。", result: "化学突触具有单向传递性；信号不会反向传到突触前末梢。" },
+} as const;
+
+const BLOCKED_STAGE_COPY = {
+  "calcium-blocked": {
+    title: "Ca²⁺通道被阻断",
+    event: "动作电位到达，但 Ca²⁺ 内流被阻断",
+    location: "突触前膜 Ca²⁺ 通道",
+    cause: "通道被阻断，因此未发生 Ca²⁺ 内流。",
+    result: "小泡不发生有效融合与递质释放，受体和突触后膜均无明显响应。",
+  },
+  "receptor-blocked": {
+    title: "突触后受体被阻断",
+    event: "递质已经释放并扩散到突触后膜附近",
+    location: "突触后膜受体",
+    cause: "受体被阻断，递质不能有效激活受体。",
+    result: "突触后膜电位维持约 −70 mV，没有出现电压响应。",
+  },
 } as const;
 
 const CONDITIONS: Array<[SynapseCondition, string]> = [
@@ -37,7 +59,12 @@ export function SynapseLab() {
   const [settings, setSettings] = useState<SynapseSettings>(DEFAULT_SETTINGS);
   const lastFrame = useRef<number | null>(null);
   const snapshot = useMemo(() => getSynapseSnapshot(time, settings), [settings, time]);
-  const copy = STAGE_COPY[snapshot.stage];
+  const copy =
+    snapshot.stage === "calcium-entry" && settings.condition === "calcium-blocked"
+      ? BLOCKED_STAGE_COPY["calcium-blocked"]
+      : snapshot.stage === "receptor-binding" && settings.condition === "receptor-blocked"
+        ? BLOCKED_STAGE_COPY["receptor-blocked"]
+        : STAGE_COPY[snapshot.stage];
 
   useEffect(() => {
     if (!playing) return;
@@ -74,7 +101,12 @@ export function SynapseLab() {
       </header>
 
       <section className="synapse-grid">
-        <SynapseView snapshot={snapshot} playing={playing} kind={settings.kind} />
+        <SynapseView
+          snapshot={snapshot}
+          playing={playing}
+          kind={settings.kind}
+          stimulation={settings.stimulation ?? "presynaptic"}
+        />
         <SynapseChart time={time} settings={settings} snapshot={snapshot} />
         <section className="synapse-explanation" aria-live="polite" aria-label="当前阶段解释">
           <p className="synapse-kicker">当前阶段</p>
@@ -90,6 +122,14 @@ export function SynapseLab() {
 
       <section className="synapse-controls" aria-label="实验控制台">
         <div className="synapse-control-groups">
+          <fieldset>
+            <legend>刺激位置</legend>
+            <div className="synapse-button-row">
+              {([ ["presynaptic", "刺激突触前末梢（正向）"], ["postsynaptic-reverse", "刺激突触后膜（反向）"] ] as Array<[SynapseStimulation, string]>).map(([stimulation, label]) => (
+                <button className="synapse-button" key={stimulation} aria-pressed={(settings.stimulation ?? "presynaptic") === stimulation} onClick={() => changeSettings({ stimulation })}>{label}</button>
+              ))}
+            </div>
+          </fieldset>
           <fieldset>
             <legend>突触类型</legend>
             <div className="synapse-button-row">

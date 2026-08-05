@@ -94,6 +94,25 @@ describe("meter deflection simulation", () => {
     );
   });
 
+  it("bases transmembrane stages only on A while B remains a reference", () => {
+    const settings = {
+      ...normal,
+      mode: "transmembrane",
+      stimulusPosition: 10,
+      electrodeA: 70,
+      electrodeB: 30,
+    } as const;
+
+    const whenWavePassesB = getMeterSnapshot(2.5, settings);
+    expect(whenWavePassesB).toMatchObject({
+      stage: "approaching-a",
+      voltageA: -70,
+      voltageB: 0,
+    });
+    expect(getMeterSnapshot(6.5, settings).stage).toBe("at-a");
+    expect(getMeterSnapshot(8.5, settings).stage).toBe("passed");
+  });
+
   it("classifies a transmembrane excitation at A at time zero", () => {
     const snapshot = getMeterSnapshot(0, {
       ...normal,

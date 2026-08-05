@@ -1,6 +1,6 @@
 "use client";
 
-import type { CurveAnswer, CurveAnswerCheck, CurveSnapshot, CurveStage, InsidePolarity, IonFlow } from "./types";
+import type { CurveAnswer, CurveAnswerCheck, CurveIntensity, CurveSnapshot, CurveStage, InsidePolarity, IonFlow } from "./types";
 
 const STAGES: Array<[CurveStage, string]> = [
   ["resting", "静息期"], ["local", "局部电位"], ["threshold", "阈电位"], ["depolarization", "去极化"], ["peak", "反极化"], ["repolarization", "复极化"], ["recovery", "恢复期"],
@@ -10,6 +10,7 @@ const POLARITIES: Array<[InsidePolarity, string]> = [["negative", "膜内相对�
 
 export interface QuizPanelProps {
   snapshot: CurveSnapshot;
+  intensity: CurveIntensity;
   answer: CurveAnswer;
   feedback: CurveAnswerCheck | null;
   correctCount: number;
@@ -22,12 +23,14 @@ function ChoiceGroup<T extends string>({ label, choices, selected, onSelect }: {
   return <fieldset className="quiz-choice-group" aria-label={label}><legend>{label}</legend><div>{choices.map(([value, copy]) => <button type="button" key={value} aria-pressed={selected === value} onClick={() => onSelect(value)}>{copy}</button>)}</div></fieldset>;
 }
 
-export function QuizPanel({ snapshot, answer, feedback, correctCount, onChange, onSubmit, onNext }: QuizPanelProps) {
+export function QuizPanel({ snapshot, intensity, answer, feedback, correctCount, onChange, onSubmit, onNext }: QuizPanelProps) {
+  const intensityLabel = intensity === "weak" ? "弱刺激" : intensity === "strong" ? "强刺激" : "阈刺激";
+
   return (
-    <section className="membrane-quiz-panel" aria-live="polite">
+    <section className="membrane-quiz-panel">
       <p className="membrane-kicker">辨析模式 · 已答对 {correctCount} 题</p>
       <h2>判断游标所在位置</h2>
-      <p>观察当前游标（{snapshot.mv.toFixed(0)} mV），选择阶段、主要离子运动和膜内外相对电性。</p>
+      <p>观察{intensityLabel}曲线的当前游标（{snapshot.mv.toFixed(0)} mV），选择阶段、主要离子运动和膜内外相对电性。</p>
       <ChoiceGroup label="阶段选择" choices={STAGES} selected={answer.stage} onSelect={(stage) => onChange({ stage })} />
       <ChoiceGroup label="主要离子运动" choices={IONS} selected={answer.ionFlow} onSelect={(ionFlow) => onChange({ ionFlow })} />
       <ChoiceGroup label="膜内相对电性" choices={POLARITIES} selected={answer.insidePolarity} onSelect={(insidePolarity) => onChange({ insidePolarity })} />
