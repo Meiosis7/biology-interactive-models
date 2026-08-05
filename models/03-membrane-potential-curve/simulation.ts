@@ -4,6 +4,7 @@ import type {
   CurveIntensity,
   CurveSnapshot,
   CurveStage,
+  InsidePolarity,
 } from "./types";
 
 const STAGE_ANSWERS: Record<CurveStage, CurveAnswer> = {
@@ -58,6 +59,27 @@ const ZERO_MV_TOLERANCE = 1e-9;
 
 function getInsidePolarity(mv: number): InsidePolarity {
   return mv >= -ZERO_MV_TOLERANCE ? "positive" : "negative";
+}
+
+function getSnapshotAnswer(snapshot: CurveSnapshot): CurveAnswer {
+  return {
+    stage: snapshot.stage,
+    ionFlow: snapshot.ionFlow,
+    insidePolarity: snapshot.insidePolarity,
+  };
+}
+
+function getSnapshotExplanation(expected: CurveAnswer): string {
+  const ionMovement =
+    expected.ionFlow === "sodium-in"
+      ? "Na⁺内流"
+      : expected.ionFlow === "potassium-out"
+        ? "K⁺外流"
+        : "无主要离子跨膜流动";
+  const outsidePolarity =
+    expected.insidePolarity === "positive" ? "负" : "正";
+
+  return `${expected.stage}：${ionMovement}，当前膜内相对为${expected.insidePolarity === "positive" ? "正" : "负"}、膜外相对为${outsidePolarity}。`;
 }
 
 function interpolate(
@@ -133,8 +155,23 @@ export function getCurveSnapshot(
 export function checkCurveAnswer(
   stage: CurveStage,
   answer: CurveAnswer,
+): CurveAnswerCheck;
+export function checkCurveAnswer(
+  snapshot: CurveSnapshot,
+  answer: CurveAnswer,
+): CurveAnswerCheck;
+export function checkCurveAnswer(
+  stageOrSnapshot: CurveStage | CurveSnapshot,
+  answer: CurveAnswer,
 ): CurveAnswerCheck {
-  const expected = STAGE_ANSWERS[stage];
+  const expected =
+    typeof stageOrSnapshot === "string"
+      ? STAGE_ANSWERS[stageOrSnapshot]
+      : getSnapshotAnswer(stageOrSnapshot);
+  const explanation =
+    typeof stageOrSnapshot === "string"
+      ? STAGE_EXPLANATIONS[stageOrSnapshot]
+      : getSnapshotExplanation(expected);
 
   return {
     correct:
@@ -142,7 +179,7 @@ export function checkCurveAnswer(
       answer.ionFlow === expected.ionFlow &&
       answer.insidePolarity === expected.insidePolarity,
     expected: { ...expected },
-    explanation: STAGE_EXPLANATIONS[stage],
+    explanation,
   };
 }
 

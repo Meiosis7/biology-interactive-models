@@ -22,20 +22,28 @@ describe("membrane potential curve", () => {
 
   it("derives membrane polarity from the voltage during phase transitions", () => {
     const earlyDepolarization = getCurveSnapshot(2.1, "threshold");
+    const lateDepolarization = getCurveSnapshot(2.9, "threshold");
     const earlyRepolarization = getCurveSnapshot(4.1, "threshold");
+    const lateRepolarization = getCurveSnapshot(4.9, "threshold");
 
     expect(earlyDepolarization.mv).toBeLessThan(0);
     expect(earlyDepolarization.insidePolarity).toBe("negative");
+    expect(lateDepolarization.mv).toBeGreaterThan(0);
+    expect(lateDepolarization.insidePolarity).toBe("positive");
     expect(earlyRepolarization.mv).toBeGreaterThan(0);
     expect(earlyRepolarization.insidePolarity).toBe("positive");
+    expect(lateRepolarization.mv).toBeLessThan(0);
+    expect(lateRepolarization.insidePolarity).toBe("negative");
   });
 
-  it("treats zero millivolts as membrane-inner-positive", () => {
-    const zeroMvTime = 2 + 55 / 85;
-    const snapshot = getCurveSnapshot(zeroMvTime, "threshold");
+  it("treats both zero-millivolt crossings as membrane-inner-positive", () => {
+    const depolarizationZero = getCurveSnapshot(2 + 55 / 85, "threshold");
+    const repolarizationZero = getCurveSnapshot(4 + 30 / 110, "threshold");
 
-    expect(snapshot.mv).toBeCloseTo(0);
-    expect(snapshot.insidePolarity).toBe("positive");
+    expect(depolarizationZero.mv).toBeCloseTo(0);
+    expect(depolarizationZero.insidePolarity).toBe("positive");
+    expect(repolarizationZero.mv).toBeCloseTo(0);
+    expect(repolarizationZero.insidePolarity).toBe("positive");
   });
 
   it("opens the matching channel in each ion-flow stage", () => {
@@ -74,6 +82,44 @@ describe("membrane potential curve", () => {
         insidePolarity: "negative",
       }).correct,
     ).toBe(false);
+  });
+
+  it("checks answers against the exact snapshot during depolarization", () => {
+    const snapshot = getCurveSnapshot(2.1, "threshold");
+
+    expect(
+      checkCurveAnswer(snapshot, {
+        stage: "depolarization",
+        ionFlow: "sodium-in",
+        insidePolarity: "negative",
+      }),
+    ).toMatchObject({
+      correct: true,
+      expected: {
+        stage: "depolarization",
+        ionFlow: "sodium-in",
+        insidePolarity: "negative",
+      },
+    });
+  });
+
+  it("checks answers against the exact snapshot during repolarization", () => {
+    const snapshot = getCurveSnapshot(4.1, "threshold");
+
+    expect(
+      checkCurveAnswer(snapshot, {
+        stage: "repolarization",
+        ionFlow: "potassium-out",
+        insidePolarity: "positive",
+      }),
+    ).toMatchObject({
+      correct: true,
+      expected: {
+        stage: "repolarization",
+        ionFlow: "potassium-out",
+        insidePolarity: "positive",
+      },
+    });
   });
 
   it("returns the expected answer and a biology explanation", () => {
