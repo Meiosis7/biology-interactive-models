@@ -84,7 +84,7 @@ export function getSimulationSnapshot(
   const localTime =
     settings.intensity === "weak"
       ? recordsLocalPotential
-        ? time - 1
+        ? time
         : -1
       : time - arrivalTime;
   const stage = getStage(localTime, settings.intensity);

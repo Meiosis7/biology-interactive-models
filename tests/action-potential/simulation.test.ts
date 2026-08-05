@@ -7,7 +7,7 @@ import {
 
 describe("action-potential simulation", () => {
   it("keeps subthreshold stimulation local", () => {
-    const result = getSimulationSnapshot(1.5, {
+    const result = getSimulationSnapshot(0.5, {
       intensity: "weak",
       stimulusPosition: 0.5,
       electrodePosition: 0.52,
@@ -18,7 +18,7 @@ describe("action-potential simulation", () => {
   });
 
   it("does not record a weak local potential at a distant electrode", () => {
-    const result = getSimulationSnapshot(1.5, {
+    const result = getSimulationSnapshot(0.5, {
       intensity: "weak",
       stimulusPosition: 0.5,
       electrodePosition: 0.8,
