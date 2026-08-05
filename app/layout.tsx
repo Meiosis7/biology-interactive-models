@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import "./globals.css";
 
-const title = "动作电位的形成和传导｜高中生物交互模型";
+const title = "高中生物动态交互模型";
 const description =
-  "通过刺激强度、刺激位置和记录电极，探究动作电位的形成、膜电位变化与神经纤维传导。";
+  "通过动态交互模型探究动作电位、突触传递、免疫调节等高中生物核心过程。";
 
 export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();
@@ -26,7 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
       description,
       type: "website",
       url: origin,
-      images: [{ url: imageUrl, width: 1731, height: 909, alt: title }],
+      images: [{ url: imageUrl, width: 1200, height: 630, alt: title }],
     },
     twitter: {
       card: "summary_large_image",
