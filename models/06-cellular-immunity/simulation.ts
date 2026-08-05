@@ -137,6 +137,27 @@ function getBlockedSnapshot(
   };
 }
 
+function getMarkerMismatchSnapshot(
+  time: number,
+  memoryMatched: boolean,
+  timeline: Timeline,
+): CellularSnapshot {
+  const recognitionStart = timeline["target-recognition"];
+
+  return {
+    stage: time >= recognitionStart ? "target-recognition" : stageAt(time, timeline),
+    blockedAt: "target-recognition",
+    helperActive: time >= timeline["helper-activation"],
+    cytotoxicActive: time >= timeline["cytotoxic-activation"],
+    effectorCount: getEffectorCount(time, timeline, memoryMatched),
+    targetCount: 1,
+    targetRecognized: false,
+    targetLysed: false,
+    memoryCount: 0,
+    memoryMatched,
+  };
+}
+
 export function getCellularSnapshot(
   time: number,
   settings: CellularSettings,
@@ -158,13 +179,17 @@ export function getCellularSnapshot(
     );
   }
 
+  if (settings.condition === "marker-mismatch") {
+    return getMarkerMismatchSnapshot(currentTime, memoryMatched, timeline);
+  }
+
   const targetRecognized =
     currentTime >= timeline["target-recognition"] && hasMatchingTarget(settings);
   const targetLysed = currentTime >= timeline["target-lysis"] && targetRecognized;
 
   return {
     stage: stageAt(currentTime, timeline),
-    blockedAt: settings.condition === "marker-mismatch" ? "target-recognition" : null,
+    blockedAt: null,
     helperActive: currentTime >= timeline["helper-activation"],
     cytotoxicActive: currentTime >= timeline["cytotoxic-activation"],
     effectorCount: getEffectorCount(currentTime, timeline, memoryMatched),

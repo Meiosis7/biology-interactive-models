@@ -55,6 +55,32 @@ describe("cellular immunity simulation", () => {
     expect(snapshot.targetLysed).toBe(false);
   });
 
+  it("stops at recognition when the displayed marker mismatches", () => {
+    const mismatchedPrimary = { ...normal, condition: "marker-mismatch" } as const;
+    const mismatchedSecondary = {
+      ...mismatchedPrimary,
+      exposure: "secondary",
+      memorySpecificity: "A",
+    } as const;
+
+    expect(getCellularSnapshot(14, mismatchedPrimary)).toMatchObject({
+      stage: "target-recognition",
+      blockedAt: "target-recognition",
+      targetRecognized: false,
+      targetLysed: false,
+      targetCount: 1,
+      memoryCount: 0,
+    });
+    expect(getCellularSnapshot(16, mismatchedPrimary)).toMatchObject({
+      stage: "target-recognition",
+      memoryCount: 0,
+    });
+    expect(getCellularSnapshot(16, mismatchedSecondary)).toMatchObject({
+      stage: "target-recognition",
+      memoryCount: 0,
+    });
+  });
+
   it("does not give unmatched secondary exposure a memory advantage", () => {
     const primary = getCellularSnapshot(9, normal);
     const unmatchedSecondary = getCellularSnapshot(9, {
