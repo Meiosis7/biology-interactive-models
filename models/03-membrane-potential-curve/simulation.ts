@@ -54,6 +54,12 @@ const STAGE_EXPLANATIONS: Record<CurveStage, string> = {
   recovery: "恢复期：K⁺继续外流后逐渐恢复静息状态，膜内相对为负、膜外相对为正。",
 };
 
+const ZERO_MV_TOLERANCE = 1e-9;
+
+function getInsidePolarity(mv: number): InsidePolarity {
+  return mv >= -ZERO_MV_TOLERANCE ? "positive" : "negative";
+}
+
 function interpolate(
   time: number,
   startTime: number,
@@ -94,10 +100,12 @@ function getActionPotentialMv(time: number, stage: CurveStage): number {
 function getWeakSnapshot(time: number): CurveSnapshot {
   const stage: CurveStage = time >= 1 && time < 4 ? "local" : "resting";
   const answer = STAGE_ANSWERS[stage];
+  const mv = stage === "local" ? -60 : -70;
 
   return {
     ...answer,
-    mv: stage === "local" ? -60 : -70,
+    mv,
+    insidePolarity: getInsidePolarity(mv),
     sodiumOpen: false,
     potassiumOpen: false,
   };
@@ -111,10 +119,12 @@ export function getCurveSnapshot(
 
   const stage = getActionPotentialStage(time);
   const answer = STAGE_ANSWERS[stage];
+  const mv = getActionPotentialMv(time, stage);
 
   return {
     ...answer,
-    mv: getActionPotentialMv(time, stage),
+    mv,
+    insidePolarity: getInsidePolarity(mv),
     sodiumOpen: stage === "depolarization",
     potassiumOpen: stage === "repolarization" || stage === "recovery",
   };

@@ -20,6 +20,24 @@ describe("membrane potential curve", () => {
     expect(getCurveSnapshot(4.2, "threshold").ionFlow).toBe("potassium-out");
   });
 
+  it("derives membrane polarity from the voltage during phase transitions", () => {
+    const earlyDepolarization = getCurveSnapshot(2.1, "threshold");
+    const earlyRepolarization = getCurveSnapshot(4.1, "threshold");
+
+    expect(earlyDepolarization.mv).toBeLessThan(0);
+    expect(earlyDepolarization.insidePolarity).toBe("negative");
+    expect(earlyRepolarization.mv).toBeGreaterThan(0);
+    expect(earlyRepolarization.insidePolarity).toBe("positive");
+  });
+
+  it("treats zero millivolts as membrane-inner-positive", () => {
+    const zeroMvTime = 2 + 55 / 85;
+    const snapshot = getCurveSnapshot(zeroMvTime, "threshold");
+
+    expect(snapshot.mv).toBeCloseTo(0);
+    expect(snapshot.insidePolarity).toBe("positive");
+  });
+
   it("opens the matching channel in each ion-flow stage", () => {
     expect(getCurveSnapshot(2.5, "threshold")).toMatchObject({
       sodiumOpen: true,
