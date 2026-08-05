@@ -30,7 +30,7 @@ describe("meter deflection simulation", () => {
   });
 
   it("stays near zero for equidistant simultaneous arrival", () => {
-    const value = getMeterSnapshot(5, {
+    const value = getMeterSnapshot(3, {
       ...normal,
       mode: "equidistant",
       stimulusPosition: 50,
@@ -40,6 +40,20 @@ describe("meter deflection simulation", () => {
 
     expect(value.stage).toBe("simultaneous");
     expect(Math.abs(value.differenceMv)).toBeLessThan(0.01);
+  });
+
+  it("ends the simultaneous stage when the equal-arrival excitation pulse has passed", () => {
+    const settings = {
+      ...normal,
+      mode: "equidistant",
+      stimulusPosition: 50,
+      electrodeA: 30,
+      electrodeB: 70,
+    } as const;
+
+    expect(getMeterSnapshot(3.9, settings).stage).toBe("simultaneous");
+    expect(getMeterSnapshot(4, settings).stage).toBe("passed");
+    expect(getMeterSnapshot(METER_DURATION, settings).stage).toBe("passed");
   });
 
   it("keeps extracellular difference near zero when both sites share a state", () => {

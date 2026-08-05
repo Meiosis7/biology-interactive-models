@@ -20,10 +20,9 @@ function isExcited(time: number, arrival: number): boolean {
 }
 
 function getStage(time: number, arrivalA: number, arrivalB: number): MeterStage {
-  if (arrivalA === arrivalB && time >= arrivalA) return "simultaneous";
-
   const excitedAtA = isExcited(time, arrivalA);
   const excitedAtB = isExcited(time, arrivalB);
+  if (arrivalA === arrivalB && excitedAtA && excitedAtB) return "simultaneous";
   if (excitedAtA && !excitedAtB) return "at-a";
   if (excitedAtB && !excitedAtA) return "at-b";
   if (time <= 0) return "resting";

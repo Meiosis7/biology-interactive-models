@@ -26,10 +26,11 @@ function curve(settings: MeterSettings, key: "voltageA" | "voltageB" | "differen
 }
 
 export function ElectrodeChart({ settings, time, snapshot }: ElectrodeChartProps) {
+  const differenceLabel = settings.leadsReversed ? "V_B − V_A" : "V_A − V_B";
   const lines = [
     { key: "voltageA" as const, label: "V_A", color: "#6ee7df" },
     { key: "voltageB" as const, label: "V_B", color: "#ad98ff" },
-    { key: "differenceMv" as const, label: "V_A − V_B", color: "#ff9c78" },
+    { key: "differenceMv" as const, label: differenceLabel, color: "#ff9c78" },
   ];
   return (
     <figure className="meter-chart-card">
@@ -42,7 +43,7 @@ export function ElectrodeChart({ settings, time, snapshot }: ElectrodeChartProps
         <circle className="chart-point" cx={x(time)} cy={y(snapshot.differenceMv)} r="4" />
       </svg>
       <div className="meter-chart-legend">{lines.map(({ key, label, color }) => <span key={key}><i style={{ background: color }} />{label}</span>)}</div>
-      <p>三条曲线共用同一教学时间轴；橙线就是检流计的输入差值。</p>
+      <p>三条曲线共用同一教学时间轴；橙线：{differenceLabel} = {snapshot.differenceMv.toFixed(0)} mV，是检流计当前的输入差值。</p>
     </figure>
   );
 }
