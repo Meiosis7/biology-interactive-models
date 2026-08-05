@@ -132,6 +132,34 @@ describe("MembraneCurveLab", () => {
     expect(screen.getByText(/已答对 1 题/)).toBeInTheDocument();
   });
 
+  it("announces only submitted quiz feedback as a polite status", () => {
+    render(<MembraneCurveLab />);
+    fireEvent.click(screen.getByRole("button", { name: "辨析模式" }));
+
+    const quizPanel = screen.getByText(/辨析模式 · 已答对/).closest("section");
+    expect(quizPanel).not.toBeNull();
+    const quiz = within(quizPanel!);
+    const score = quiz.getByText(/辨析模式 · 已答对/);
+    const voltagePrompt = quiz.getByText(/当前游标.*mV/);
+    const numericExplanation = within(screen.getByLabelText("当前阶段解释"))
+      .getByText(/mV；膜内相对/);
+
+    expect(quizPanel).not.toHaveAttribute("aria-live");
+    expect(score.closest("[aria-live]")).toBeNull();
+    expect(voltagePrompt.closest("[aria-live]")).toBeNull();
+    expect(numericExplanation.closest("[aria-live]")).toBeNull();
+    expect(quiz.queryByRole("status")).not.toBeInTheDocument();
+
+    fireEvent.click(quiz.getByRole("button", { name: "提交判断" }));
+
+    const statuses = quiz.getAllByRole("status");
+    expect(statuses).toHaveLength(1);
+    expect(statuses[0]).toHaveAttribute("aria-live", "polite");
+    expect(statuses[0]).toHaveAttribute("aria-atomic", "true");
+    expect(statuses[0]).toHaveTextContent(/^判断正确。/);
+    expect(quizPanel?.querySelectorAll("[aria-live]")).toHaveLength(1);
+  });
+
   it("announces only stage transitions instead of live voltage and quiz counts", () => {
     render(<MembraneCurveLab />);
 

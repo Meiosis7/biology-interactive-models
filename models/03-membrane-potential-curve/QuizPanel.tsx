@@ -35,7 +35,7 @@ export function QuizPanel({ snapshot, intensity, answer, feedback, correctCount,
       <ChoiceGroup label="主要离子运动" choices={IONS} selected={answer.ionFlow} onSelect={(ionFlow) => onChange({ ionFlow })} />
       <ChoiceGroup label="膜内相对电性" choices={POLARITIES} selected={answer.insidePolarity} onSelect={(insidePolarity) => onChange({ insidePolarity })} />
       <div className="quiz-actions"><button className="membrane-button primary" type="button" onClick={onSubmit}>提交判断</button><button className="membrane-button" type="button" onClick={onNext}>下一题位置</button></div>
-      {feedback && <p className={`quiz-feedback ${feedback.correct ? "correct" : "incorrect"}`}>{feedback.correct ? "判断正确。" : "再想一想。"}{feedback.explanation}</p>}
+      {feedback && <p className={`quiz-feedback ${feedback.correct ? "correct" : "incorrect"}`} role="status" aria-live="polite" aria-atomic="true">{feedback.correct ? "判断正确。" : "再想一想。"}{feedback.explanation}</p>}
     </section>
   );
 }
