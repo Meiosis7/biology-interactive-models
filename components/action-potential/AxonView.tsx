@@ -35,7 +35,7 @@ export function AxonView({ settings, snapshot, onElectrodeChange }: AxonViewProp
           {snapshot.wavefronts.map((position, index) => (
             <span
               className="wavefront"
-              key={`${index}-${position.toFixed(2)}`}
+              key={`wavefront-${index}`}
               style={{ left: `${position * 100}%` }}
             />
           ))}
