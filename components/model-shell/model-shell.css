@@ -175,6 +175,59 @@
   outline-offset: 5px;
 }
 
+.model-nav {
+  padding: 14px clamp(20px, 4vw, 56px);
+  border-bottom: 1px solid rgba(169, 204, 230, 0.2);
+  color: #eff8ff;
+  background: #07111f;
+}
+
+.model-nav__content {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 18px;
+  width: min(1180px, 100%);
+  margin-inline: auto;
+}
+
+.model-nav a {
+  color: #eff8ff;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.model-nav__home {
+  padding: 8px 11px;
+  border: 1px solid rgba(53, 211, 245, 0.45);
+  border-radius: 999px;
+  color: #35d3f5 !important;
+}
+
+.model-nav__current {
+  margin: 0;
+  color: #9bb3c9;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.model-nav__links {
+  display: flex;
+  justify-content: end;
+  gap: 16px;
+}
+
+.model-nav a:hover {
+  color: #35d3f5;
+}
+
+.model-nav a:focus-visible {
+  outline: 3px solid #ffd166;
+  outline-offset: 4px;
+}
+
 @media (max-width: 900px) {
   .model-hub__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -196,6 +249,22 @@
 
   .model-card__description {
     min-height: 0;
+  }
+
+  .model-nav__content {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .model-nav__home,
+  .model-nav__current {
+    justify-self: start;
+    text-align: left;
+  }
+
+  .model-nav__links {
+    justify-content: start;
+    flex-wrap: wrap;
   }
 }
 
