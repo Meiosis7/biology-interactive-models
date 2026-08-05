@@ -14,8 +14,48 @@ const MIN_MV = -90;
 const MAX_MV = 40;
 const SAMPLE_COUNT = 400;
 
+interface ChartSample {
+  teachingTime: number;
+  snapshot: SimulationSnapshot;
+}
+
 function formatTeachingTime(value: number) {
   return Number.isInteger(value) ? value.toFixed(0) : value.toFixed(1);
+}
+
+function getStageInterval(
+  samples: ChartSample[],
+  time: number,
+  stage: SimulationSnapshot["stage"],
+) {
+  let currentIndex = -1;
+  let nearestDistance = Number.POSITIVE_INFINITY;
+  samples.forEach((sample, index) => {
+    const distance = Math.abs(sample.teachingTime - time);
+    if (sample.snapshot.stage === stage && distance < nearestDistance) {
+      currentIndex = index;
+      nearestDistance = distance;
+    }
+  });
+
+  if (currentIndex < 0) return { start: time, end: time };
+
+  let startIndex = currentIndex;
+  let endIndex = currentIndex;
+  while (startIndex > 0 && samples[startIndex - 1].snapshot.stage === stage) {
+    startIndex -= 1;
+  }
+  while (
+    endIndex < samples.length - 1 &&
+    samples[endIndex + 1].snapshot.stage === stage
+  ) {
+    endIndex += 1;
+  }
+
+  return {
+    start: samples[startIndex].teachingTime,
+    end: samples[Math.min(samples.length - 1, endIndex + 1)].teachingTime,
+  };
 }
 
 export function PotentialChart({
@@ -56,6 +96,26 @@ export function PotentialChart({
       const y = (mv: number) => (
         padding.top + ((MAX_MV - mv) / (MAX_MV - MIN_MV)) * plotHeight
       );
+      const samples: ChartSample[] = Array.from(
+        { length: SAMPLE_COUNT + 1 },
+        (_, index) => {
+          const teachingTime = (duration * index) / SAMPLE_COUNT;
+          return {
+            teachingTime,
+            snapshot: getSimulationSnapshot(teachingTime, settings),
+          };
+        },
+      );
+      const currentStage = getSimulationSnapshot(time, settings).stage;
+      const interval = getStageInterval(samples, time, currentStage);
+
+      context.fillStyle = "rgba(255,209,102,.12)";
+      context.fillRect(
+        x(interval.start),
+        padding.top,
+        Math.max(2, x(interval.end) - x(interval.start)),
+        plotHeight,
+      );
 
       context.font = "12px sans-serif";
       [-70, -55, 0, 30].forEach((mv) => {
@@ -71,12 +131,14 @@ export function PotentialChart({
       });
 
       context.beginPath();
-      for (let index = 0; index <= SAMPLE_COUNT; index += 1) {
-        const sample = (duration * index) / SAMPLE_COUNT;
-        const mv = getSimulationSnapshot(sample, settings).membranePotential;
-        if (index === 0) context.moveTo(x(sample), y(mv));
-        else context.lineTo(x(sample), y(mv));
-      }
+      samples.forEach((sample, index) => {
+        const point = [
+          x(sample.teachingTime),
+          y(sample.snapshot.membranePotential),
+        ] as const;
+        if (index === 0) context.moveTo(...point);
+        else context.lineTo(...point);
+      });
       context.strokeStyle = "#ff6b4a";
       context.lineWidth = 3;
       context.stroke();

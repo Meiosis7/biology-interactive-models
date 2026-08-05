@@ -1,100 +1,43 @@
-# vinext-starter
+# 动作电位的形成和传导｜高中生物交互模型
 
-A clean full-stack starter running on
-[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
-Drizzle support.
+面向高中生物课堂演示与自主探究的单页面交互实验台。模型同步展示神经纤维上的局部兴奋与双向传播、记录点膜电位曲线、离子通道状态和阶段解释。
 
-## Prerequisites
+## 可操作内容
 
-- Node.js `>=22.13.0`
+- 选择弱刺激、阈刺激或强刺激，比较局部电位与“全或无”的动作电位。
+- 选择左侧、中部或右侧刺激，观察两个传播波前到达边界的先后差异。
+- 拖动记录电极，比较记录距离对动作电位出现时间的影响。
+- 使用播放、暂停、上下步、教学时间轴、速度和重置控制实验。
+- 对照 Na⁺ 内流、K⁺ 外流、阈电位参考线和当前阶段区间理解曲线变化。
 
-## Quick Start
+动画时间、传播速度、粒子和通道数量均为教学示意，不代表真实生理测量。
+
+## 本地运行
+
+需要 Node.js `>=22.13.0`。
 
 ```bash
 npm install
 npm run dev
+```
+
+开发服务启动后，按终端提示打开本地地址。
+
+## 验证命令
+
+```bash
+npm test
+npm run lint
 npm run build
 ```
 
-This starter does not use `wrangler.jsonc`.
+- `npm test`：运行 Vitest 模拟逻辑、交互、Canvas 绘制、元信息与 OG 资源回归测试。
+- `npm run lint`：检查 TypeScript、React 与测试代码规范。
+- `npm run build`：执行 Vinext/Cloudflare 生产构建。
 
-## Included Shape
+## 主要目录
 
-- edit site code under `app/`
-- `.openai/hosting.json` declares optional Sites D1 and R2 bindings
-- `vite.config.ts` simulates declared bindings for local development
-- `db/schema.ts` starts intentionally empty
-- `examples/d1/` contains an optional D1 example surface
-- `drizzle.config.ts` supports local migration generation when needed
-
-## Workspace Auth Headers
-
-Signed-in visitors receive both `oai-authenticated-user-id` and `oai-authenticated-user-email`. Private Sites require every visitor to sign in; public Sites may also have anonymous visitors, for whom neither header is present.
-
-The user ID is stable for the same user on the same Site and different across Sites. Email and name are intended for display or contact purposes.
-
-SIWC-authenticated workspace sites may also receive
-`oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty
-`name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by
-`oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
-
-Treat the full name as optional and fall back to email when it is absent:
-
-```tsx
-import { headers } from "next/headers";
-
-export default async function Home() {
-  const requestHeaders = await headers();
-  const userId = requestHeaders.get("oai-authenticated-user-id");
-  const email = requestHeaders.get("oai-authenticated-user-email");
-  const encodedFullName = requestHeaders.get("oai-authenticated-user-full-name");
-  const fullName =
-    encodedFullName &&
-    requestHeaders.get("oai-authenticated-user-full-name-encoding") ===
-      "percent-encoded-utf-8"
-      ? decodeURIComponent(encodedFullName)
-      : null;
-
-  const displayName = fullName ?? email;
-  // ...
-}
-```
-
-## Optional Dispatch-Owned ChatGPT Sign-In
-
-Import the ready-to-use helpers from `app/chatgpt-auth.ts` when the site needs
-optional or required ChatGPT sign-in:
-
-- Use `getChatGPTUser()` for optional signed-in UI.
-- Use `requireChatGPTUser(returnTo)` for server-rendered pages that should send
-  anonymous visitors through Sign in with ChatGPT.
-- Use `chatGPTSignInPath(returnTo)` and `chatGPTSignOutPath(returnTo)` for
-  browser links or actions.
-- Pass a same-origin relative `returnTo` path for the destination after sign-in
-  or sign-out. The helper validates and safely encodes it.
-- Mark protected pages with `export const dynamic = "force-dynamic"` because
-  they depend on per-request identity headers.
-
-Dispatch owns `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, the
-OAuth cookies, and identity header injection. Do not implement app routes for
-those reserved paths. Routes that do not import and call the helper remain
-anonymous-compatible.
-
-SIWC establishes identity only; it does not prove workspace membership. Use the
-Sites hosting platform's access policy controls for workspace-wide restrictions,
-or enforce explicit server-side membership or allowlist checks.
-
-Use SIWC for account pages, user-specific dashboards, saved records, and write
-actions tied to the current ChatGPT user. Leave public content anonymous.
-
-## Useful Commands
-
-- `npm run dev`: start local development
-- `npm run build`: verify the vinext build output
-- `npm test`: build the starter and verify its rendered loading skeleton
-- `npm run db:generate`: generate Drizzle migrations after schema changes
-
-## Learn More
-
-- [vinext Documentation](https://github.com/cloudflare/vinext)
-- [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
+- `components/action-potential/`：模拟逻辑、实验台组件、Canvas 曲线和局部样式。
+- `tests/action-potential/`：动作电位模拟与真实组件交互测试。
+- `tests/site-metadata.test.ts`：站点元信息、OG 资源和 Canvas 响应式样式测试。
+- `docs/superpowers/`：批准的设计与实施计划。

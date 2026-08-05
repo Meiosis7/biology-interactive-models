@@ -11,6 +11,7 @@ export const canvasStyles: Array<[string, string | number]> = [];
 export const canvasContext = {
   beginPath: vi.fn(),
   clearRect: vi.fn(),
+  fillRect: vi.fn(),
   fillText: vi.fn(),
   lineTo: vi.fn(),
   moveTo: vi.fn(),

@@ -10,8 +10,30 @@ export interface AxonViewProps {
   onElectrodeChange: (position: number) => void;
 }
 
-const CHANNELS = [12, 28, 44, 60, 76, 90];
-const IONS = [18, 34, 50, 66, 82];
+const CHANNELS = [
+  { id: "sodium-left", ion: "sodium", left: 10 },
+  { id: "potassium-left", ion: "potassium", left: 16 },
+  { id: "sodium-middle", ion: "sodium", left: 50 },
+  { id: "potassium-middle", ion: "potassium", left: 56 },
+  { id: "potassium-right", ion: "potassium", left: 84 },
+  { id: "sodium-right", ion: "sodium", left: 90 },
+] as const;
+
+const SODIUM_IONS = [
+  { id: "sodium-left", left: 10, top: -44 },
+  { id: "sodium-left-middle", left: 30, top: -66 },
+  { id: "sodium-middle", left: 50, top: -44 },
+  { id: "sodium-right-middle", left: 70, top: -66 },
+  { id: "sodium-right", left: 90, top: -44 },
+] as const;
+
+const POTASSIUM_IONS = [
+  { id: "potassium-left", left: 14, top: 32 },
+  { id: "potassium-left-middle", left: 34, top: 54 },
+  { id: "potassium-middle", left: 54, top: 32 },
+  { id: "potassium-right-middle", left: 74, top: 54 },
+  { id: "potassium-right", left: 86, top: 32 },
+] as const;
 
 export function AxonView({
   time,
@@ -57,43 +79,42 @@ export function AxonView({
             className="electrode-marker"
             style={{ left: `${settings.electrodePosition * 100}%` }}
           >记录电极</span>
-          {CHANNELS.map((left, index) => {
-            const localSnapshot = snapshotAt(left / 100);
-            const sodiumChannel = index % 2 === 0;
+          {CHANNELS.map((channel) => {
+            const localSnapshot = snapshotAt(channel.left / 100);
+            const sodiumChannel = channel.ion === "sodium";
             const open = sodiumChannel
               ? localSnapshot.ionFlow === "sodium-in"
               : localSnapshot.ionFlow === "potassium-out";
             return (
               <span
-                key={`channel-${left}`}
+                key={channel.id}
                 className={`channel ${sodiumChannel ? "sodium-channel" : "potassium-channel"} ${open ? "open" : "closed"}`}
                 data-stage={localSnapshot.stage}
-                style={{ left: `${left}%` }}
+                style={{ left: `${channel.left}%` }}
               />
             );
           })}
-          {IONS.map((left, index) => {
-            const localSnapshot = snapshotAt(left / 100);
+          {SODIUM_IONS.map((ion) => {
+            const localSnapshot = snapshotAt(ion.left / 100);
             const sodiumActive = localSnapshot.ionFlow === "sodium-in";
             return (
               <span
-                key={`sodium-${left}`}
+                key={ion.id}
                 className={`ion sodium ${playing && sodiumActive ? "moving-in" : ""}`}
                 data-stage={localSnapshot.stage}
-                style={{ left: `${left}%`, top: `${-44 - (index % 2) * 22}px` } as CSSProperties}
+                style={{ left: `${ion.left}%`, top: `${ion.top}px` } as CSSProperties}
               >Na⁺</span>
             );
           })}
-          {IONS.map((left, index) => {
-            const position = (left + 5) / 100;
-            const localSnapshot = snapshotAt(position);
+          {POTASSIUM_IONS.map((ion) => {
+            const localSnapshot = snapshotAt(ion.left / 100);
             const potassiumActive = localSnapshot.ionFlow === "potassium-out";
             return (
               <span
-                key={`potassium-${left}`}
+                key={ion.id}
                 className={`ion potassium ${playing && potassiumActive ? "moving-out" : ""}`}
                 data-stage={localSnapshot.stage}
-                style={{ left: `${left + 5}%`, top: `${32 + (index % 2) * 22}px` } as CSSProperties}
+                style={{ left: `${ion.left}%`, top: `${ion.top}px` } as CSSProperties}
               >K⁺</span>
             );
           })}

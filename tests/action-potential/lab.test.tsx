@@ -143,7 +143,7 @@ describe("ActionPotentialLab", () => {
     expect(updatedWavefronts[1]).toBe(initialWavefronts[1]);
   });
 
-  it("draws reference levels, simulation trace, and the current-time cursor", () => {
+  it("draws the current-stage interval, reference levels, trace, and cursor", () => {
     render(<ActionPotentialLab />);
     resetCanvasContext();
     fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "4" } });
@@ -159,6 +159,13 @@ describe("ActionPotentialLab", () => {
     expect(canvasStyles).toContainEqual(["strokeStyle", "#38d9ff"]);
     expect(canvasStyles).toContainEqual(["lineWidth", 3]);
     expect(canvasStyles).toContainEqual(["lineWidth", 1.5]);
+    expect(canvasStyles).toContainEqual(["fillStyle", "rgba(255,209,102,.12)"]);
+    expect(canvasContext.fillRect).toHaveBeenCalledTimes(1);
+    const [bandX, bandY, bandWidth, bandHeight] = canvasContext.fillRect.mock.calls[0];
+    expect(bandX).toBeGreaterThan(88);
+    expect(bandY).toBe(18);
+    expect(bandWidth).toBeGreaterThan(0);
+    expect(bandHeight).toBe(175);
     expect(canvasContext.fillText).toHaveBeenCalledWith(
       "阈电位 −55 mV",
       4,
@@ -254,16 +261,29 @@ describe("ActionPotentialLab", () => {
     expect(Number(screen.getByLabelText("教学时间").getAttribute("max"))).toBeGreaterThan(12.5);
   });
 
-  it("shows a weak local sodium-channel response near the stimulus with a distant electrode", () => {
-    render(<ActionPotentialLab />);
-    fireEvent.click(screen.getByRole("button", { name: "弱刺激" }));
-    fireEvent.change(screen.getByLabelText("记录电极位置"), { target: { value: "0.9" } });
-    fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "0.5" } });
+  it.each([
+    ["左侧刺激", "1"],
+    ["中部刺激", "1"],
+    ["右侧刺激", "0"],
+  ])(
+    "shows a weak local sodium response for %s with a distant recording electrode",
+    (stimulusLabel, electrodePosition) => {
+      render(<ActionPotentialLab />);
+      fireEvent.click(screen.getByRole("button", { name: "弱刺激" }));
+      fireEvent.click(screen.getByRole("button", { name: stimulusLabel }));
+      fireEvent.change(screen.getByLabelText("记录电极位置"), {
+        target: { value: electrodePosition },
+      });
+      fireEvent.change(screen.getByLabelText("教学时间"), {
+        target: { value: "0.5" },
+      });
 
-    expect(screen.getByText("静息状态")).toBeInTheDocument();
-    expect(document.querySelectorAll(".sodium-channel.open").length).toBeGreaterThan(0);
-    expect(document.querySelectorAll(".wavefront")).toHaveLength(0);
-  });
+      expect(screen.getByRole("heading", { name: "静息状态" })).toBeInTheDocument();
+      expect(document.querySelectorAll(".sodium-channel.open").length).toBeGreaterThan(0);
+      expect(document.querySelectorAll('.ion.sodium[data-stage="local"]').length).toBeGreaterThan(0);
+      expect(document.querySelectorAll(".wavefront")).toHaveLength(0);
+    },
+  );
 
   it("advances sodium-channel opening sequentially along the fiber", () => {
     render(<ActionPotentialLab />);
