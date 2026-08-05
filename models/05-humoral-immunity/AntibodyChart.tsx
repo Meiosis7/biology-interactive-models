@@ -26,14 +26,20 @@ function makeCurve(settings: HumoralSettings, field: "antibodyLevel" | "antigenL
 }
 
 export function AntibodyChart({ settings, snapshot, time }: AntibodyChartProps) {
+  const blocked = settings.condition !== "normal" || snapshot.blockedAt !== null;
   const matchedSecondary =
     settings.exposure === "secondary" &&
     snapshot.memoryMatched &&
-    settings.condition === "normal";
+    !blocked;
   const primaryComparison: HumoralSettings = { ...settings, exposure: "primary", memoryAntigen: undefined };
   const antibodyCurve = makeCurve(settings, "antibodyLevel");
   const antigenCurve = makeCurve(settings, "antigenLevel");
   const primaryCurve = matchedSecondary ? makeCurve(primaryComparison, "antibodyLevel") : null;
+  const chartSummary = blocked
+    ? "所选干预阻断下游抗体产生，抗体保持 0，抗原不下降。"
+    : matchedSecondary
+      ? "同一抗原的二次反应调用记忆 B 细胞，曲线显示更快、更强、更持久；虚线保留初次反应作对照。"
+      : "抗体升高后特异性结合当前抗原，抗原相对量随之下降。";
 
   return (
     <figure className="humoral-chart-card" aria-labelledby="humoral-chart-title">
@@ -53,7 +59,7 @@ export function AntibodyChart({ settings, snapshot, time }: AntibodyChartProps) 
         <span><i className="antigen" />抗原 {settings.antigen}（相对量）</span>
         {matchedSecondary && <span><i className="primary" />初次反应（对照虚线）</span>}
       </div>
-      <p>{matchedSecondary ? "同一抗原的二次反应调用记忆 B 细胞，曲线显示更快、更强、更持久；虚线保留初次反应作对照。" : "抗体升高后特异性结合当前抗原，抗原相对量随之下降。"} 时间与浓度均为教学示意，并非临床检测数值。</p>
+      <p>{chartSummary} 时间与浓度均为教学示意，并非临床检测数值。</p>
     </figure>
   );
 }

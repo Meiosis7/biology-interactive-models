@@ -1,6 +1,9 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { HumoralImmunityLab } from "../../../models/05-humoral-immunity/HumoralImmunityLab";
+
+const humoralStyles = readFileSync("models/05-humoral-immunity/humoral-immunity.css", "utf8");
 
 describe("HumoralImmunityLab", () => {
   it("shows the ordered immune-process spine", () => {
@@ -22,6 +25,11 @@ describe("HumoralImmunityLab", () => {
     expect(screen.getByText("当前：保留免疫记忆")).toBeInTheDocument();
   });
 
+  it("keeps the desktop spine in nine columns and stacks it on small screens", () => {
+    expect(humoralStyles).toContain("grid-template-columns: repeat(9, minmax(72px, 1fr))");
+    expect(humoralStyles).toMatch(/@media \(max-width: 720px\).*?\.humoral-process-spine \{ grid-template-columns: 1fr;/s);
+  });
+
   it("compares primary and matched secondary responses", () => {
     render(<HumoralImmunityLab />);
 
@@ -38,6 +46,16 @@ describe("HumoralImmunityLab", () => {
 
     expect(screen.getByText(/B 细胞不能充分活化/)).toBeInTheDocument();
     expect(screen.getByText(/缺少辅助性 T 细胞的激活信号/)).toBeInTheDocument();
+  });
+
+  it("uses a blocked-response chart caption when an intervention stops antibody production", () => {
+    render(<HumoralImmunityLab />);
+
+    fireEvent.click(screen.getByRole("button", { name: "辅助性 T 细胞受阻" }));
+
+    const chart = screen.getByText("抗体与抗原的相对变化").closest("figure");
+    expect(chart).not.toBeNull();
+    expect(within(chart!).getByText(/所选干预阻断下游抗体产生，抗体保持 0，抗原不下降/)).toBeInTheDocument();
   });
 
   it("hides secondary-response comparison when a matched response is blocked", () => {
