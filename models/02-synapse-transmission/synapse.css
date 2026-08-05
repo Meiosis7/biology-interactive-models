@@ -1,0 +1,62 @@
+:root {
+  --synapse-bg: #07111f;
+  --synapse-panel: #0d1c2d;
+  --synapse-panel-strong: #12263d;
+  --synapse-text: #eff8ff;
+  --synapse-muted: #9bb3c9;
+  --synapse-cyan: #38d9ff;
+  --synapse-violet: #aa7cff;
+  --synapse-gold: #ffd166;
+  --synapse-coral: #ff6b4a;
+  --synapse-border: rgba(169, 204, 230, 0.2);
+}
+
+.synapse-shell {
+  min-height: 100vh;
+  padding: clamp(20px, 4vw, 56px);
+  color: var(--synapse-text);
+  background: radial-gradient(circle at 50% 0%, #182d51 0, var(--synapse-bg) 52%);
+}
+
+.synapse-header, .synapse-grid, .synapse-controls { width: min(1180px, 100%); margin-inline: auto; }
+.synapse-header { padding: 10px 2px 28px; }
+.synapse-header h1 { max-width: 780px; margin: 8px 0 12px; font-size: clamp(34px, 5vw, 58px); line-height: 1.08; letter-spacing: -.035em; }
+.synapse-header > p:last-child { max-width: 720px; margin: 0; color: var(--synapse-muted); font-size: clamp(15px, 1.7vw, 18px); line-height: 1.7; }
+.synapse-eyebrow, .synapse-kicker { margin: 0; color: var(--synapse-cyan); font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+
+.synapse-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); gap: 18px; }
+.synapse-view-card, .synapse-chart-card, .synapse-explanation, .synapse-controls { border: 1px solid var(--synapse-border); border-radius: 22px; background: rgba(13, 28, 45, .92); box-shadow: 0 18px 50px rgba(0, 0, 0, .22); }
+.synapse-view-card { position: relative; grid-column: 1 / -1; min-height: 348px; overflow: hidden; }
+.synapse-direction { position: absolute; z-index: 2; top: 18px; right: 22px; margin: 0; padding: 7px 11px; border-radius: 999px; background: rgba(255, 209, 102, .12); color: var(--synapse-gold); font-size: 13px; }
+.synapse-stage { position: relative; display: grid; grid-template-rows: 1.35fr .72fr 1fr; min-height: 300px; margin: 24px; border-radius: 16px; overflow: hidden; background: #081522; }
+.synapse-presynaptic, .synapse-postsynaptic { position: relative; border: 3px solid #47627a; background: rgba(18, 38, 61, .72); }
+.synapse-presynaptic { border-radius: 16px 16px 0 0; border-bottom-width: 2px; }
+.synapse-postsynaptic { border-radius: 0 0 16px 16px; border-top-width: 2px; }
+.synapse-postsynaptic.is-active { box-shadow: inset 0 0 32px rgba(56, 217, 255, .2); }
+.synapse-cleft { position: relative; display: grid; place-items: center; color: var(--synapse-muted); border-inline: 3px solid #47627a; background: rgba(7, 17, 31, .86); font-size: 12px; }
+.synapse-cleft > span:first-child { align-self: start; margin-top: 9px; }
+.synapse-membrane-name { position: absolute; left: 14px; top: 12px; color: var(--synapse-muted); font-size: 12px; }
+.synapse-channel { position: absolute; right: 18%; bottom: -11px; z-index: 1; display: grid; place-items: center; width: 66px; height: 22px; border: 2px solid var(--synapse-cyan); border-radius: 9px; color: var(--synapse-cyan); background: #0d1c2d; font-size: 10px; font-weight: 800; }
+.synapse-calcium, .synapse-vesicle, .synapse-transmitter, .synapse-receptor { position: absolute; display: grid; place-items: center; border-radius: 999px; font-size: 10px; font-weight: 800; box-shadow: 0 5px 16px rgba(0, 0, 0, .28); }
+.synapse-calcium { width: 32px; height: 32px; color: #02131d; background: var(--synapse-cyan); }
+.synapse-calcium:nth-of-type(3) { right: 25%; bottom: 24px; }.synapse-calcium:nth-of-type(4) { right: 33%; bottom: 48px; }.synapse-calcium:nth-of-type(5) { right: 12%; bottom: 40px; }
+.synapse-vesicle { bottom: 18px; width: 48px; height: 48px; border: 2px solid var(--synapse-violet); color: #e6d9ff; background: rgba(170, 124, 255, .24); }
+.synapse-vesicle:nth-of-type(6) { left: 24%; }.synapse-vesicle:nth-of-type(7) { left: 40%; bottom: 40px; }.synapse-vesicle:nth-of-type(8) { left: 56%; }
+.synapse-transmitter { width: 29px; height: 29px; color: #231600; background: var(--synapse-gold); }
+.synapse-transmitter:nth-of-type(2) { left: 24%; bottom: 12px; }.synapse-transmitter:nth-of-type(3) { left: 40%; bottom: 22px; }.synapse-transmitter:nth-of-type(4) { left: 56%; bottom: 12px; }.synapse-transmitter:nth-of-type(5) { left: 72%; bottom: 22px; }
+.synapse-receptor { top: -11px; width: 46px; height: 22px; border: 2px solid var(--synapse-gold); color: var(--synapse-gold); background: #0d1c2d; }
+.synapse-receptor:nth-of-type(2) { left: 21%; }.synapse-receptor:nth-of-type(3) { left: 39%; }.synapse-receptor:nth-of-type(4) { left: 57%; }.synapse-receptor:nth-of-type(5) { left: 75%; }
+.synapse-postsynaptic strong { position: absolute; right: 20px; bottom: 14px; color: var(--synapse-coral); font-size: 20px; }.synapse-postsynaptic.is-active strong { color: var(--synapse-cyan); }
+.synapse-view-note { margin: 0 24px 16px; color: var(--synapse-muted); font-size: 12px; line-height: 1.5; }
+.synapse-calcium.is-moving { animation: synapse-calcium-in 850ms ease-in-out infinite; }.synapse-vesicle.is-fusing { animation: synapse-vesicle-fuse 850ms ease-in-out infinite; }.synapse-transmitter.is-releasing { animation: synapse-transmitter-release 900ms ease-in-out infinite; }
+@keyframes synapse-calcium-in { from { transform: translateY(-16px); } to { transform: translateY(24px); } }
+@keyframes synapse-vesicle-fuse { from { transform: translateY(-7px); } to { transform: translateY(5px); } }
+@keyframes synapse-transmitter-release { from { transform: translateY(-10px); } to { transform: translateY(16px); } }
+
+.synapse-chart-card { min-height: 300px; margin: 0; padding: 18px; display: grid; grid-template-rows: auto 1fr auto; gap: 10px; }.synapse-chart-card figcaption { display: flex; justify-content: space-between; gap: 16px; color: var(--synapse-muted); }.synapse-chart-card strong { color: var(--synapse-coral); font-size: 22px; }.synapse-chart-card canvas { display: block; width: 100%; height: clamp(235px, 32vw, 300px); border-radius: 14px; background: #081522; }.synapse-chart-card p { margin: 0; color: var(--synapse-muted); font-size: 12px; }
+.synapse-explanation { padding: 24px; }.synapse-explanation h2 { margin: 6px 0 20px; font-size: 28px; }.synapse-explanation dl { display: grid; gap: 14px; margin: 0; }.synapse-explanation dl div { display: grid; gap: 5px; padding-bottom: 13px; border-bottom: 1px solid var(--synapse-border); }.synapse-explanation dl div:last-child { padding-bottom: 0; border-bottom: 0; }.synapse-explanation dt { color: var(--synapse-muted); font-size: 12px; }.synapse-explanation dd { margin: 0; line-height: 1.55; }
+.synapse-controls { display: grid; gap: 14px; margin-top: 18px; padding: 18px; }.synapse-control-groups { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 14px; }.synapse-control-groups fieldset { display: grid; gap: 8px; min-width: 0; margin: 0; padding: 0; border: 0; }.synapse-control-groups legend { padding: 0; color: var(--synapse-muted); font-size: 13px; }.synapse-button-row { display: flex; flex-wrap: wrap; gap: 8px; }.synapse-button { min-height: 44px; padding: 9px 14px; border: 1px solid var(--synapse-border); border-radius: 12px; color: var(--synapse-text); background: var(--synapse-panel-strong); transition: border-color 160ms ease, background-color 160ms ease, transform 160ms ease; }.synapse-button:hover:not(:disabled) { border-color: rgba(56, 217, 255, .5); background: #18324f; }.synapse-button:active:not(:disabled) { transform: translateY(1px); }.synapse-button.primary { border-color: rgba(56, 217, 255, .55); color: #02131d; background: var(--synapse-cyan); font-weight: 800; }.synapse-button[aria-pressed="true"] { border-color: var(--synapse-gold); box-shadow: 0 0 0 2px rgba(255, 209, 102, .25); }
+.synapse-timeline { display: grid; grid-template-columns: auto minmax(160px, 1fr) auto; align-items: center; gap: 12px; color: var(--synapse-muted); font-size: 13px; }.synapse-timeline input { width: 100%; accent-color: var(--synapse-coral); }.synapse-timeline output { min-width: 4rem; color: var(--synapse-text); font-variant-numeric: tabular-nums; text-align: right; }.synapse-note { margin: 0; color: var(--synapse-muted); font-size: 12px; line-height: 1.5; }
+.synapse-button:focus-visible, .synapse-timeline input:focus-visible { outline: 3px solid var(--synapse-cyan); outline-offset: 3px; }.synapse-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+@media (max-width: 760px) { .synapse-shell { padding: 18px 12px 32px; }.synapse-header { padding: 8px 2px 22px; }.synapse-header h1 { font-size: clamp(32px, 10vw, 46px); }.synapse-grid, .synapse-control-groups { grid-template-columns: 1fr; }.synapse-view-card, .synapse-chart-card, .synapse-explanation { grid-column: 1; }.synapse-direction { position: static; display: inline-flex; margin: 14px 14px 0; }.synapse-stage { margin: 14px; }.synapse-view-note { margin: 0 14px 14px; }.synapse-timeline { grid-template-columns: 1fr; }.synapse-timeline output { text-align: left; }.synapse-button-row .synapse-button { flex: 1 1 auto; } }
+@media (prefers-reduced-motion: reduce) { .synapse-shell *, .synapse-shell *::before, .synapse-shell *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; } }

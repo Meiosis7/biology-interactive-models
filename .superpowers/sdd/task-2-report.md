@@ -1,45 +1,35 @@
-# Task 2 — 联动实验台与交互控制
+# Task 2 report — Synapse transmission interactive model
 
 ## RED / GREEN evidence
 
-- **RED:** `npm test -- tests/action-potential/lab.test.tsx` failed as expected before implementation: Vite could not resolve `ActionPotentialLab` because the component did not yet exist.
-- **GREEN:** after adding the lab, controls, stage explanation, and minimal visual-component stubs, `npm test -- tests/action-potential/lab.test.tsx` passed: **4/4 tests**.
-- **Full suite:** `npm test` passed: **14/14 tests across 2 files**.
+- **RED:** `npm test -- tests/models/synapse-transmission/lab.test.tsx` failed because `SynapseLab` could not be resolved. The failure was the expected missing-component failure.
+- **GREEN:** after implementation, the same focused test command passed: 1 test file, 3 tests passed.
+- Added regression coverage that keeps Ca²⁺, vesicles, and neurotransmitters visible without motion classes when the timeline is paused.
 
 ## Files changed
 
-- `components/action-potential/ActionPotentialLab.tsx` — page-level state, simulation snapshot wiring, transport controls, and animation loop.
-- `components/action-potential/LabControls.tsx` — stateless intensity, stimulus-position, speed, timeline, and transport controls.
-- `components/action-potential/StageExplanation.tsx` — required stage copy and accessible explanation card.
-- `components/action-potential/AxonView.tsx` — minimal compilable Task 3 replacement stub.
-- `components/action-potential/PotentialChart.tsx` — minimal compilable Task 3 replacement stub.
-- `tests/action-potential/lab.test.tsx` — required interaction coverage.
-- `tests/setup.ts`, `package.json`, `package-lock.json` — added React Testing Library and deterministic cleanup after each render; without cleanup, the brief's sequential tests retained prior rendered labs and produced duplicate-control query failures.
+- `models/02-synapse-transmission/SynapseLab.tsx`
+- `models/02-synapse-transmission/SynapseView.tsx`
+- `models/02-synapse-transmission/SynapseChart.tsx`
+- `models/02-synapse-transmission/synapse.css`
+- `app/models/synapse-transmission/page.tsx`
+- `tests/models/synapse-transmission/lab.test.tsx`
+
+## Verification
+
+- `npm test -- tests/models/synapse-transmission` — passed: 2 files, 9 tests.
+- `npm run lint` — passed with no output or warnings.
+- `npm run build` — passed; route `/models/synapse-transmission` was generated. Vinext emitted its existing informational warning that routes using `headers()` cannot be statically classified.
+- `npm test` — passed: 5 files, 44 tests.
+- `git diff --check` — passed with no whitespace errors.
 
 ## Self-review
 
-- Confirmed settings changes stop playback and reset time to zero.
-- Confirmed the lab passes current `time` and unchanged Task 1 settings into `getSimulationSnapshot`; Task 1 local-time semantics were not modified.
-- Confirmed the weak near-electrode interaction displays the required local-potential explanation.
-- Confirmed controls are stateless and delegate through the required callbacks.
-- Confirmed only requested Task 3 view files were added as minimal stubs.
-- `git diff --check` completed with no whitespace errors.
+- The lab keeps timeline, play state, speed, and settings in one component; changing either an intervention or synapse type stops playback and resets time.
+- The diagram always renders labelled Ca²⁺, vesicles, neurotransmitters, receptors, and membrane regions. Motion classes are added only while playing and at the active stage.
+- The canvas chart has the required −70 mV baseline, condition-specific excitatory/inhibitory trace, and current-time cursor.
+- Controls meet the 44 px minimum height, focus-visible styling, reduced-motion support, and 760 px single-column layout requirement.
 
 ## Concerns
 
-- `npx tsc --noEmit` remains blocked by pre-existing Cloudflare ambient-type errors in `db/index.ts` and `worker/index.ts` (`cloudflare:workers`, `Fetcher`, and `D1Database`), unrelated to this feature. The Vitest suite is green.
-
-## Fix Review
-
-### RED
-
-- Command: `npm test -- tests/action-potential/lab.test.tsx`
-- Output: **3 failed, 6 passed**. The new review tests showed that the step buttons lacked disabled semantics and that the timeline did not clamp a value above `DURATION`. The synchronization test initially also failed after an electrode change.
-- Investigation: the mock electrode range was uncontrolled; its browser default value was already `0.5`, so changing it to `0.5` did not emit a React change event. The double now receives and renders the supplied electrode setting, which accurately exercises the lab boundary.
-
-### GREEN
-
-- Command: `npm test -- tests/action-potential/lab.test.tsx`
-- Output: **9/9 passed**. This covers disabled previous/next controls and clamping; synchronized AxonView, PotentialChart, and stage explanation props; deterministic animation advancement; pause cancellation; and stopping at `DURATION`.
-- Command: `npm test`
-- Output: **19/19 passed across 2 files**.
+- No blocking concerns. The build's `headers()` route-classification notice is pre-existing root-layout behavior and does not affect this route.
