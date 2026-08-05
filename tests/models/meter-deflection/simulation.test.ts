@@ -47,6 +47,16 @@ describe("meter deflection simulation", () => {
     expect(getMeterSnapshot(9, normal).differenceMv).toBe(0);
   });
 
+  it("classifies an extracellular excitation at A at time zero", () => {
+    const snapshot = getMeterSnapshot(0, {
+      ...normal,
+      stimulusPosition: normal.electrodeA,
+    });
+
+    expect(snapshot.stage).toBe("at-a");
+    expect(snapshot.voltageA).toBeLessThan(0);
+  });
+
   it("derives arrival order from distance instead of electrode labels", () => {
     const snapshot = getMeterSnapshot(3.5, {
       ...normal,
@@ -68,6 +78,28 @@ describe("meter deflection simulation", () => {
     expect(excited.differenceMv).not.toBe(
       getMeterSnapshot(3.5, normal).differenceMv,
     );
+  });
+
+  it("classifies a transmembrane excitation at A at time zero", () => {
+    const snapshot = getMeterSnapshot(0, {
+      ...normal,
+      mode: "transmembrane",
+      stimulusPosition: normal.electrodeA,
+    });
+
+    expect(snapshot.stage).toBe("at-a");
+    expect(snapshot.voltageA).toBe(30);
+  });
+
+  it("names B as the approaching electrode when B arrives first", () => {
+    const snapshot = getMeterSnapshot(1, {
+      ...normal,
+      electrodeA: 70,
+      electrodeB: 35,
+    });
+
+    expect(snapshot.stage).toBe("approaching-b");
+    expect(snapshot.differenceMv).toBe(0);
   });
 
   it("keeps the pointer within the teaching dial limits", () => {

@@ -14,6 +14,7 @@ export interface MeterSettings {
 export type MeterStage =
   | "resting"
   | "approaching-a"
+  | "approaching-b"
   | "at-a"
   | "between"
   | "at-b"

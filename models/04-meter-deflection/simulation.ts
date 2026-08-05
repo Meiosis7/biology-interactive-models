@@ -20,20 +20,27 @@ function isExcited(time: number, arrival: number): boolean {
 }
 
 function getStage(time: number, arrivalA: number, arrivalB: number): MeterStage {
-  if (time <= 0) return "resting";
   if (arrivalA === arrivalB && time >= arrivalA) return "simultaneous";
+
+  const excitedAtA = isExcited(time, arrivalA);
+  const excitedAtB = isExcited(time, arrivalB);
+  if (excitedAtA && !excitedAtB) return "at-a";
+  if (excitedAtB && !excitedAtA) return "at-b";
+  if (time <= 0) return "resting";
 
   const firstArrival = Math.min(arrivalA, arrivalB);
   const lastArrival = Math.max(arrivalA, arrivalB);
-  if (time < firstArrival) return "approaching-a";
+  if (time < firstArrival) {
+    return arrivalA < arrivalB ? "approaching-a" : "approaching-b";
+  }
   if (time >= lastArrival + EXCITATION_DURATION) return "passed";
 
   if (arrivalA < arrivalB) {
-    if (isExcited(time, arrivalA)) return "at-a";
-    if (isExcited(time, arrivalB)) return "at-b";
+    if (excitedAtA) return "at-a";
+    if (excitedAtB) return "at-b";
   } else {
-    if (isExcited(time, arrivalB)) return "at-b";
-    if (isExcited(time, arrivalA)) return "at-a";
+    if (excitedAtB) return "at-b";
+    if (excitedAtA) return "at-a";
   }
 
   return "between";
