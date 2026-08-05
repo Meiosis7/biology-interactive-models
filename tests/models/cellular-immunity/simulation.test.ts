@@ -25,6 +25,28 @@ describe("cellular immunity simulation", () => {
     expect(getCellularSnapshot(14, { ...normal, target: "normal" }).targetLysed).toBe(false);
   });
 
+  it.each([
+    ["normal", "normal target"],
+    ["infected-b", "infected target with an unmatched antigen"],
+  ] as const)(
+    "holds %s at recognition after prior activation and expansion",
+    (target) => {
+      const snapshot = getCellularSnapshot(16, { ...normal, target });
+
+      expect(snapshot).toMatchObject({
+        stage: "target-recognition",
+        blockedAt: "target-recognition",
+        helperActive: true,
+        cytotoxicActive: true,
+        effectorCount: 60,
+        targetRecognized: false,
+        targetLysed: false,
+        targetCount: 1,
+        memoryCount: 0,
+      });
+    },
+  );
+
   it("makes a matched secondary response faster", () => {
     const primary = getCellularSnapshot(9, normal);
     const secondary = getCellularSnapshot(9, {

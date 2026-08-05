@@ -23,6 +23,21 @@ describe("CellularImmunityLab", () => {
     expect(screen.getByText(/不能特异性识别，因此不裂解/)).toBeInTheDocument();
   });
 
+  it.each([
+    ["正常细胞", "normal target"],
+    ["感染细胞 B", "infected target with an unmatched antigen"],
+  ])("keeps the %s view at recognition at a late time", (target) => {
+    render(<CellularImmunityLab />);
+
+    fireEvent.click(screen.getByRole("button", { name: target }));
+    fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "16" } });
+
+    expect(screen.getByText("当前：特异性识别靶细胞")).toBeInTheDocument();
+    expect(screen.queryByText("当前：靶细胞裂解")).not.toBeInTheDocument();
+    expect(screen.queryByText("当前：保留免疫记忆")).not.toBeInTheDocument();
+    expect(screen.getByText(/靶细胞 1，记忆 T 细胞 0/)).toBeInTheDocument();
+  });
+
   it("explains missing cytotoxic T cells", () => {
     render(<CellularImmunityLab />);
 
@@ -59,7 +74,9 @@ describe("CellularImmunityLab", () => {
   });
 
   it("stacks the process view on small screens and supports reduced motion", () => {
-    expect(cellularStyles).toMatch(/@media \(max-width: 720px\).*?\.cellular-process-spine \{ grid-template-columns: 1fr;/s);
+    expect(cellularStyles).toMatch(
+      /@media \(max-width: 720px\)\s*\{[\s\S]*?\.cellular-process-spine\s*\{[\s\S]*?grid-template-columns:\s*1fr;/,
+    );
     expect(cellularStyles).toContain("@media (prefers-reduced-motion: reduce)");
   });
 });

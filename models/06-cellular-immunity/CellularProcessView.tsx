@@ -51,8 +51,9 @@ export function CellularProcessView({ settings, snapshot, playing }: CellularPro
         {PROCESS.map((item, index) => {
           const blocked = snapshot.blockedAt === item.stage;
           const disabled = blockedIndex >= 0 && index > blockedIndex;
+          const recognitionLimited = blocked && item.stage === "target-recognition";
           return <div className={`cellular-process-step ${index === currentIndex ? "is-current" : ""} ${index < currentIndex ? "is-past" : ""} ${blocked ? "is-blocked" : ""} ${disabled ? "is-disabled" : ""}`} key={item.stage}>
-            <span className="cellular-step-number">{index + 1}</span><strong>{item.label}</strong>{blocked && <em>受阻</em>}
+            <span className="cellular-step-number">{index + 1}</span><strong>{item.label}</strong>{blocked && <em>{recognitionLimited ? "未匹配" : "受阻"}</em>}
           </div>;
         })}
       </div>
