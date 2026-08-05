@@ -6,8 +6,9 @@ import type {
   StimulusIntensity,
 } from "./types";
 
-export const DURATION = 10;
 const PROPAGATION_SPEED = 0.16;
+export const LOCAL_WAVEFORM_DURATION = 6;
+export const MIN_EXPERIMENT_DURATION = 8;
 
 export function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
@@ -18,6 +19,17 @@ export function getArrivalTime(
   electrodePosition: number,
 ) {
   return 1 + Math.abs(electrodePosition - stimulusPosition) / PROPAGATION_SPEED;
+}
+
+export function getExperimentDuration(settings: ExperimentSettings) {
+  if (settings.intensity === "weak") return MIN_EXPERIMENT_DURATION;
+  const requiredDuration =
+    getArrivalTime(settings.stimulusPosition, settings.electrodePosition) +
+    LOCAL_WAVEFORM_DURATION;
+  return Math.max(
+    MIN_EXPERIMENT_DURATION,
+    Math.ceil(requiredDuration * 2) / 2,
+  );
 }
 
 export function getMembranePotential(
@@ -53,7 +65,13 @@ function getStage(
 }
 
 function getIonFlow(stage: ActionPotentialStage): IonFlow {
-  if (stage === "depolarization") return "sodium-in";
+  if (
+    stage === "local" ||
+    stage === "threshold" ||
+    stage === "depolarization"
+  ) {
+    return "sodium-in";
+  }
   if (stage === "repolarization" || stage === "recovery") {
     return "potassium-out";
   }
@@ -65,8 +83,6 @@ function getWavefronts(time: number, stimulusPosition: number) {
   const distance = (time - 1) * PROPAGATION_SPEED;
   const left = clamp(stimulusPosition - distance, 0, 1);
   const right = clamp(stimulusPosition + distance, 0, 1);
-  if (stimulusPosition <= 0.15) return [right];
-  if (stimulusPosition >= 0.85) return [left];
   return [left, right];
 }
 

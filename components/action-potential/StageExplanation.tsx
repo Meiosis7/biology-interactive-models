@@ -8,7 +8,7 @@ export const STAGE_COPY: Record<
   local: { title: "局部电位", voltage: "膜电位小幅升高后恢复", ions: "少量 Na⁺ 内流（示意）", cause: "刺激未达到阈值，未形成可传导的动作电位。" },
   threshold: { title: "达到阈值", voltage: "膜电位接近阈电位", ions: "Na⁺ 通道开始开放", cause: "阈上刺激触发动作电位。" },
   depolarization: { title: "去极化", voltage: "膜电位快速升高", ions: "Na⁺ 内流", cause: "Na⁺ 通道开放使膜内电位升高。" },
-  peak: { title: "反极化", voltage: "膜电位约为 +30 mV", ions: "Na⁺ 内流减弱", cause: "膜内电位短暂高于膜外。" },
+  peak: { title: "反极化", voltage: "膜电位约为 +30 mV", ions: "Na⁺ 通道逐渐关闭，K⁺ 通道随后开放", cause: "膜内电位短暂高于膜外。" },
   repolarization: { title: "复极化", voltage: "膜电位快速下降", ions: "K⁺ 外流", cause: "K⁺ 通道开放使膜内电位降低。" },
   recovery: { title: "恢复静息", voltage: "膜电位回到约 −70 mV", ions: "K⁺ 外流逐渐结束", cause: "膜恢复静息状态的离子分布。" },
 };

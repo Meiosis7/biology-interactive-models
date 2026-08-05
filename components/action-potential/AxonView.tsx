@@ -1,24 +1,34 @@
 import type { CSSProperties } from "react";
+import { getSimulationSnapshot } from "./simulation";
 import type { ExperimentSettings, SimulationSnapshot } from "./types";
 
 export interface AxonViewProps {
   time: number;
   settings: ExperimentSettings;
   snapshot: SimulationSnapshot;
+  playing: boolean;
   onElectrodeChange: (position: number) => void;
 }
 
 const CHANNELS = [12, 28, 44, 60, 76, 90];
 const IONS = [18, 34, 50, 66, 82];
 
-export function AxonView({ settings, snapshot, onElectrodeChange }: AxonViewProps) {
+export function AxonView({
+  time,
+  settings,
+  snapshot,
+  playing,
+  onElectrodeChange,
+}: AxonViewProps) {
   const conditionLabel = settings.stimulusPosition <= 0.15
-    ? "左侧刺激：兴奋主要向右传播"
+    ? "左侧刺激：兴奋向两侧传播，左侧先到达边界"
     : settings.stimulusPosition >= 0.85
-      ? "右侧刺激：兴奋主要向左传播"
+      ? "右侧刺激：兴奋向两侧传播，右侧先到达边界"
       : "中部刺激：兴奋向两侧传播";
-  const sodiumOpen = snapshot.ionFlow === "sodium-in";
-  const potassiumOpen = snapshot.ionFlow === "potassium-out";
+  const snapshotAt = (position: number) => getSimulationSnapshot(time, {
+    ...settings,
+    electrodePosition: position,
+  });
 
   return (
     <section className="axon-card" aria-labelledby="axon-title">
@@ -27,7 +37,7 @@ export function AxonView({ settings, snapshot, onElectrodeChange }: AxonViewProp
       <div
         className="axon-stage"
         role="img"
-        aria-label={`离体神经纤维，当前为${snapshot.stage}阶段，${conditionLabel}`}
+        aria-label={`离体神经纤维，记录电极当前为${snapshot.stage}阶段，${conditionLabel}`}
       >
         <span className="membrane-label outside">膜外</span>
         <span className="membrane-label inside">膜内</span>
@@ -47,27 +57,46 @@ export function AxonView({ settings, snapshot, onElectrodeChange }: AxonViewProp
             className="electrode-marker"
             style={{ left: `${settings.electrodePosition * 100}%` }}
           >记录电极</span>
-          {CHANNELS.map((left, index) => (
-            <span
-              key={`channel-${left}`}
-              className={`channel ${index % 2 === 0 ? "sodium-channel" : "potassium-channel"} ${(index % 2 === 0 ? sodiumOpen : potassiumOpen) ? "open" : "closed"}`}
-              style={{ left: `${left}%` }}
-            />
-          ))}
-          {IONS.map((left, index) => (
-            <span
-              key={`sodium-${left}`}
-              className={`ion sodium ${sodiumOpen ? "moving-in" : ""}`}
-              style={{ left: `${left}%`, top: `${-44 - (index % 2) * 22}px` } as CSSProperties}
-            >Na⁺</span>
-          ))}
-          {IONS.map((left, index) => (
-            <span
-              key={`potassium-${left}`}
-              className={`ion potassium ${potassiumOpen ? "moving-out" : ""}`}
-              style={{ left: `${left + 5}%`, top: `${32 + (index % 2) * 22}px` } as CSSProperties}
-            >K⁺</span>
-          ))}
+          {CHANNELS.map((left, index) => {
+            const localSnapshot = snapshotAt(left / 100);
+            const sodiumChannel = index % 2 === 0;
+            const open = sodiumChannel
+              ? localSnapshot.ionFlow === "sodium-in"
+              : localSnapshot.ionFlow === "potassium-out";
+            return (
+              <span
+                key={`channel-${left}`}
+                className={`channel ${sodiumChannel ? "sodium-channel" : "potassium-channel"} ${open ? "open" : "closed"}`}
+                data-stage={localSnapshot.stage}
+                style={{ left: `${left}%` }}
+              />
+            );
+          })}
+          {IONS.map((left, index) => {
+            const localSnapshot = snapshotAt(left / 100);
+            const sodiumActive = localSnapshot.ionFlow === "sodium-in";
+            return (
+              <span
+                key={`sodium-${left}`}
+                className={`ion sodium ${playing && sodiumActive ? "moving-in" : ""}`}
+                data-stage={localSnapshot.stage}
+                style={{ left: `${left}%`, top: `${-44 - (index % 2) * 22}px` } as CSSProperties}
+              >Na⁺</span>
+            );
+          })}
+          {IONS.map((left, index) => {
+            const position = (left + 5) / 100;
+            const localSnapshot = snapshotAt(position);
+            const potassiumActive = localSnapshot.ionFlow === "potassium-out";
+            return (
+              <span
+                key={`potassium-${left}`}
+                className={`ion potassium ${playing && potassiumActive ? "moving-out" : ""}`}
+                data-stage={localSnapshot.stage}
+                style={{ left: `${left + 5}%`, top: `${32 + (index % 2) * 22}px` } as CSSProperties}
+              >K⁺</span>
+            );
+          })}
         </div>
       </div>
       <label className="electrode-control">

@@ -1141,3 +1141,15 @@ git commit -m "feat: complete action potential interactive model"
 - [ ] Run: `npm run build` — Expected: exit code 0。
 - [ ] Run: `git status --short` — Expected: 无未提交的本任务改动。
 - [ ] 对照 `docs/superpowers/specs/2026-08-05-action-potential-design.md` 逐条确认学习目标、交互、视觉、可访问性和范围边界均已覆盖。
+
+## Final-review amendments（2026-08-06）
+
+以下修正具有最高优先级，明确取代计划正文中的 `DURATION = 10`、`DURATION` 消费接口、`实验时间`/秒数输出，以及左/右刺激只返回一个 wavefront 的代码片段：
+
+- `simulation.ts` 导出 `LOCAL_WAVEFORM_DURATION = 6`、`MIN_EXPERIMENT_DURATION = 8` 与 `getExperimentDuration(settings)`。阈上时长至少为 `getArrivalTime(...) + LOCAL_WAVEFORM_DURATION`，并向上取整到 0.5 时间单位；弱刺激直接使用最短时长。
+- `ActionPotentialLab` 只计算一次当前设置的派生时长，并将其用于 RAF 截止、时间轴最大值、时间变更夹紧、播放重启和单步边界；`PotentialChart` 接收同一 `duration` 完成横轴缩放和定量采样。
+- `getWavefronts()` 对纤维内部所有允许刺激位置始终返回 `[left, right]`；两端分别夹紧到 0 和 1，不删除先抵达边界的一侧。
+- `AxonView` 接收 `time` 与 `playing`，为每个通道/粒子以其空间位置作为临时记录位置调用同一纯模拟函数。仅在 `playing` 且局部离子流匹配时附加 `moving-in`/`moving-out` 类。
+- `PotentialChart` 增加教学时间刻度、阈电位文字、阶段标签和包含时长、阈值、阶段、当前电位的 Canvas 摘要；CSS 用 `height: clamp(...)` 取代 `min-height`。
+- `LabControls` 使用“教学时间”“时间单位”，并显示不对应真实生理秒数的示意声明。
+- 测试先覆盖动态极端距离、双波前边界夹紧、空间通道顺序、弱刺激局部可见性、暂停 CSS 动画、图表语义和固定 Canvas 高度；删除未被 Vitest include 且仍断言 starter skeleton 的 `tests/rendered-html.test.mjs`，新增活动测试中的 metadata/OG 静态回归。

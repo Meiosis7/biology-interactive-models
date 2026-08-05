@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   getArrivalTime,
+  getExperimentDuration,
   getMembranePotential,
   getSimulationSnapshot,
 } from "../../components/action-potential/simulation";
+import type { ExperimentSettings } from "../../components/action-potential/types";
 
 describe("action-potential simulation", () => {
   it("keeps subthreshold stimulation local", () => {
@@ -60,6 +62,24 @@ describe("action-potential simulation", () => {
     expect(result.ionFlow).toBe("sodium-in");
   });
 
+  it("reports sodium influx for local and threshold sodium-channel opening", () => {
+    const local = getSimulationSnapshot(0.5, {
+      intensity: "weak",
+      stimulusPosition: 0.5,
+      electrodePosition: 0.5,
+    });
+    const threshold = getSimulationSnapshot(1.5, {
+      intensity: "threshold",
+      stimulusPosition: 0.5,
+      electrodePosition: 0.5,
+    });
+
+    expect(local.stage).toBe("local");
+    expect(local.ionFlow).toBe("sodium-in");
+    expect(threshold.stage).toBe("threshold");
+    expect(threshold.ionFlow).toBe("sodium-in");
+  });
+
   it("reports potassium efflux during repolarization", () => {
     const result = getSimulationSnapshot(5.2, {
       intensity: "threshold",
@@ -81,23 +101,60 @@ describe("action-potential simulation", () => {
     expect(result.wavefronts[1]).toBeGreaterThan(0.5);
   });
 
-  it("propagates rightward only from the left end", () => {
+  it("keeps both wavefronts from a left-side stimulus while the shorter path clamps", () => {
     const result = getSimulationSnapshot(2, {
       intensity: "threshold",
       stimulusPosition: 0.1,
       electrodePosition: 0.5,
     });
-    expect(result.wavefronts).toHaveLength(1);
-    expect(result.wavefronts[0]).toBeGreaterThan(0.1);
+    expect(result.wavefronts).toHaveLength(2);
+    expect(result.wavefronts[0]).toBe(0);
+    expect(result.wavefronts[1]).toBeGreaterThan(0.1);
   });
 
-  it("propagates leftward only from the right end", () => {
+  it("keeps both wavefronts from a right-side stimulus while the shorter path clamps", () => {
     const result = getSimulationSnapshot(2, {
       intensity: "threshold",
       stimulusPosition: 0.9,
       electrodePosition: 0.5,
     });
-    expect(result.wavefronts).toHaveLength(1);
+    expect(result.wavefronts).toHaveLength(2);
     expect(result.wavefronts[0]).toBeLessThan(0.9);
+    expect(result.wavefronts[1]).toBe(1);
+  });
+
+  it("derives enough experiment time for a distant recording to recover", () => {
+    const settings: ExperimentSettings = {
+      intensity: "threshold",
+      stimulusPosition: 0.1,
+      electrodePosition: 1,
+    };
+    const arrivalTime = getArrivalTime(
+      settings.stimulusPosition,
+      settings.electrodePosition,
+    );
+    const duration = getExperimentDuration(settings);
+
+    expect(duration).toBeGreaterThanOrEqual(arrivalTime + 6);
+    expect(getSimulationSnapshot(arrivalTime + 4, settings).stage).toBe("repolarization");
+    expect(getSimulationSnapshot(arrivalTime + 5.5, settings).stage).toBe("recovery");
+    expect(arrivalTime + 5.5).toBeLessThan(duration);
+    expect(getSimulationSnapshot(duration, settings).stage).toBe("resting");
+  });
+
+  it("uses a sensible minimum duration for weak and nearby recordings", () => {
+    const weakDuration = getExperimentDuration({
+      intensity: "weak",
+      stimulusPosition: 0.5,
+      electrodePosition: 0.5,
+    });
+    const nearDuration = getExperimentDuration({
+      intensity: "threshold",
+      stimulusPosition: 0.5,
+      electrodePosition: 0.5,
+    });
+
+    expect(weakDuration).toBeGreaterThanOrEqual(7);
+    expect(nearDuration).toBe(weakDuration);
   });
 });

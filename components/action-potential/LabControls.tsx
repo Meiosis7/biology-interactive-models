@@ -53,9 +53,9 @@ export function LabControls(props: LabControlsProps) {
         </fieldset>
       </div>
       <label className="timeline-row">
-        <span>实验时间</span>
-        <input aria-label="实验时间" type="range" min="0" max={props.duration} step="0.1" value={props.time} onChange={(event) => props.onTimeChange(Number(event.target.value))} />
-        <output>{props.time.toFixed(1)} s</output>
+        <span>教学时间</span>
+        <input aria-label="教学时间" aria-valuetext={`${props.time.toFixed(1)} 时间单位`} type="range" min="0" max={props.duration} step="0.1" value={props.time} onChange={(event) => props.onTimeChange(Number(event.target.value))} />
+        <output>{props.time.toFixed(1)} 时间单位</output>
       </label>
       <div className="button-row transport-row">
         <button className="control-button primary" onClick={props.onStart}>开始刺激</button>
@@ -64,6 +64,7 @@ export function LabControls(props: LabControlsProps) {
         <button className="control-button" disabled={props.time >= props.duration} onClick={() => props.onStep(0.5)}>下一步</button>
         <button className="control-button" onClick={props.onReset}>重置</button>
       </div>
+      <p className="schematic-note">动画时间和传播速度均为教学示意，不对应真实生理秒数。</p>
     </section>
   );
 }

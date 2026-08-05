@@ -5,7 +5,11 @@ import { AxonView } from "./AxonView";
 import { PotentialChart } from "./PotentialChart";
 import { LabControls } from "./LabControls";
 import { StageExplanation } from "./StageExplanation";
-import { DURATION, clamp, getSimulationSnapshot } from "./simulation";
+import {
+  clamp,
+  getExperimentDuration,
+  getSimulationSnapshot,
+} from "./simulation";
 import type { ExperimentSettings, StimulusIntensity } from "./types";
 
 const DEFAULT_SETTINGS: ExperimentSettings = {
@@ -20,6 +24,7 @@ export function ActionPotentialLab() {
   const [speed, setSpeed] = useState<0.5 | 1>(1);
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const lastFrame = useRef<number | null>(null);
+  const duration = useMemo(() => getExperimentDuration(settings), [settings]);
   const snapshot = useMemo(() => getSimulationSnapshot(time, settings), [time, settings]);
 
   useEffect(() => {
@@ -29,8 +34,8 @@ export function ActionPotentialLab() {
       const previous = lastFrame.current ?? now;
       lastFrame.current = now;
       setTime((current) => {
-        const next = clamp(current + ((now - previous) / 1000) * speed, 0, DURATION);
-        if (next >= DURATION) setPlaying(false);
+        const next = clamp(current + ((now - previous) / 1000) * speed, 0, duration);
+        if (next >= duration) setPlaying(false);
         return next;
       });
       frame = requestAnimationFrame(tick);
@@ -40,7 +45,7 @@ export function ActionPotentialLab() {
       cancelAnimationFrame(frame);
       lastFrame.current = null;
     };
-  }, [playing, speed]);
+  }, [duration, playing, speed]);
 
   const changeSetting = (patch: Partial<ExperimentSettings>) => {
     setPlaying(false);
@@ -60,25 +65,31 @@ export function ActionPotentialLab() {
           time={time}
           settings={settings}
           snapshot={snapshot}
+          playing={playing}
           onElectrodeChange={(electrodePosition) => changeSetting({ electrodePosition })}
         />
-        <PotentialChart time={time} settings={settings} snapshot={snapshot} />
+        <PotentialChart
+          time={time}
+          duration={duration}
+          settings={settings}
+          snapshot={snapshot}
+        />
         <StageExplanation stage={snapshot.stage} ionFlow={snapshot.ionFlow} />
       </section>
       <LabControls
         time={time}
-        duration={DURATION}
+        duration={duration}
         playing={playing}
         intensity={settings.intensity}
         stimulusPosition={settings.stimulusPosition}
         speed={speed}
         onStart={() => { setTime(0); setPlaying(true); }}
-        onTimeChange={(next) => { setPlaying(false); setTime(clamp(next, 0, DURATION)); }}
+        onTimeChange={(next) => { setPlaying(false); setTime(clamp(next, 0, duration)); }}
         onIntensityChange={(intensity: StimulusIntensity) => changeSetting({ intensity })}
         onStimulusPositionChange={(stimulusPosition) => changeSetting({ stimulusPosition })}
         onSpeedChange={setSpeed}
-        onTogglePlaying={() => { if (time >= DURATION) setTime(0); setPlaying((current) => !current); }}
-        onStep={(delta) => { setPlaying(false); setTime((current) => clamp(current + delta, 0, DURATION)); }}
+        onTogglePlaying={() => { if (time >= duration) setTime(0); setPlaying((current) => !current); }}
+        onStep={(delta) => { setPlaying(false); setTime((current) => clamp(current + delta, 0, duration)); }}
         onReset={() => { setPlaying(false); setTime(0); setSettings(DEFAULT_SETTINGS); }}
       />
     </main>

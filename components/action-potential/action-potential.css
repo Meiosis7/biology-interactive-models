@@ -70,6 +70,7 @@
 
 .chart-card {
   min-height: 300px;
+  margin: 0;
 }
 
 .stage-card {
@@ -249,14 +250,14 @@
 .chart-card {
   padding: 18px;
   display: grid;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto auto 1fr auto;
   gap: 10px;
 }
 
 .chart-card canvas {
   display: block;
   width: 100%;
-  min-height: 235px;
+  height: clamp(235px, 32vw, 300px);
   border-radius: 14px;
   background: #081522;
 }
@@ -273,6 +274,26 @@
   color: var(--lab-curve);
   font-size: 22px;
   white-space: nowrap;
+}
+
+.chart-stage {
+  margin: 0;
+  color: var(--lab-excited);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.chart-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 16px;
+  color: var(--lab-muted);
+  font-size: 12px;
+}
+
+.threshold-reference {
+  color: var(--lab-excited);
 }
 
 .stage-kicker,
@@ -415,6 +436,13 @@ input[type="range"]:focus-visible {
 
 .transport-row {
   padding-top: 2px;
+}
+
+.schematic-note {
+  margin: 0;
+  color: var(--lab-muted);
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .sr-only {
