@@ -1,6 +1,6 @@
-import { ActionPotentialLab } from "../components/action-potential/ActionPotentialLab";
-import "../components/action-potential/action-potential.css";
+import { ModelHub } from "../components/model-shell/ModelHub";
+import "../components/model-shell/model-shell.css";
 
 export default function Page() {
-  return <ActionPotentialLab />;
+  return <ModelHub />;
 }
