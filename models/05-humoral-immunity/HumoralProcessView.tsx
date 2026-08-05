@@ -9,6 +9,7 @@ export interface HumoralProcessViewProps {
 }
 
 const PROCESS: Array<{ stage: HumoralStage; label: string; shortLabel: string }> = [
+  { stage: "entry", label: "抗原进入", shortLabel: "进入" },
   { stage: "presentation", label: "抗原呈递", shortLabel: "呈递" },
   { stage: "helper-activation", label: "辅助性 T 细胞活化", shortLabel: "T 细胞" },
   { stage: "b-activation", label: "匹配 B 细胞活化", shortLabel: "B 细胞" },
@@ -16,6 +17,7 @@ const PROCESS: Array<{ stage: HumoralStage; label: string; shortLabel: string }>
   { stage: "differentiation", label: "形成浆细胞和记忆 B 细胞", shortLabel: "分化" },
   { stage: "antibody-release", label: "浆细胞产生抗体", shortLabel: "抗体" },
   { stage: "clearance", label: "抗体结合并清除抗原", shortLabel: "清除" },
+  { stage: "memory", label: "保留免疫记忆", shortLabel: "记忆" },
 ];
 
 const ORDER: HumoralStage[] = [

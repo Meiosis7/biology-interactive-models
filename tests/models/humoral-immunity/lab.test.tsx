@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { HumoralImmunityLab } from "../../../models/05-humoral-immunity/HumoralImmunityLab";
 
@@ -9,6 +9,17 @@ describe("HumoralImmunityLab", () => {
     expect(screen.getByText("抗原呈递")).toBeInTheDocument();
     expect(screen.getByText("B 细胞克隆增殖")).toBeInTheDocument();
     expect(screen.getByText("浆细胞产生抗体")).toBeInTheDocument();
+  });
+
+  it("keeps antigen entry and immune memory as explicit spine endpoints", () => {
+    render(<HumoralImmunityLab />);
+
+    fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "18" } });
+
+    const spine = within(screen.getByLabelText("体液免疫有序流程"));
+    expect(spine.getByText("抗原进入")).toBeInTheDocument();
+    expect(spine.getByText("保留免疫记忆")).toBeInTheDocument();
+    expect(screen.getByText("当前：保留免疫记忆")).toBeInTheDocument();
   });
 
   it("compares primary and matched secondary responses", () => {
@@ -27,6 +38,17 @@ describe("HumoralImmunityLab", () => {
 
     expect(screen.getByText(/B 细胞不能充分活化/)).toBeInTheDocument();
     expect(screen.getByText(/缺少辅助性 T 细胞的激活信号/)).toBeInTheDocument();
+  });
+
+  it("hides secondary-response comparison when a matched response is blocked", () => {
+    render(<HumoralImmunityLab />);
+
+    fireEvent.click(screen.getByRole("button", { name: "二次免疫" }));
+    fireEvent.click(screen.getByRole("button", { name: "辅助性 T 细胞受阻" }));
+
+    expect(screen.getByText(/缺少辅助性 T 细胞的激活信号/)).toBeInTheDocument();
+    expect(screen.queryByText(/初次反应（对照虚线）/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/更快、更强、更持久/)).not.toBeInTheDocument();
   });
 
   it("resets teaching time when a key condition changes", () => {

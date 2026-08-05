@@ -26,7 +26,10 @@ function makeCurve(settings: HumoralSettings, field: "antibodyLevel" | "antigenL
 }
 
 export function AntibodyChart({ settings, snapshot, time }: AntibodyChartProps) {
-  const matchedSecondary = settings.exposure === "secondary" && snapshot.memoryMatched;
+  const matchedSecondary =
+    settings.exposure === "secondary" &&
+    snapshot.memoryMatched &&
+    settings.condition === "normal";
   const primaryComparison: HumoralSettings = { ...settings, exposure: "primary", memoryAntigen: undefined };
   const antibodyCurve = makeCurve(settings, "antibodyLevel");
   const antigenCurve = makeCurve(settings, "antigenLevel");
