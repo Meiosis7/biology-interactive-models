@@ -2,38 +2,6 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ActionPotentialLab } from "../../components/action-potential/ActionPotentialLab";
 
-vi.mock("../../components/action-potential/AxonView", () => ({
-  AxonView: ({ time, settings, snapshot, onElectrodeChange }: {
-    time: number;
-    settings: { electrodePosition: number };
-    snapshot: { stage: string };
-    onElectrodeChange: (position: number) => void;
-  }) => (
-    <div>
-      <div data-testid="axon-state">{`${time}|${settings.electrodePosition}|${snapshot.stage}`}</div>
-      <input
-        aria-label="记录电极位置"
-        type="range"
-        min="0"
-        max="1"
-        step="0.01"
-        value={settings.electrodePosition}
-        onChange={(event) => onElectrodeChange(Number(event.target.value))}
-      />
-    </div>
-  ),
-}));
-
-vi.mock("../../components/action-potential/PotentialChart", () => ({
-  PotentialChart: ({ time, settings, snapshot }: {
-    time: number;
-    settings: { electrodePosition: number };
-    snapshot: { stage: string; membranePotential: number };
-  }) => (
-    <div data-testid="chart-value">{`${time}|${settings.electrodePosition}|${snapshot.stage}|${Math.round(snapshot.membranePotential)}`}</div>
-  ),
-}));
-
 describe("ActionPotentialLab", () => {
   let animationFrameId = 0;
   let frames = new Map<number, FrameRequestCallback>();
@@ -65,7 +33,7 @@ describe("ActionPotentialLab", () => {
   it("starts with the resting state", () => {
     render(<ActionPotentialLab />);
     expect(screen.getByText("静息状态")).toBeInTheDocument();
-    expect(screen.getByTestId("chart-value")).toHaveTextContent("-70");
+    expect(screen.getByText("-70 mV")).toBeInTheDocument();
   });
 
   it("resets time when experiment settings change", () => {
@@ -106,14 +74,28 @@ describe("ActionPotentialLab", () => {
   it("keeps visual consumers and stage copy synchronized after timeline and electrode changes", () => {
     render(<ActionPotentialLab />);
     fireEvent.change(screen.getByLabelText("实验时间"), { target: { value: "4" } });
-    expect(screen.getByTestId("axon-state")).toHaveTextContent("4|0.72|depolarization");
-    expect(screen.getByTestId("chart-value")).toHaveTextContent("4|0.72|depolarization");
+    expect(screen.getByRole("img", { name: /当前为depolarization阶段/ })).toBeInTheDocument();
+    expect(screen.getByText("-61 mV")).toBeInTheDocument();
     expect(screen.getByText("去极化")).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("记录电极位置"), { target: { value: "0.5" } });
-    expect(screen.getByTestId("axon-state")).toHaveTextContent("0|0.5|resting");
-    expect(screen.getByTestId("chart-value")).toHaveTextContent("0|0.5|resting");
+    expect(screen.getByRole("img", { name: /当前为resting阶段/ })).toBeInTheDocument();
+    expect(screen.getByText("-70 mV")).toBeInTheDocument();
     expect(screen.getByText("静息状态")).toBeInTheDocument();
+  });
+
+  it("labels the experiment condition and synchronized views", () => {
+    render(<ActionPotentialLab />);
+    expect(screen.getByRole("img", { name: /离体神经纤维/ })).toBeInTheDocument();
+    expect(screen.getByLabelText("膜电位曲线")).toBeInTheDocument();
+    expect(screen.getByText("中部刺激：兴奋向两侧传播")).toBeInTheDocument();
+  });
+
+  it("resets the experiment when the recording electrode moves", () => {
+    render(<ActionPotentialLab />);
+    fireEvent.change(screen.getByLabelText("实验时间"), { target: { value: "6" } });
+    fireEvent.change(screen.getByLabelText("记录电极位置"), { target: { value: "0.9" } });
+    expect(screen.getByLabelText("实验时间")).toHaveValue("0");
   });
 
   it("advances experiment time while playing", () => {
