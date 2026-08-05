@@ -49,14 +49,19 @@ export function ActionPotentialLab() {
   };
 
   return (
-    <main className="lab-shell">
+    <main className="lab-shell" aria-labelledby="lab-title">
       <header className="lab-header">
         <p className="eyebrow">选择性必修 1 · 神经调节</p>
-        <h1>动作电位的形成和传导</h1>
+        <h1 id="lab-title">动作电位的形成和传导</h1>
         <p>给予神经纤维适宜刺激，观察动作电位如何形成并传播。</p>
       </header>
       <section className="experiment-grid">
-        <AxonView time={time} settings={settings} snapshot={snapshot} onElectrodeChange={(electrodePosition) => changeSetting({ electrodePosition })} />
+        <AxonView
+          time={time}
+          settings={settings}
+          snapshot={snapshot}
+          onElectrodeChange={(electrodePosition) => changeSetting({ electrodePosition })}
+        />
         <PotentialChart time={time} settings={settings} snapshot={snapshot} />
         <StageExplanation stage={snapshot.stage} ionFlow={snapshot.ionFlow} />
       </section>

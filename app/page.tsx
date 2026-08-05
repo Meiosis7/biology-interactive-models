@@ -1,15 +1,6 @@
-import type { Metadata } from "next";
-import { SkeletonPreview } from "./_sites-preview/SkeletonPreview";
+import { ActionPotentialLab } from "../components/action-potential/ActionPotentialLab";
+import "../components/action-potential/action-potential.css";
 
-export const metadata: Metadata = {
-  title: "Your site is taking shape",
-  description:
-    "Your first version will appear here automatically when it’s ready.",
-  other: {
-    "codex-preview": "development",
-  },
-};
-
-export default function Home() {
-  return <SkeletonPreview />;
+export default function Page() {
+  return <ActionPotentialLab />;
 }

@@ -1,0 +1,500 @@
+:root {
+  --lab-bg: #07111f;
+  --lab-panel: #0d1c2d;
+  --lab-panel-strong: #12263d;
+  --lab-text: #eff8ff;
+  --lab-muted: #9bb3c9;
+  --lab-sodium: #38d9ff;
+  --lab-potassium: #aa7cff;
+  --lab-excited: #ffd166;
+  --lab-curve: #ff6b4a;
+  --lab-border: rgba(169, 204, 230, 0.2);
+}
+
+.lab-shell {
+  min-height: 100vh;
+  color: var(--lab-text);
+  background: radial-gradient(circle at 50% 0%, #123250 0, var(--lab-bg) 50%);
+  padding: clamp(20px, 4vw, 56px);
+}
+
+.lab-header,
+.experiment-grid,
+.lab-controls {
+  width: min(1180px, 100%);
+  margin-inline: auto;
+}
+
+.lab-header {
+  padding: 10px 2px 28px;
+}
+
+.lab-header h1 {
+  max-width: 780px;
+  margin: 8px 0 12px;
+  font-size: clamp(34px, 5vw, 58px);
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+}
+
+.lab-header > p:last-child {
+  max-width: 680px;
+  margin: 0;
+  color: var(--lab-muted);
+  font-size: clamp(15px, 1.7vw, 18px);
+  line-height: 1.7;
+}
+
+.experiment-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+  gap: 18px;
+}
+
+.axon-card,
+.chart-card,
+.stage-card,
+.lab-controls {
+  border: 1px solid var(--lab-border);
+  border-radius: 22px;
+  background: rgba(13, 28, 45, 0.92);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.22);
+}
+
+.axon-card {
+  grid-column: 1 / -1;
+  min-height: 330px;
+  position: relative;
+  overflow: hidden;
+}
+
+.chart-card {
+  min-height: 300px;
+}
+
+.stage-card {
+  padding: 24px;
+}
+
+.lab-controls {
+  margin-top: 18px;
+  padding: 18px;
+  display: grid;
+  gap: 14px;
+}
+
+.axon-stage {
+  position: relative;
+  min-height: 260px;
+  padding: 62px 28px 28px;
+}
+
+.membrane-label {
+  position: absolute;
+  left: 28px;
+  color: var(--lab-muted);
+  font-size: 13px;
+}
+
+.membrane-label.outside {
+  top: 22px;
+}
+
+.membrane-label.inside {
+  bottom: 22px;
+}
+
+.axon-body {
+  position: absolute;
+  inset: 92px 28px 76px;
+  border-block: 3px solid #47627a;
+  background: rgba(18, 38, 61, 0.72);
+}
+
+.wavefront {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 12%;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, transparent, rgba(255, 209, 102, 0.82), transparent);
+}
+
+.stimulus-marker,
+.electrode-marker {
+  position: absolute;
+  top: -42px;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: var(--lab-text);
+  white-space: nowrap;
+}
+
+.stimulus-marker::after,
+.electrode-marker::after {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 50%;
+  width: 2px;
+  height: 23px;
+  border-radius: 2px;
+  background: currentColor;
+  content: "";
+  opacity: 0.78;
+}
+
+.stimulus-marker {
+  color: var(--lab-excited);
+}
+
+.electrode-marker {
+  color: var(--lab-sodium);
+}
+
+.channel {
+  position: absolute;
+  top: -10px;
+  width: 11px;
+  height: 20px;
+  border: 2px solid currentColor;
+  border-radius: 5px;
+}
+
+.sodium-channel {
+  color: var(--lab-sodium);
+}
+
+.potassium-channel {
+  color: var(--lab-potassium);
+}
+
+.channel.closed {
+  opacity: 0.55;
+}
+
+.channel.open {
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 0 14px currentColor;
+}
+
+.ion {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 800;
+  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.24);
+}
+
+.ion.sodium {
+  color: #02131d;
+  background: var(--lab-sodium);
+}
+
+.ion.potassium {
+  color: #160d28;
+  background: var(--lab-potassium);
+}
+
+.ion.moving-in {
+  animation: sodium-in 900ms ease-in-out infinite;
+}
+
+.ion.moving-out {
+  animation: potassium-out 900ms ease-in-out infinite;
+}
+
+@keyframes sodium-in {
+  from { transform: translateY(-28px); }
+  to { transform: translateY(32px); }
+}
+
+@keyframes potassium-out {
+  from { transform: translateY(30px); }
+  to { transform: translateY(-30px); }
+}
+
+.electrode-control {
+  position: absolute;
+  left: 28px;
+  right: 28px;
+  bottom: 22px;
+  display: grid;
+  gap: 6px;
+  color: var(--lab-muted);
+  font-size: 13px;
+}
+
+.electrode-control input {
+  width: 100%;
+  accent-color: var(--lab-sodium);
+}
+
+.condition-note {
+  position: absolute;
+  top: 18px;
+  right: 24px;
+  z-index: 1;
+  margin: 0;
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: rgba(255, 209, 102, 0.12);
+  color: var(--lab-excited);
+  font-size: 13px;
+}
+
+.chart-card {
+  padding: 18px;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 10px;
+}
+
+.chart-card canvas {
+  display: block;
+  width: 100%;
+  min-height: 235px;
+  border-radius: 14px;
+  background: #081522;
+}
+
+.chart-reading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  color: var(--lab-muted);
+}
+
+.chart-reading strong {
+  color: var(--lab-curve);
+  font-size: 22px;
+  white-space: nowrap;
+}
+
+.stage-kicker,
+.eyebrow {
+  color: var(--lab-sodium);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.eyebrow,
+.stage-kicker {
+  margin: 0;
+}
+
+.stage-card h2 {
+  margin: 6px 0 20px;
+  font-size: 28px;
+}
+
+.stage-card dl {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+}
+
+.stage-card dl div {
+  display: grid;
+  gap: 5px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--lab-border);
+}
+
+.stage-card dl div:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.stage-card dt {
+  color: var(--lab-muted);
+  font-size: 12px;
+}
+
+.stage-card dd {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.flow-code {
+  margin: 18px 0 0;
+  color: var(--lab-muted);
+  font-size: 12px;
+}
+
+.control-groups {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.control-group {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.control-group legend {
+  padding: 0;
+  color: var(--lab-muted);
+  font-size: 13px;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.timeline-row {
+  display: grid;
+  grid-template-columns: auto minmax(160px, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  color: var(--lab-muted);
+  font-size: 13px;
+}
+
+.timeline-row input {
+  width: 100%;
+  accent-color: var(--lab-curve);
+}
+
+.timeline-row output {
+  min-width: 3.5rem;
+  color: var(--lab-text);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.control-button {
+  min-height: 44px;
+  padding: 9px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--lab-border);
+  color: var(--lab-text);
+  background: var(--lab-panel-strong);
+  transition: border-color 160ms ease, background-color 160ms ease, transform 160ms ease;
+}
+
+.control-button:hover:not(:disabled) {
+  border-color: rgba(56, 217, 255, 0.5);
+  background: #18324f;
+}
+
+.control-button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.control-button.primary {
+  border-color: rgba(56, 217, 255, 0.55);
+  color: #02131d;
+  background: var(--lab-sodium);
+  font-weight: 800;
+}
+
+.control-button[aria-pressed="true"] {
+  border-color: var(--lab-excited);
+  box-shadow: 0 0 0 2px rgba(255, 209, 102, 0.25);
+}
+
+.control-button:focus-visible,
+input[type="range"]:focus-visible {
+  outline: 3px solid var(--lab-sodium);
+  outline-offset: 3px;
+}
+
+.transport-row {
+  padding-top: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 760px) {
+  .experiment-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .axon-card,
+  .chart-card,
+  .stage-card {
+    grid-column: 1;
+  }
+
+  .lab-shell {
+    padding: 18px 12px 32px;
+  }
+
+  .lab-header {
+    padding: 8px 2px 22px;
+  }
+
+  .lab-header h1 {
+    font-size: clamp(32px, 10vw, 46px);
+  }
+
+  .control-groups {
+    grid-template-columns: 1fr;
+  }
+
+  .timeline-row {
+    grid-template-columns: 1fr;
+  }
+
+  .timeline-row output {
+    text-align: left;
+  }
+
+  .condition-note {
+    position: static;
+    display: inline-flex;
+    margin: 14px 14px 0;
+  }
+
+  .axon-stage {
+    padding-inline: 16px;
+  }
+
+  .axon-body {
+    right: 16px;
+    left: 16px;
+  }
+
+  .electrode-control {
+    right: 16px;
+    left: 16px;
+  }
+
+  .button-row .control-button {
+    flex: 1 1 auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
