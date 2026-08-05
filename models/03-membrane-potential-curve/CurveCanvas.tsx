@@ -34,6 +34,27 @@ function stageLabel(stage: CurveSnapshot["stage"]) {
   })[stage];
 }
 
+function getStageInterval(
+  time: number,
+  intensity: CurveIntensity,
+  stage: CurveSnapshot["stage"],
+): [number, number] {
+  if (intensity === "weak") {
+    if (stage === "local") return [1, 4];
+    return time < 1 ? [0, 1] : [4, DURATION];
+  }
+
+  switch (stage) {
+    case "threshold": return [1, 2];
+    case "depolarization": return [2, 3];
+    case "peak": return [3, 4];
+    case "repolarization": return [4, 5];
+    case "recovery": return [5, 6];
+    case "resting": return time < 1 ? [0, 1] : [6, DURATION];
+    default: return [0, DURATION];
+  }
+}
+
 export function CurveCanvas({
   time,
   intensity,
@@ -78,6 +99,10 @@ export function CurveCanvas({
         context.fillText(`${mv > 0 ? "+" : ""}${mv} mV`, 8, y(mv) + 4);
       });
 
+      const [stageStart, stageEnd] = getStageInterval(time, intensity, snapshot.stage);
+      context.fillStyle = "rgba(61, 224, 209, .13)";
+      context.fillRect(x(stageStart), PADDING.top, x(stageEnd) - x(stageStart), plotHeight);
+
       const intensities: CurveIntensity[] = compare ? ["weak", "threshold", "strong"] : [intensity];
       intensities.forEach((curveIntensity) => {
         const style = CURVE_STYLE[curveIntensity];
@@ -95,8 +120,6 @@ export function CurveCanvas({
         context.setLineDash?.([]);
       });
 
-      context.fillStyle = "rgba(61, 224, 209, .13)";
-      context.fillRect(x(Math.max(0, time - 0.09)), PADDING.top, Math.max(2, x(Math.min(DURATION, time + 0.09)) - x(Math.max(0, time - 0.09))), plotHeight);
       context.beginPath();
       context.strokeStyle = "#f5fbff";
       context.lineWidth = 1.5;

@@ -36,6 +36,38 @@ describe("MembraneCurveLab", () => {
     );
   });
 
+  it("fills the full current stage while keeping a separate cursor line", () => {
+    render(<MembraneCurveLab />);
+    resetCanvasContext();
+
+    fireEvent.change(screen.getByLabelText("曲线游标"), {
+      target: { value: "2.5" },
+    });
+
+    const [fillStart, fillTop, fillWidth, fillHeight] = canvasContext.fillRect.mock.calls.at(-1) ?? [];
+    const [cursorX, cursorY] = canvasContext.moveTo.mock.calls.at(-1) ?? [];
+    expect(fillStart).toBeCloseTo(272);
+    expect(fillTop).toBe(22);
+    expect(fillWidth).toBeCloseTo(102);
+    expect(fillHeight).toBe(270);
+    expect(cursorX).toBeCloseTo(323);
+    expect(cursorY).toBe(22);
+  });
+
+  it("uses the complete local-potential interval for weak stimulation", () => {
+    render(<MembraneCurveLab />);
+    fireEvent.click(screen.getByRole("button", { name: "弱刺激" }));
+    resetCanvasContext();
+
+    fireEvent.change(screen.getByLabelText("曲线游标"), {
+      target: { value: "2.5" },
+    });
+
+    const [fillStart, , fillWidth] = canvasContext.fillRect.mock.calls.at(-1) ?? [];
+    expect(fillStart).toBeCloseTo(170);
+    expect(fillWidth).toBeCloseTo(306);
+  });
+
   it("hides the membrane ion hint when requested", () => {
     render(<MembraneCurveLab />);
     fireEvent.change(screen.getByLabelText("曲线游标"), {
