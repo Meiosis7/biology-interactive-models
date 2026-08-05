@@ -576,6 +576,9 @@
   padding-top: 12px;
   border-top: 1px solid rgba(186, 219, 246, 0.15);
 }
+.cellular-shell button {
+  min-height: 44px;
+}
 @keyframes cellular-grow {
   from {
     transform: scale(0.82);
