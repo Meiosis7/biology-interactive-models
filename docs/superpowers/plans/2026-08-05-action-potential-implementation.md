@@ -99,7 +99,31 @@ Object.defineProperty(HTMLCanvasElement.prototype, "getContext", {
 });
 ```
 
-- [ ] **Step 2: 先写模拟逻辑的失败测试**
+- [ ] **Step 2: 创建可导入但行为未实现的接口骨架**
+
+先创建 `components/action-potential/types.ts` 中 Step 5 给出的完整类型定义；再创建 `components/action-potential/simulation.ts` 的接口骨架：
+
+```ts
+import type { ExperimentSettings, SimulationSnapshot, StimulusIntensity } from "./types";
+
+export const DURATION = 10;
+export const clamp = (value: number) => value;
+export const getArrivalTime = (_stimulusPosition: number, _electrodePosition: number) => 0;
+export const getMembranePotential = (_localTime: number, _intensity: StimulusIntensity) => -70;
+export const getSimulationSnapshot = (_time: number, _settings: ExperimentSettings): SimulationSnapshot => ({
+  stage: "resting",
+  ionFlow: "none",
+  membranePotential: -70,
+  propagating: false,
+  wavefronts: [],
+  arrivalTime: 0,
+  localTime: 0,
+});
+```
+
+这些固定返回值只用于让测试完成导入，并会在首次测试中因行为不正确而失败。
+
+- [ ] **Step 3: 写模拟逻辑的失败测试**
 
 创建 `tests/action-potential/simulation.test.ts`：
 
@@ -179,13 +203,13 @@ describe("action-potential simulation", () => {
 });
 ```
 
-- [ ] **Step 3: 运行测试并确认因缺少模块而失败**
+- [ ] **Step 4: 运行测试并确认断言因行为尚未实现而失败**
 
 Run: `npm test -- tests/action-potential/simulation.test.ts`
 
-Expected: FAIL，提示无法找到 `components/action-potential/simulation`。
+Expected: 测试文件可以正常导入，至少 5 项断言 FAIL；失败原因是固定返回值不符合阈下局部电位、传播延迟、离子流和双向传播要求，不是模块缺失或语法错误。
 
-- [ ] **Step 4: 创建类型和最小模拟实现**
+- [ ] **Step 5: 用真实模拟逻辑替换接口骨架**
 
 创建 `components/action-potential/types.ts`：
 
@@ -312,13 +336,13 @@ export function getSimulationSnapshot(
 }
 ```
 
-- [ ] **Step 5: 运行模拟测试并确认通过**
+- [ ] **Step 6: 运行模拟测试并确认通过**
 
 Run: `npm test -- tests/action-potential/simulation.test.ts`
 
 Expected: 7 tests PASS。
 
-- [ ] **Step 6: 提交模拟核心**
+- [ ] **Step 7: 提交模拟核心**
 
 ```bash
 git add package.json package-lock.json vitest.config.ts tests/setup.ts components/action-potential/types.ts components/action-potential/simulation.ts tests/action-potential/simulation.test.ts
