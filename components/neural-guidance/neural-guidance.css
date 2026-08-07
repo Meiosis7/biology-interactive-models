@@ -1,0 +1,115 @@
+.neural-guide,
+.advanced-panel {
+  width: min(1180px, 100%);
+  margin-inline: auto;
+}
+
+.neural-guide {
+  margin-bottom: 18px;
+  padding: clamp(16px, 2.4vw, 24px);
+  border: 1px solid rgba(108, 225, 221, 0.32);
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(25, 66, 82, 0.92), rgba(12, 30, 48, 0.94));
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.2);
+}
+
+.neural-guide__eyebrow {
+  margin: 0 0 6px;
+  color: #79ebe2;
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+}
+
+.neural-guide h2 {
+  margin: 0;
+  color: #f5fcff;
+  font-size: clamp(19px, 2.5vw, 26px);
+  line-height: 1.35;
+}
+
+.neural-guide ol {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 16px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.neural-guide li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 52px;
+  padding: 10px 12px;
+  border: 1px solid rgba(184, 220, 237, 0.18);
+  border-radius: 12px;
+  color: #afc5d5;
+  background: rgba(4, 17, 29, 0.42);
+  line-height: 1.4;
+}
+
+.neural-guide li[aria-current="step"] {
+  border-color: #ffd36b;
+  color: #ffffff;
+  background: rgba(255, 211, 107, 0.13);
+  box-shadow: 0 0 0 2px rgba(255, 211, 107, 0.12);
+}
+
+.neural-guide li > span {
+  display: grid;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 999px;
+  color: #08202a;
+  background: #6ee7df;
+  font-weight: 900;
+}
+
+.neural-guide__takeaway {
+  margin: 0;
+  color: #ffd979;
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.advanced-panel {
+  margin-top: 14px;
+}
+
+.advanced-panel__toggle {
+  min-height: 44px;
+  padding: 9px 14px;
+  border: 1px solid rgba(184, 220, 237, 0.28);
+  border-radius: 12px;
+  color: #eff8ff;
+  background: rgba(19, 48, 68, 0.96);
+  font-weight: 750;
+}
+
+.advanced-panel__toggle:hover,
+.advanced-panel__toggle:focus-visible {
+  border-color: #6ee7df;
+}
+
+.advanced-panel__toggle:focus-visible {
+  outline: 3px solid #6ee7df;
+  outline-offset: 3px;
+}
+
+.advanced-panel__content {
+  display: grid;
+  gap: 14px;
+  margin-top: 12px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(184, 220, 237, 0.18);
+}
+
+@media (max-width: 700px) {
+  .neural-guide ol {
+    grid-template-columns: 1fr;
+  }
+}
