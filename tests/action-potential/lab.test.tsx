@@ -32,6 +32,10 @@ describe("ActionPotentialLab", () => {
     frame[1](time);
   };
 
+  const openAdvanced = () => {
+    fireEvent.click(screen.getByRole("button", { name: "打开进阶模式" }));
+  };
+
   beforeEach(() => {
     animationFrameId = 0;
     frames = new Map();
@@ -56,8 +60,26 @@ describe("ActionPotentialLab", () => {
     expect(screen.getByText("-70 mV")).toBeInTheDocument();
   });
 
+  it("starts in guided mode and resets back to collapsed advanced controls", () => {
+    render(<ActionPotentialLab />);
+
+    expect(screen.getByLabelText("基础引导")).toHaveTextContent("点击开始刺激");
+    expect(screen.queryByRole("button", { name: "弱刺激" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "打开进阶模式" }));
+    expect(screen.getByRole("button", { name: "弱刺激" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "重置" }));
+
+    expect(screen.queryByRole("button", { name: "弱刺激" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "打开进阶模式" })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+  });
+
   it("resets time when experiment settings change", () => {
     render(<ActionPotentialLab />);
+    openAdvanced();
     fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "6" } });
     fireEvent.click(screen.getByRole("button", { name: "左侧刺激" }));
     expect(screen.getByLabelText("教学时间")).toHaveValue("0");
@@ -65,6 +87,7 @@ describe("ActionPotentialLab", () => {
 
   it("shows that a weak stimulus does not propagate", () => {
     render(<ActionPotentialLab />);
+    openAdvanced();
     fireEvent.click(screen.getByRole("button", { name: "弱刺激" }));
     fireEvent.change(screen.getByLabelText("记录电极位置"), { target: { value: "0.52" } });
     fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "0.5" } });
@@ -74,12 +97,14 @@ describe("ActionPotentialLab", () => {
 
   it("moves one fixed step with the next button", () => {
     render(<ActionPotentialLab />);
+    openAdvanced();
     fireEvent.click(screen.getByRole("button", { name: "下一步" }));
     expect(screen.getByLabelText("教学时间")).toHaveValue("0.5");
   });
 
   it("disables step controls at both bounds and clamps timeline time", () => {
     render(<ActionPotentialLab />);
+    openAdvanced();
     const previous = screen.getByRole("button", { name: "上一步" });
     const next = screen.getByRole("button", { name: "下一步" });
 
@@ -94,6 +119,7 @@ describe("ActionPotentialLab", () => {
 
   it("keeps visual consumers and stage copy synchronized after timeline and electrode changes", () => {
     render(<ActionPotentialLab />);
+    openAdvanced();
     fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "4" } });
     expect(screen.getByRole("img", { name: /当前为depolarization阶段/ })).toBeInTheDocument();
     expect(screen.getByText("-61 mV")).toBeInTheDocument();
@@ -145,6 +171,7 @@ describe("ActionPotentialLab", () => {
 
   it("draws the current-stage interval, reference levels, trace, and cursor", () => {
     render(<ActionPotentialLab />);
+    openAdvanced();
     resetCanvasContext();
     fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "4" } });
 
@@ -213,6 +240,7 @@ describe("ActionPotentialLab", () => {
 
   it("resets the experiment when the recording electrode moves", () => {
     render(<ActionPotentialLab />);
+    openAdvanced();
     fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "6" } });
     fireEvent.change(screen.getByLabelText("记录电极位置"), { target: { value: "0.9" } });
     expect(screen.getByLabelText("教学时间")).toHaveValue("0");
@@ -220,6 +248,7 @@ describe("ActionPotentialLab", () => {
 
   it("advances experiment time while playing", () => {
     render(<ActionPotentialLab />);
+    openAdvanced();
     fireEvent.click(screen.getByRole("button", { name: "开始刺激" }));
     act(() => runFrame(1_000));
     act(() => runFrame(1_500));
@@ -228,6 +257,7 @@ describe("ActionPotentialLab", () => {
 
   it("pauses playback and cancels further animation frames", () => {
     render(<ActionPotentialLab />);
+    openAdvanced();
     fireEvent.click(screen.getByRole("button", { name: "开始刺激" }));
     act(() => runFrame(1_000));
     act(() => runFrame(5_000));
@@ -241,6 +271,7 @@ describe("ActionPotentialLab", () => {
 
   it("stops playback at the experiment duration", () => {
     render(<ActionPotentialLab />);
+    openAdvanced();
     const timeline = screen.getByLabelText("教学时间");
     const duration = Number(timeline.getAttribute("max"));
     fireEvent.change(timeline, { target: { value: String(duration - 0.1) } });
@@ -255,6 +286,7 @@ describe("ActionPotentialLab", () => {
 
   it("expands the teaching timeline for an extreme recording distance", () => {
     render(<ActionPotentialLab />);
+    openAdvanced();
     fireEvent.click(screen.getByRole("button", { name: "左侧刺激" }));
     fireEvent.change(screen.getByLabelText("记录电极位置"), { target: { value: "1" } });
 
@@ -269,6 +301,7 @@ describe("ActionPotentialLab", () => {
     "shows a weak local sodium response for %s with a distant recording electrode",
     (stimulusLabel, electrodePosition) => {
       render(<ActionPotentialLab />);
+      openAdvanced();
       fireEvent.click(screen.getByRole("button", { name: "弱刺激" }));
       fireEvent.click(screen.getByRole("button", { name: stimulusLabel }));
       fireEvent.change(screen.getByLabelText("记录电极位置"), {
@@ -287,6 +320,7 @@ describe("ActionPotentialLab", () => {
 
   it("advances sodium-channel opening sequentially along the fiber", () => {
     render(<ActionPotentialLab />);
+    openAdvanced();
     fireEvent.click(screen.getByRole("button", { name: "左侧刺激" }));
     fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "3" } });
 
@@ -297,6 +331,7 @@ describe("ActionPotentialLab", () => {
 
   it("keeps ion motion static while the timeline is scrubbed", () => {
     render(<ActionPotentialLab />);
+    openAdvanced();
     fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "4" } });
 
     expect(screen.getByText("去极化")).toBeInTheDocument();

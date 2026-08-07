@@ -3,8 +3,26 @@ import { describe, expect, it, vi } from "vitest";
 import { SynapseLab } from "../../../models/02-synapse-transmission/SynapseLab";
 
 describe("SynapseLab", () => {
+  const openAdvanced = () => {
+    fireEvent.click(screen.getByRole("button", { name: "打开进阶模式" }));
+  };
+
+  it("starts with a plain-language guide and keeps experimental variants advanced", () => {
+    render(<SynapseLab />);
+
+    expect(screen.getByLabelText("基础引导")).toHaveTextContent("看递质从上方释放");
+    expect(screen.queryByRole("button", { name: "抑制性突触" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "打开进阶模式" }));
+    expect(screen.getByRole("button", { name: "抑制性突触" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "重置" }));
+
+    expect(screen.queryByRole("button", { name: "抑制性突触" })).not.toBeInTheDocument();
+  });
+
   it("switches between excitatory and inhibitory effects", () => {
     render(<SynapseLab />);
+    openAdvanced();
     fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "6" } });
     expect(screen.getByText(/突触后膜电位升高/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "抑制性突触" }));
@@ -14,6 +32,7 @@ describe("SynapseLab", () => {
 
   it("resets after an intervention changes", () => {
     render(<SynapseLab />);
+    openAdvanced();
     fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "5" } });
     fireEvent.click(screen.getByRole("button", { name: "阻断 Ca²⁺通道" }));
     expect(screen.getByLabelText("教学时间")).toHaveValue("0");
@@ -21,6 +40,7 @@ describe("SynapseLab", () => {
 
   it("uses calcium-blocked stage copy without describing downstream events", () => {
     render(<SynapseLab />);
+    openAdvanced();
     fireEvent.click(screen.getByRole("button", { name: "阻断 Ca²⁺通道" }));
     fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "6" } });
 
@@ -33,6 +53,7 @@ describe("SynapseLab", () => {
 
   it("uses receptor-blocked copy without claiming a postsynaptic response", () => {
     render(<SynapseLab />);
+    openAdvanced();
     fireEvent.click(screen.getByRole("button", { name: "阻断受体" }));
     fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "6" } });
 
@@ -50,6 +71,7 @@ describe("SynapseLab", () => {
 
   it("keeps the current particles visible but static when paused", () => {
     const { container } = render(<SynapseLab />);
+    openAdvanced();
 
     fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "2" } });
     expect(container.querySelectorAll(".synapse-calcium")).toHaveLength(3);
@@ -107,6 +129,7 @@ describe("SynapseLab", () => {
 
   it("resets and stops when switching to reverse postsynaptic stimulation", () => {
     const { container } = render(<SynapseLab />);
+    openAdvanced();
     fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "4" } });
     fireEvent.click(screen.getByRole("button", { name: "播放" }));
     expect(screen.getByRole("button", { name: "暂停" })).toBeInTheDocument();
@@ -120,6 +143,7 @@ describe("SynapseLab", () => {
 
   it("explains that a postsynaptic stimulus cannot cross backward", () => {
     const { container } = render(<SynapseLab />);
+    openAdvanced();
     fireEvent.click(screen.getByRole("button", { name: "刺激突触后膜（反向）" }));
     fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "2" } });
 

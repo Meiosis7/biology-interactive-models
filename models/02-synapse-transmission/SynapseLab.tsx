@@ -5,6 +5,7 @@ import { SYNAPSE_DURATION, getSynapseSnapshot } from "./simulation";
 import { SynapseChart } from "./SynapseChart";
 import { SynapseView } from "./SynapseView";
 import type { SynapseCondition, SynapseKind, SynapseSettings, SynapseStimulation } from "./types";
+import { AdvancedPanel, NeuralLearningGuide } from "../../components/neural-guidance/NeuralLearningGuide";
 
 const DEFAULT_SETTINGS: SynapseSettings = {
   kind: "excitatory",
@@ -56,9 +57,11 @@ export function SynapseLab() {
   const [time, setTime] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<0.5 | 1>(1);
+  const [advanced, setAdvanced] = useState(false);
   const [settings, setSettings] = useState<SynapseSettings>(DEFAULT_SETTINGS);
   const lastFrame = useRef<number | null>(null);
   const snapshot = useMemo(() => getSynapseSnapshot(time, settings), [settings, time]);
+  const guideStep = time === 0 ? 0 : time < 5 ? 1 : 2;
   const copy =
     snapshot.stage === "calcium-entry" && settings.condition === "calcium-blocked"
       ? BLOCKED_STAGE_COPY["calcium-blocked"]
@@ -97,8 +100,15 @@ export function SynapseLab() {
       <header className="synapse-header">
         <p className="synapse-eyebrow">选择性必修 1 · 神经调节</p>
         <h1 id="synapse-title">化学突触的兴奋传递</h1>
-        <p>调整突触类型与干预条件，观察电信号如何转为化学信号，再影响突触后膜电位。</p>
+        <p>先看递质从上方释放，再看下方细胞有没有反应。</p>
       </header>
+
+      <NeuralLearningGuide
+        goal="电信号怎样跨过两个神经元之间的空隙"
+        steps={["点击开始刺激", "看递质从上方释放", "看下方膜电位改变"]}
+        currentStep={guideStep}
+        takeaway="化学突触只能从突触前膜传向突触后膜。"
+      />
 
       <section className="synapse-grid">
         <SynapseView
@@ -121,51 +131,53 @@ export function SynapseLab() {
       </section>
 
       <section className="synapse-controls" aria-label="实验控制台">
-        <div className="synapse-control-groups">
-          <fieldset>
-            <legend>刺激位置</legend>
-            <div className="synapse-button-row">
-              {([ ["presynaptic", "刺激突触前末梢（正向）"], ["postsynaptic-reverse", "刺激突触后膜（反向）"] ] as Array<[SynapseStimulation, string]>).map(([stimulation, label]) => (
-                <button className="synapse-button" key={stimulation} aria-pressed={(settings.stimulation ?? "presynaptic") === stimulation} onClick={() => changeSettings({ stimulation })}>{label}</button>
-              ))}
-            </div>
-          </fieldset>
-          <fieldset>
-            <legend>突触类型</legend>
-            <div className="synapse-button-row">
-              {([ ["excitatory", "兴奋性突触"], ["inhibitory", "抑制性突触"] ] as Array<[SynapseKind, string]>).map(([kind, label]) => (
-                <button className="synapse-button" key={kind} aria-pressed={settings.kind === kind} onClick={() => changeSettings({ kind })}>{label}</button>
-              ))}
-            </div>
-          </fieldset>
-          <fieldset>
-            <legend>实验干预</legend>
-            <div className="synapse-button-row">
-              {CONDITIONS.map(([condition, label]) => (
-                <button className="synapse-button" key={condition} aria-pressed={settings.condition === condition} onClick={() => changeSettings({ condition })}>{label}</button>
-              ))}
-            </div>
-          </fieldset>
-          <fieldset>
-            <legend>动画速度</legend>
-            <div className="synapse-button-row">
-              <button className="synapse-button" aria-pressed={speed === 0.5} onClick={() => setSpeed(0.5)}>慢速</button>
-              <button className="synapse-button" aria-pressed={speed === 1} onClick={() => setSpeed(1)}>正常</button>
-            </div>
-          </fieldset>
-        </div>
-        <label className="synapse-timeline">
-          <span>教学时间</span>
-          <input aria-label="教学时间" aria-valuetext={`${time.toFixed(1)} 时间单位`} type="range" min="0" max={SYNAPSE_DURATION} step="0.1" value={time} onChange={(event) => { setPlaying(false); setTime(clamp(Number(event.target.value))); }} />
-          <output>{time.toFixed(1)} 时间单位</output>
-        </label>
         <div className="synapse-button-row synapse-transport">
           <button className="synapse-button primary" onClick={() => { setTime(0); setPlaying(true); }}>开始刺激</button>
           <button className="synapse-button" onClick={() => { if (time >= SYNAPSE_DURATION) setTime(0); setPlaying((current) => !current); }}>{playing ? "暂停" : "播放"}</button>
           <button className="synapse-button" disabled={time <= 0} onClick={() => { setPlaying(false); setTime((current) => clamp(current - 0.5)); }}>上一步</button>
           <button className="synapse-button" disabled={time >= SYNAPSE_DURATION} onClick={() => { setPlaying(false); setTime((current) => clamp(current + 0.5)); }}>下一步</button>
-          <button className="synapse-button" onClick={() => { setPlaying(false); setTime(0); setSettings(DEFAULT_SETTINGS); }}>重置</button>
+          <button className="synapse-button" onClick={() => { setPlaying(false); setTime(0); setSettings(DEFAULT_SETTINGS); setAdvanced(false); }}>重置</button>
         </div>
+        <AdvancedPanel id="synapse-advanced" expanded={advanced} onExpandedChange={setAdvanced}>
+          <div className="synapse-control-groups">
+            <fieldset>
+              <legend>刺激位置</legend>
+              <div className="synapse-button-row">
+                {([ ["presynaptic", "刺激突触前末梢（正向）"], ["postsynaptic-reverse", "刺激突触后膜（反向）"] ] as Array<[SynapseStimulation, string]>).map(([stimulation, label]) => (
+                  <button className="synapse-button" key={stimulation} aria-pressed={(settings.stimulation ?? "presynaptic") === stimulation} onClick={() => changeSettings({ stimulation })}>{label}</button>
+                ))}
+              </div>
+            </fieldset>
+            <fieldset>
+              <legend>突触类型</legend>
+              <div className="synapse-button-row">
+                {([ ["excitatory", "兴奋性突触"], ["inhibitory", "抑制性突触"] ] as Array<[SynapseKind, string]>).map(([kind, label]) => (
+                  <button className="synapse-button" key={kind} aria-pressed={settings.kind === kind} onClick={() => changeSettings({ kind })}>{label}</button>
+                ))}
+              </div>
+            </fieldset>
+            <fieldset>
+              <legend>实验干预</legend>
+              <div className="synapse-button-row">
+                {CONDITIONS.map(([condition, label]) => (
+                  <button className="synapse-button" key={condition} aria-pressed={settings.condition === condition} onClick={() => changeSettings({ condition })}>{label}</button>
+                ))}
+              </div>
+            </fieldset>
+            <fieldset>
+              <legend>动画速度</legend>
+              <div className="synapse-button-row">
+                <button className="synapse-button" aria-pressed={speed === 0.5} onClick={() => setSpeed(0.5)}>慢速</button>
+                <button className="synapse-button" aria-pressed={speed === 1} onClick={() => setSpeed(1)}>正常</button>
+              </div>
+            </fieldset>
+          </div>
+          <label className="synapse-timeline">
+            <span>教学时间</span>
+            <input aria-label="教学时间" aria-valuetext={`${time.toFixed(1)} 时间单位`} type="range" min="0" max={SYNAPSE_DURATION} step="0.1" value={time} onChange={(event) => { setPlaying(false); setTime(clamp(Number(event.target.value))); }} />
+            <output>{time.toFixed(1)} 时间单位</output>
+          </label>
+        </AdvancedPanel>
         <p className="synapse-note">传递方向具有单向性；时间、粒子与数量均为教学示意。</p>
       </section>
     </main>
