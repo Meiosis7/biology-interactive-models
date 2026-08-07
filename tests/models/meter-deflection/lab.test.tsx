@@ -4,7 +4,25 @@ import { describe, expect, it, vi } from "vitest";
 import { AnalogMeter } from "../../../models/04-meter-deflection/AnalogMeter";
 import { MeterDeflectionLab } from "../../../models/04-meter-deflection/MeterDeflectionLab";
 
+function openAdvancedMode() {
+  fireEvent.click(screen.getByRole("button", { name: "打开进阶模式" }));
+}
+
 describe("MeterDeflectionLab", () => {
+  it("starts with a simple judgement chain and moves through examples", () => {
+    render(<MeterDeflectionLab />);
+
+    expect(screen.getByLabelText("基础判断链")).toHaveTextContent("谁先兴奋");
+    expect(screen.queryByRole("button", { name: "交换导线" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "下一个示例" }));
+    expect(screen.getByText(/B 距刺激点更近/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "打开进阶模式" }));
+    expect(screen.getByRole("button", { name: "交换导线" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "重置" }));
+    expect(screen.queryByRole("button", { name: "交换导线" })).not.toBeInTheDocument();
+  });
+
   it("serializes meter coordinates at a fixed precision for hydration", () => {
     const markup = renderToString(<AnalogMeter differenceMv={12} pointerAngle={17} leadsReversed={false} />);
     const coordinates = Array.from(markup.matchAll(/(?:x1|y1|x2|y2|x|y)="([^"]+)"/g), ([, value]) => value);
@@ -24,6 +42,7 @@ describe("MeterDeflectionLab", () => {
 
   it("reverses the displayed sign when leads are swapped", () => {
     render(<MeterDeflectionLab />);
+    openAdvancedMode();
 
     fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "3.5" } });
     const before = screen.getByTestId("meter-difference").textContent;
@@ -34,6 +53,7 @@ describe("MeterDeflectionLab", () => {
 
   it("loads an equidistant preset", () => {
     render(<MeterDeflectionLab />);
+    openAdvancedMode();
 
     fireEvent.click(screen.getByRole("button", { name: "等距验证" }));
 
@@ -42,6 +62,7 @@ describe("MeterDeflectionLab", () => {
 
   it("offers four accessible presets and resets time for each", () => {
     render(<MeterDeflectionLab />);
+    openAdvancedMode();
     const presets = [
       "膜外双电极（A 先到）",
       "膜外双电极（B 先到）",
@@ -58,6 +79,7 @@ describe("MeterDeflectionLab", () => {
 
   it("makes B arrive first in the B-first extracellular preset", () => {
     render(<MeterDeflectionLab />);
+    openAdvancedMode();
     fireEvent.click(screen.getByRole("button", { name: "膜外双电极（B 先到）" }));
     fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "3" } });
 
@@ -66,6 +88,7 @@ describe("MeterDeflectionLab", () => {
 
   it("never describes B as changing in transmembrane mode", () => {
     render(<MeterDeflectionLab />);
+    openAdvancedMode();
     fireEvent.click(screen.getByRole("button", { name: "膜内外跨膜" }));
     fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "5.2" } });
 
@@ -76,16 +99,19 @@ describe("MeterDeflectionLab", () => {
 
   it("shows and hides the four-step reasoning chain itself", () => {
     render(<MeterDeflectionLab />);
+    openAdvancedMode();
+    const explanation = within(screen.getByLabelText("四步解释链"));
 
-    expect(screen.getByRole("list")).toBeInTheDocument();
+    expect(explanation.getByRole("list")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "隐藏四步推理" }));
-    expect(screen.queryByRole("list")).not.toBeInTheDocument();
+    expect(explanation.queryByRole("list")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "显示四步推理" }));
-    expect(screen.getByRole("list")).toBeInTheDocument();
+    expect(explanation.getByRole("list")).toBeInTheDocument();
   });
 
   it("labels the chart with the swapped lead subtraction and its live value", () => {
     render(<MeterDeflectionLab />);
+    openAdvancedMode();
     const chart = screen.getByText("电极电位与差值").closest("figure");
     expect(chart).not.toBeNull();
 
@@ -99,6 +125,7 @@ describe("MeterDeflectionLab", () => {
 
   it("shows a passed-wave explanation at the end of the equal-arrival run", () => {
     render(<MeterDeflectionLab />);
+    openAdvancedMode();
 
     fireEvent.click(screen.getByRole("button", { name: "等距验证" }));
     fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "10" } });
@@ -118,6 +145,7 @@ describe("MeterDeflectionLab", () => {
 
     try {
       render(<MeterDeflectionLab />);
+      openAdvancedMode();
       fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "3.5" } });
       fireEvent.click(screen.getByRole("button", { name: "播放" }));
       const first = callbacks.entries().next().value as [number, FrameRequestCallback];

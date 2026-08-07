@@ -5,6 +5,7 @@ import type { MeterSettings, MeterSnapshot } from "./types";
 export interface NerveElectrodeViewProps {
   settings: MeterSettings;
   snapshot: MeterSnapshot;
+  showPositionControls?: boolean;
   onPositionChange: (field: "stimulusPosition" | "electrodeA" | "electrodeB", value: number) => void;
 }
 
@@ -18,7 +19,7 @@ function point(position: number) {
   return 34 + position * 2.92;
 }
 
-export function NerveElectrodeView({ settings, snapshot, onPositionChange }: NerveElectrodeViewProps) {
+export function NerveElectrodeView({ settings, snapshot, showPositionControls = true, onPositionChange }: NerveElectrodeViewProps) {
   const transmembrane = settings.mode === "transmembrane";
   return (
     <section className="meter-nerve-card" aria-label="神经与电极示意图">
@@ -35,7 +36,7 @@ export function NerveElectrodeView({ settings, snapshot, onPositionChange }: Ner
         <g className="electrode electrode-a"><line x1={point(settings.electrodeA)} y1={transmembrane ? "128" : "116"} x2={point(settings.electrodeA)} y2={transmembrane ? "85" : "101"} /><circle cx={point(settings.electrodeA)} cy={transmembrane ? "83" : "103"} r="5" /><text x={point(settings.electrodeA)} y="151">A{transmembrane ? "（膜内）" : "（膜外）"}</text></g>
         <g className="electrode electrode-b"><line x1={point(settings.electrodeB)} y1="42" x2={point(settings.electrodeB)} y2="68" /><circle cx={point(settings.electrodeB)} cy="66" r="5" /><text x={point(settings.electrodeB)} y="151">B（膜外）</text></g>
       </svg>
-      <div className="meter-position-controls">
+      {showPositionControls && <div className="meter-position-controls">
         {(Object.keys(positionName) as Array<keyof typeof positionName>).map((field) => (
           <label key={field}>
             <span>{positionName[field]}</span>
@@ -43,7 +44,7 @@ export function NerveElectrodeView({ settings, snapshot, onPositionChange }: Ner
             <output>{settings[field]} 格</output>
           </label>
         ))}
-      </div>
+      </div>}
     </section>
   );
 }
