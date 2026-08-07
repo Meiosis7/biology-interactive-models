@@ -4,8 +4,28 @@ import { MembraneCurveLab } from "../../../models/03-membrane-potential-curve/Me
 import { canvasContext, resetCanvasContext } from "../../setup";
 
 describe("MembraneCurveLab", () => {
+  const openAdvanced = () => {
+    fireEvent.click(screen.getByRole("button", { name: "打开进阶模式" }));
+  };
+
+  it("offers four guided observation points before advanced exploration", () => {
+    render(<MembraneCurveLab />);
+
+    expect(screen.getByLabelText("基础引导")).toHaveTextContent("先看曲线怎么变");
+    expect(screen.getByRole("button", { name: "观察上升" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "观察下降" }));
+    expect(screen.getByLabelText("当前教学时间")).toHaveTextContent("4.5");
+    expect(screen.queryByRole("button", { name: "对比模式" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "打开进阶模式" }));
+    expect(screen.getByRole("button", { name: "对比模式" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "重置" }));
+    expect(screen.queryByRole("button", { name: "对比模式" })).not.toBeInTheDocument();
+  });
+
   it("synchronizes cursor and ion explanation", () => {
     render(<MembraneCurveLab />);
+    openAdvanced();
 
     fireEvent.change(screen.getByLabelText("曲线游标"), {
       target: { value: "2.5" },
@@ -21,6 +41,7 @@ describe("MembraneCurveLab", () => {
 
   it("overlays equal threshold and strong peaks", () => {
     render(<MembraneCurveLab />);
+    openAdvanced();
 
     fireEvent.click(screen.getByRole("button", { name: "对比模式" }));
 
@@ -29,6 +50,7 @@ describe("MembraneCurveLab", () => {
 
   it("hides the threshold reference when requested", () => {
     render(<MembraneCurveLab />);
+    openAdvanced();
     resetCanvasContext();
 
     fireEvent.click(screen.getByLabelText("显示阈电位线"));
@@ -42,6 +64,7 @@ describe("MembraneCurveLab", () => {
 
   it("fills the full current stage while keeping a separate cursor line", () => {
     render(<MembraneCurveLab />);
+    openAdvanced();
     resetCanvasContext();
 
     fireEvent.change(screen.getByLabelText("曲线游标"), {
@@ -60,6 +83,7 @@ describe("MembraneCurveLab", () => {
 
   it("uses the complete local-potential interval for weak stimulation", () => {
     render(<MembraneCurveLab />);
+    openAdvanced();
     fireEvent.click(screen.getByRole("button", { name: "弱刺激" }));
     resetCanvasContext();
 
@@ -74,6 +98,7 @@ describe("MembraneCurveLab", () => {
 
   it("hides the membrane ion hint when requested", () => {
     render(<MembraneCurveLab />);
+    openAdvanced();
     fireEvent.change(screen.getByLabelText("曲线游标"), {
       target: { value: "2.5" },
     });
@@ -85,6 +110,7 @@ describe("MembraneCurveLab", () => {
 
   it("shows the quiz controls", () => {
     render(<MembraneCurveLab />);
+    openAdvanced();
 
     fireEvent.click(screen.getByRole("button", { name: "辨析模式" }));
 
@@ -93,6 +119,7 @@ describe("MembraneCurveLab", () => {
 
   it("includes a weak-stimulus local-potential question in the quiz sequence", () => {
     render(<MembraneCurveLab />);
+    openAdvanced();
     fireEvent.click(screen.getByRole("button", { name: "辨析模式" }));
     fireEvent.click(screen.getByRole("button", { name: "下一题位置" }));
 
@@ -106,6 +133,7 @@ describe("MembraneCurveLab", () => {
 
   it("grades quiz polarity from the live cursor snapshot", () => {
     render(<MembraneCurveLab />);
+    openAdvanced();
     fireEvent.click(screen.getByRole("button", { name: "辨析模式" }));
     fireEvent.change(screen.getByLabelText("曲线游标"), {
       target: { value: "2.1" },
@@ -121,6 +149,7 @@ describe("MembraneCurveLab", () => {
 
   it("counts a correctly answered quiz location only once", () => {
     render(<MembraneCurveLab />);
+    openAdvanced();
     fireEvent.click(screen.getByRole("button", { name: "辨析模式" }));
     fireEvent.change(screen.getByLabelText("曲线游标"), { target: { value: "2.1" } });
     fireEvent.click(screen.getByRole("button", { name: "去极化" }));
@@ -134,6 +163,7 @@ describe("MembraneCurveLab", () => {
 
   it("announces only submitted quiz feedback as a polite status", () => {
     render(<MembraneCurveLab />);
+    openAdvanced();
     fireEvent.click(screen.getByRole("button", { name: "辨析模式" }));
 
     const quizPanel = screen.getByText(/辨析模式 · 已答对/).closest("section");
@@ -162,6 +192,7 @@ describe("MembraneCurveLab", () => {
 
   it("announces only stage transitions instead of live voltage and quiz counts", () => {
     render(<MembraneCurveLab />);
+    openAdvanced();
 
     const explanation = screen.getByLabelText("当前阶段解释");
     const announcer = screen.getByLabelText("阶段播报：静息期");

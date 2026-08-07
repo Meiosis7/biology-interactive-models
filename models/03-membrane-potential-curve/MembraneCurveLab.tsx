@@ -6,9 +6,16 @@ import { MembraneView } from "./MembraneView";
 import { QuizPanel } from "./QuizPanel";
 import { checkCurveAnswer, getCurveSnapshot } from "./simulation";
 import type { CurveAnswer, CurveAnswerCheck, CurveIntensity } from "./types";
+import { AdvancedPanel, NeuralLearningGuide } from "../../components/neural-guidance/NeuralLearningGuide";
 
 type LabMode = "explore" | "compare" | "quiz";
 const DURATION = 6;
+const GUIDED_POINTS = [
+  { label: "静息", time: 0 },
+  { label: "上升", time: 2.5 },
+  { label: "下降", time: 4.5 },
+  { label: "恢复", time: 5.5 },
+] as const;
 const QUIZ_QUESTIONS: ReadonlyArray<{
   intensity: CurveIntensity;
   time: number;
@@ -50,6 +57,7 @@ export function MembraneCurveLab() {
   const [time, setTime] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<0.5 | 1>(1);
+  const [advanced, setAdvanced] = useState(false);
   const [showLabels, setShowLabels] = useState(true);
   const [showThreshold, setShowThreshold] = useState(true);
   const [showIonHint, setShowIonHint] = useState(true);
@@ -61,6 +69,7 @@ export function MembraneCurveLab() {
   const lastFrame = useRef<number | null>(null);
   const snapshot = useMemo(() => getCurveSnapshot(time, intensity), [intensity, time]);
   const copy = STAGE_COPY[snapshot.stage];
+  const guideStep = time === 0 ? 0 : time < 4 ? 1 : 2;
 
   useEffect(() => {
     if (!playing) return;
@@ -120,13 +129,28 @@ export function MembraneCurveLab() {
       <header className="membrane-header">
         <p className="membrane-eyebrow">选择性必修 1 · 神经调节</p>
         <h1 id="membrane-title">膜电位变化曲线实验台</h1>
-        <p>拖动曲线游标，将电位变化、离子通道与膜内外相对电性联系起来。</p>
+        <p>不用先背七个阶段，先看曲线的上升、下降和恢复。</p>
       </header>
 
-      <nav className="membrane-mode-switch" aria-label="实验模式">
-        <button className="membrane-button" aria-pressed={mode === "explore"} onClick={() => changeMode("explore")}>探究模式</button>
-        <button className="membrane-button" aria-pressed={mode === "compare"} onClick={() => changeMode("compare")}>对比模式</button>
-        <button className="membrane-button" aria-pressed={mode === "quiz"} onClick={() => changeMode("quiz")}>辨析模式</button>
+      <NeuralLearningGuide
+        goal="先看曲线怎么变，再把变化和离子运动对应起来"
+        steps={["点击一个观察点", "看曲线上升或下降", "记住 Na⁺ 入、K⁺ 出"]}
+        currentStep={guideStep}
+        takeaway="上升主要对应 Na⁺ 内流，下降主要对应 K⁺ 外流。"
+      />
+
+      <nav className="membrane-guided-points" aria-label="基础观察点">
+        {GUIDED_POINTS.map((point) => (
+          <button
+            key={point.label}
+            className="membrane-button"
+            aria-pressed={time === point.time}
+            onClick={() => changeTime(point.time)}
+          >
+            观察{point.label}
+          </button>
+        ))}
+        <output aria-label="当前教学时间">当前 {time.toFixed(1)} 时间单位</output>
       </nav>
 
       <p className="membrane-sr-only" aria-label={`阶段播报：${copy.title}`} aria-live="polite" aria-atomic="true">
@@ -148,10 +172,27 @@ export function MembraneCurveLab() {
       {mode === "quiz" && <QuizPanel snapshot={snapshot} intensity={intensity} answer={answer} feedback={feedback} correctCount={correctCount} onChange={(patch) => { setAnswer((current) => ({ ...current, ...patch })); setFeedback(null); }} onSubmit={submitQuiz} onNext={nextQuiz} />}
 
       <section className="membrane-controls" aria-label="实验控制台">
-        {mode === "explore" && <fieldset><legend>刺激强度</legend><div className="membrane-button-row">{([ ["weak", "弱刺激"], ["threshold", "阈刺激"], ["strong", "强刺激"] ] as Array<[CurveIntensity, string]>).map(([value, label]) => <button key={value} className="membrane-button" aria-pressed={intensity === value} onClick={() => { setIntensity(value); changeTime(0); }}>{label}</button>)}</div></fieldset>}
-        <div className="membrane-toggle-row"><label><input type="checkbox" checked={showLabels} onChange={(event) => setShowLabels(event.target.checked)} /> 显示阶段标签</label><label><input type="checkbox" checked={showThreshold} onChange={(event) => setShowThreshold(event.target.checked)} /> 显示阈电位线</label><label><input type="checkbox" checked={showIonHint} onChange={(event) => setShowIonHint(event.target.checked)} /> 显示离子提示</label></div>
-        <label className="membrane-timeline"><span>曲线游标</span><input aria-label="曲线游标" aria-valuetext={`${time.toFixed(1)} 教学时间单位`} type="range" min="0" max={DURATION} step="0.1" value={time} onChange={(event) => changeTime(Number(event.target.value))} /><output>{time.toFixed(1)} 时间单位</output></label>
-        <div className="membrane-button-row membrane-transport"><button className="membrane-button primary" onClick={() => { setTime(0); setPlaying(true); }}>开始刺激</button><button className="membrane-button" onClick={() => { if (time >= DURATION) setTime(0); setPlaying((current) => !current); }}>{playing ? "暂停" : "播放"}</button><button className="membrane-button" disabled={time <= 0} onClick={() => changeTime(time - 0.5)}>上一步</button><button className="membrane-button" disabled={time >= DURATION} onClick={() => changeTime(time + 0.5)}>下一步</button><button className="membrane-button" aria-pressed={speed === 0.5} onClick={() => setSpeed(0.5)}>慢速</button><button className="membrane-button" aria-pressed={speed === 1} onClick={() => setSpeed(1)}>正常</button><button className="membrane-button" onClick={() => { setPlaying(false); setTime(0); setIntensity("threshold"); setFeedback(null); }}>重置</button></div>
+        <div className="membrane-button-row membrane-transport">
+          <button className="membrane-button primary" onClick={() => { setTime(0); setPlaying(true); }}>开始刺激</button>
+          <button className="membrane-button" onClick={() => { if (time >= DURATION) setTime(0); setPlaying((current) => !current); }}>{playing ? "暂停" : "播放"}</button>
+          <button className="membrane-button" onClick={() => { setPlaying(false); setTime(0); setIntensity("threshold"); setMode("explore"); setSpeed(1); setFeedback(null); setAnswer(answerForNewQuestion()); setAdvanced(false); }}>重置</button>
+        </div>
+        <AdvancedPanel id="membrane-advanced" expanded={advanced} onExpandedChange={setAdvanced}>
+          <nav className="membrane-mode-switch" aria-label="实验模式">
+            <button className="membrane-button" aria-pressed={mode === "explore"} onClick={() => changeMode("explore")}>探究模式</button>
+            <button className="membrane-button" aria-pressed={mode === "compare"} onClick={() => changeMode("compare")}>对比模式</button>
+            <button className="membrane-button" aria-pressed={mode === "quiz"} onClick={() => changeMode("quiz")}>辨析模式</button>
+          </nav>
+          {mode === "explore" && <fieldset><legend>刺激强度</legend><div className="membrane-button-row">{([ ["weak", "弱刺激"], ["threshold", "阈刺激"], ["strong", "强刺激"] ] as Array<[CurveIntensity, string]>).map(([value, label]) => <button key={value} className="membrane-button" aria-pressed={intensity === value} onClick={() => { setIntensity(value); changeTime(0); }}>{label}</button>)}</div></fieldset>}
+          <div className="membrane-toggle-row"><label><input type="checkbox" checked={showLabels} onChange={(event) => setShowLabels(event.target.checked)} /> 显示阶段标签</label><label><input type="checkbox" checked={showThreshold} onChange={(event) => setShowThreshold(event.target.checked)} /> 显示阈电位线</label><label><input type="checkbox" checked={showIonHint} onChange={(event) => setShowIonHint(event.target.checked)} /> 显示离子提示</label></div>
+          <label className="membrane-timeline"><span>曲线游标</span><input aria-label="曲线游标" aria-valuetext={`${time.toFixed(1)} 教学时间单位`} type="range" min="0" max={DURATION} step="0.1" value={time} onChange={(event) => changeTime(Number(event.target.value))} /><output>{time.toFixed(1)} 时间单位</output></label>
+          <div className="membrane-button-row">
+            <button className="membrane-button" disabled={time <= 0} onClick={() => changeTime(time - 0.5)}>上一步</button>
+            <button className="membrane-button" disabled={time >= DURATION} onClick={() => changeTime(time + 0.5)}>下一步</button>
+            <button className="membrane-button" aria-pressed={speed === 0.5} onClick={() => setSpeed(0.5)}>慢速</button>
+            <button className="membrane-button" aria-pressed={speed === 1} onClick={() => setSpeed(1)}>正常</button>
+          </div>
+        </AdvancedPanel>
       </section>
     </main>
   );
