@@ -24,6 +24,10 @@ describe("HumoralImmunityLab", () => {
     expect(within(scene).getByText("克隆与分化")).toBeInTheDocument();
     expect(within(scene).getByText("抗体—抗原结合")).toBeInTheDocument();
     expect(within(scene).getByLabelText("B 细胞受体：特异识别抗原 A")).toBeInTheDocument();
+    expect(scene).toHaveClass("is-paused");
+
+    fireEvent.click(screen.getByRole("button", { name: "播放" }));
+    expect(scene).toHaveClass("is-playing");
   });
 
   it("marks an unmatched B-cell step without marking it as experimentally blocked", () => {
@@ -100,6 +104,17 @@ describe("HumoralImmunityLab", () => {
     expect(screen.getByText(/缺少辅助性 T 细胞的激活信号/)).toBeInTheDocument();
     expect(screen.queryByText(/初次反应（对照虚线）/)).not.toBeInTheDocument();
     expect(screen.queryByText(/更快、更强、更持久/)).not.toBeInTheDocument();
+  });
+
+  it("explains a BCR-mismatched flat antibody curve", () => {
+    render(<HumoralImmunityLab />);
+    fireEvent.click(screen.getByRole("button", { name: "二次免疫" }));
+    fireEvent.click(screen.getByRole("button", { name: "BCR B" }));
+
+    const chart = screen.getByText("抗体与抗原的相对变化").closest("figure");
+    expect(chart).not.toBeNull();
+    expect(within(chart!).getByText(/BCR 与抗原不匹配，抗体保持 0，抗原不下降/)).toBeInTheDocument();
+    expect(within(chart!).queryByText(/初次反应（对照虚线）/)).not.toBeInTheDocument();
   });
 
   it("resets teaching time when a key condition changes", () => {
