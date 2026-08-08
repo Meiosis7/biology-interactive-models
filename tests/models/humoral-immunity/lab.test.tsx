@@ -1,33 +1,42 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { HumoralImmunityLab } from "../../../models/05-humoral-immunity/HumoralImmunityLab";
 
-const humoralStyles = readFileSync("models/05-humoral-immunity/humoral-immunity.css", "utf8");
-
 describe("HumoralImmunityLab", () => {
-  it("shows the ordered immune-process spine", () => {
+  it("shows the aligned seven-stage process", () => {
     render(<HumoralImmunityLab />);
+    const spine = within(screen.getByLabelText("体液免疫有序流程"));
 
-    expect(screen.getByText("抗原呈递")).toBeInTheDocument();
-    expect(screen.getByText("B 细胞克隆增殖")).toBeInTheDocument();
-    expect(screen.getByText("浆细胞产生抗体")).toBeInTheDocument();
+    expect(spine.getAllByText(/抗原呈递|辅助性 T 细胞活化|B 细胞活化|克隆增殖|分化|抗体产生与结合|免疫记忆/)).toHaveLength(7);
+    expect(screen.queryByText("抗原进入")).not.toBeInTheDocument();
+    expect(screen.queryByText("抗体结合并清除抗原")).not.toBeInTheDocument();
   });
 
-  it("keeps antigen entry and immune memory as explicit spine endpoints", () => {
+  it("offers independent antigen and BCR controls", () => {
     render(<HumoralImmunityLab />);
 
+    expect(screen.getByRole("button", { name: "抗原 A" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "BCR A" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "BCR B" })).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("labels a BCR mismatch as unmatched", () => {
+    render(<HumoralImmunityLab />);
+    fireEvent.click(screen.getByRole("button", { name: "BCR B" }));
     fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "18" } });
 
-    const spine = within(screen.getByLabelText("体液免疫有序流程"));
-    expect(spine.getByText("抗原进入")).toBeInTheDocument();
-    expect(spine.getByText("保留免疫记忆")).toBeInTheDocument();
-    expect(screen.getByText("当前：保留免疫记忆")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "未匹配" })).toBeInTheDocument();
+    expect(screen.getByText(/BCR B 只能特异识别抗原 B/)).toBeInTheDocument();
+    expect(screen.getByText(/浆细胞 0，记忆 B 细胞 0，抗体相对量 0，抗原相对量 100/)).toBeInTheDocument();
   });
 
-  it("keeps the desktop spine in nine columns and stacks it on small screens", () => {
-    expect(humoralStyles).toContain("grid-template-columns: repeat(9, minmax(72px, 1fr))");
-    expect(humoralStyles).toMatch(/@media \(max-width: 720px\).*?\.humoral-process-spine \{ grid-template-columns: 1fr;/s);
+  it("distinguishes a missing B cell from a receptor mismatch", () => {
+    render(<HumoralImmunityLab />);
+    fireEvent.click(screen.getByRole("button", { name: "缺少 B 细胞" }));
+
+    expect(screen.getByRole("heading", { name: "过程受阻" })).toBeInTheDocument();
+    expect(screen.getByText(/没有执行特异性应答的 B 细胞/)).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "未匹配" })).not.toBeInTheDocument();
   });
 
   it("compares primary and matched secondary responses", () => {
@@ -87,19 +96,20 @@ describe("HumoralImmunityLab", () => {
     expect(screen.getByText(/时间、浓度和细胞数量均为教学示意/)).toBeInTheDocument();
   });
 
-  it("keeps live quantities outside the polite stage announcer", () => {
+  it("keeps live quantities outside the explanation card", () => {
     render(<HumoralImmunityLab />);
 
     const explanation = screen.getByLabelText("当前阶段解释");
-    const liveValues = within(explanation).getByText(/当前：浆细胞/);
-    const announcer = screen.getByLabelText("阶段播报：抗原进入");
+    const liveValues = screen.getByText(/当前：浆细胞/);
+    const announcer = screen.getByLabelText("阶段播报：抗原呈递");
     expect(explanation).not.toHaveAttribute("aria-live");
-    expect(liveValues).not.toHaveAttribute("aria-live");
+    expect(explanation).not.toContainElement(liveValues);
+    expect(liveValues).toHaveAttribute("aria-live", "polite");
     expect(announcer).toHaveAttribute("aria-live", "polite");
-    expect(announcer).toHaveTextContent("抗原进入");
+    expect(announcer).toHaveTextContent("抗原呈递");
 
     fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "11" } });
-    expect(announcer).toHaveTextContent("浆细胞产生抗体");
-    expect(announcer).toHaveAccessibleName("阶段播报：浆细胞产生抗体");
+    expect(announcer).toHaveTextContent("抗体产生与结合");
+    expect(announcer).toHaveAccessibleName("阶段播报：抗体产生与结合");
   });
 });
