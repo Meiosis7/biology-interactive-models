@@ -80,6 +80,45 @@ describe("HumoralImmunityLab", () => {
     expect(screen.getByLabelText(/阶段播报/)).toHaveTextContent("未匹配：B 细胞活化");
   });
 
+  it("does not disable downstream mismatch stages before the stop is reached", () => {
+    render(<HumoralImmunityLab />);
+    fireEvent.click(screen.getByRole("button", { name: "BCR B" }));
+    const slider = screen.getByLabelText("教学时间");
+    const spine = within(screen.getByLabelText("体液免疫有序流程"));
+    const downstream = spine.getByText("克隆增殖").closest(".humoral-process-step");
+
+    expect(downstream).not.toHaveClass("is-disabled");
+    fireEvent.change(slider, { target: { value: "4.9" } });
+    expect(downstream).not.toHaveClass("is-disabled");
+
+    fireEvent.change(slider, { target: { value: "5" } });
+    expect(downstream).toHaveClass("is-disabled");
+  });
+
+  it("announces a future intervention before its stop and failure after reach", () => {
+    render(<HumoralImmunityLab />);
+    fireEvent.click(screen.getByRole("button", { name: "辅助性 T 细胞受阻" }));
+    const slider = screen.getByLabelText("教学时间");
+    const spine = within(screen.getByLabelText("体液免疫有序流程"));
+    const stopStep = spine
+      .getByText("辅助性 T 细胞活化")
+      .closest(".humoral-process-step");
+    const downstream = spine.getByText("B 细胞活化").closest(".humoral-process-step");
+
+    expect(screen.getByLabelText(/阶段播报/)).toHaveTextContent(
+      "当前阶段 抗原呈递；将在 辅助性 T 细胞活化受阻",
+    );
+    expect(stopStep).not.toHaveClass("is-blocked");
+    expect(downstream).not.toHaveClass("is-disabled");
+
+    fireEvent.change(slider, { target: { value: "3" } });
+    expect(screen.getByLabelText(/阶段播报/)).toHaveTextContent(
+      "过程受阻：辅助性 T 细胞活化",
+    );
+    expect(stopStep).toHaveClass("is-blocked");
+    expect(downstream).toHaveClass("is-disabled");
+  });
+
   it("offers independent antigen and BCR controls", () => {
     render(<HumoralImmunityLab />);
 
@@ -217,10 +256,12 @@ describe("HumoralImmunityLab", () => {
 
     fireEvent.change(slider, { target: { value: "3" } });
     expect(within(explanation).getByText(/增殖、分化并分泌细胞因子/)).toBeInTheDocument();
-    expect(within(scene).getByText(/提供第二信号并分泌细胞因子/)).toBeInTheDocument();
+    expect(within(scene).getByText(/准备接触 B 细胞并提供第二信号/)).toBeInTheDocument();
+    expect(within(scene).getByText(/等待辅助性 T 细胞的第二信号/)).toBeInTheDocument();
 
     fireEvent.change(slider, { target: { value: "5" } });
     expect(within(explanation).getByText(/只有同时获得第一、第二信号/)).toBeInTheDocument();
+    expect(within(scene).getByText(/接触 B 细胞提供第二信号并分泌细胞因子/)).toBeInTheDocument();
     expect(within(scene).getByText(/获得两个信号，B 细胞已活化/)).toBeInTheDocument();
 
     fireEvent.change(slider, { target: { value: "9" } });
@@ -242,6 +283,21 @@ describe("HumoralImmunityLab", () => {
     });
     expect(within(scene).getByText(/抗体已完成特异性结合，抗原已清除/)).toBeInTheDocument();
     expect(within(scene).queryByText(/尚未向体液分泌/)).not.toBeInTheDocument();
+  });
+
+  it("shows persistent secondary antibody without an antigen-binding claim after clearance", () => {
+    render(<HumoralImmunityLab />);
+    fireEvent.click(screen.getByRole("button", { name: "二次免疫" }));
+    fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "15" } });
+
+    const scene = screen.getByRole("group", {
+      name: "B 细胞与抗原的体液免疫相互作用示意",
+    });
+    expect(screen.getByText(/抗体相对量 90，抗原相对量 0/)).toBeInTheDocument();
+    expect(within(scene).getByText(/抗原已清除，抗体仍留在体液中/)).toBeInTheDocument();
+    expect(within(scene).queryByLabelText(/抗原 A：圆形标记/)).not.toBeInTheDocument();
+    expect(scene.querySelectorAll(".humoral-antibody.is-bound")).toHaveLength(0);
+    expect(within(scene).queryByText(/正在|特异性结合抗原 A/)).not.toBeInTheDocument();
   });
 
   it("resets teaching time when a key condition changes", () => {

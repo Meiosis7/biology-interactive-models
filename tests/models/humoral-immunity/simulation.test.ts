@@ -197,6 +197,23 @@ describe("humoral immunity simulation", () => {
     expect(againstB.antigenLevel).toBeLessThan(100);
   });
 
+  it("marks active binding only while antibody and antigen coexist", () => {
+    const matchedSecondary = {
+      ...normal,
+      exposure: "secondary",
+      memorySpecificity: "A",
+    } as const;
+    const beforeClearance = getHumoralSnapshot(14, matchedSecondary);
+    const afterClearance = getHumoralSnapshot(15, matchedSecondary);
+
+    expect(beforeClearance.antibodyLevel).toBeGreaterThan(0);
+    expect(beforeClearance.antigenLevel).toBeGreaterThan(0);
+    expect(beforeClearance.antibodyTarget).toBe("A");
+    expect(afterClearance.antibodyLevel).toBeGreaterThan(0);
+    expect(afterClearance.antigenLevel).toBe(0);
+    expect(afterClearance.antibodyTarget).toBeNull();
+  });
+
   it("keeps the primary antigen curve continuous at clearance", () => {
     const justBeforeClearance = getHumoralSnapshot(15.999, normal).antigenLevel;
     const atClearance = getHumoralSnapshot(16, normal).antigenLevel;

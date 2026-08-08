@@ -38,7 +38,8 @@ function ReceptorMark({ specificity }: { specificity: BCellSpecificity }) {
 
 export function HumoralProcessView({ settings, snapshot, playing }: HumoralProcessViewProps) {
   const currentIndex = ORDER.indexOf(snapshot.stage);
-  const blockedIndex = snapshot.stopAt ? ORDER.indexOf(snapshot.stopAt) : -1;
+  const blockedIndex =
+    snapshot.stopReached && snapshot.stopAt ? ORDER.indexOf(snapshot.stopAt) : -1;
   const isPast = (stage: HumoralStage) => ORDER.indexOf(stage) < currentIndex;
   const mismatchConfigured = snapshot.stopReason === "bcr-mismatch";
   const mismatchReached = mismatchConfigured && snapshot.stopReached;
@@ -53,7 +54,9 @@ export function HumoralProcessView({ settings, snapshot, playing }: HumoralProce
         : interventionReason === "b-cell-missing"
           ? "缺少可接触并接收第二信号的 B 细胞"
         : snapshot.helperActive
-          ? "已活化并增殖、分化；接触 B 细胞提供第二信号并分泌细胞因子"
+          ? snapshot.bCellActive
+            ? "已活化并增殖、分化；接触 B 细胞提供第二信号并分泌细胞因子"
+            : "已活化并开始增殖、分化和分泌细胞因子；准备接触 B 细胞并提供第二信号"
           : "等待树突状细胞、B 细胞等呈递处理后的抗原";
   const bCellStatus = mismatchReached
     ? "BCR 与抗原不匹配，第一信号未建立"
@@ -83,7 +86,9 @@ export function HumoralProcessView({ settings, snapshot, playing }: HumoralProce
           const unmatched =
             mismatchReached && snapshot.stopAt === item.stage;
           const blocked =
-            interventionReason !== null && snapshot.stopAt === item.stage;
+            interventionReason !== null &&
+            snapshot.stopReached &&
+            snapshot.stopAt === item.stage;
           const disabled = blockedIndex >= 0 && nodeIndex > blockedIndex;
           const active = nodeIndex === currentIndex;
           return (
@@ -136,7 +141,9 @@ export function HumoralProcessView({ settings, snapshot, playing }: HumoralProce
         </div>
         <div className="humoral-binding-zone">
           <b>抗体—抗原结合</b>
-          <AntigenMark antigen={settings.antigen} className="binding-antigen" />
+          {snapshot.antigenLevel > 0 && (
+            <AntigenMark antigen={settings.antigen} className="binding-antigen" />
+          )}
           {Array.from({ length: Math.min(5, Math.max(1, Math.ceil(snapshot.antibodyLevel / 25))) }, (_, index) => (
             <i aria-hidden="true" className={`humoral-antibody ${antibodyActive ? "is-bound" : ""}`} key={index}>Y</i>
           ))}
@@ -148,7 +155,9 @@ export function HumoralProcessView({ settings, snapshot, playing }: HumoralProce
                 : antibodyActive
                   ? `抗体进入体液并特异性结合抗原 ${settings.antigen}，抑制病原体增殖或黏附`
                   : snapshot.stage === "memory" && snapshot.stopReason === null
-                    ? "抗体已完成特异性结合，抗原已清除"
+                    ? snapshot.antibodyLevel > 0
+                      ? "抗原已清除，抗体仍留在体液中"
+                      : "抗体已完成特异性结合，抗原已清除"
                   : "浆细胞尚未向体液分泌特异性抗体"}
           </small>
         </div>

@@ -90,6 +90,11 @@ export function HumoralImmunityLab() {
   const mismatchReached = mismatchConfigured && snapshot.stopReached;
   const interventionReason =
     snapshot.stopReason !== "bcr-mismatch" ? snapshot.stopReason : null;
+  const interventionPending =
+    interventionReason !== null && !snapshot.stopReached;
+  const stopStageTitle = snapshot.stopAt
+    ? STAGE_TITLES[snapshot.stopAt]
+    : STAGE_TITLES[snapshot.stage];
   const mismatchCopy = {
     what: "当前 B 细胞存在，但它的受体与抗原特异性不一致。",
     recognition: `BCR ${settings.bCellSpecificity} 只能特异识别抗原 ${settings.bCellSpecificity}。`,
@@ -108,7 +113,9 @@ export function HumoralImmunityLab() {
   const announcedStage = mismatchReached
     ? `未匹配：${STAGE_TITLES[snapshot.stage]}`
     : interventionReason
-      ? `过程受阻：${STAGE_TITLES[snapshot.stage]}`
+      ? interventionPending
+        ? `当前阶段 ${STAGE_TITLES[snapshot.stage]}；将在 ${stopStageTitle}受阻`
+        : `过程受阻：${stopStageTitle}`
       : STAGE_TITLES[snapshot.stage];
 
   useEffect(() => {
@@ -135,9 +142,6 @@ export function HumoralImmunityLab() {
   };
   const changeTime = (value: number) => { setPlaying(false); setTime(clamp(value)); };
   const changeSpeed = (next: 0.5 | 1 | 2) => { setPlaying(false); setSpeed(next); };
-  const stopStageTitle = snapshot.stopAt
-    ? STAGE_TITLES[snapshot.stopAt]
-    : STAGE_TITLES[snapshot.stage];
   const exposureText = mismatchConfigured
     ? mismatchReached
       ? `BCR 未匹配：流程已在 ${stopStageTitle}阶段停止`
@@ -159,7 +163,7 @@ export function HumoralImmunityLab() {
       </header>
 
       <p className="humoral-sr-only" aria-label={`阶段播报：${announcedStage}`} aria-live="polite" aria-atomic="true">
-        当前阶段：{announcedStage}
+        {interventionPending ? announcedStage : `当前阶段：${announcedStage}`}
       </p>
 
       <section className="humoral-grid">

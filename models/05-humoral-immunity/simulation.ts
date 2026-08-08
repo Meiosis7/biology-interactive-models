@@ -209,6 +209,11 @@ export function getHumoralSnapshot(
     memoryMatched,
     response,
   );
+  const antigenLevel = getAntigenLevel(
+    currentTime,
+    timeline,
+    response.antigenClearance,
+  );
   const hasDifferentiated = currentTime >= timeline.differentiation;
   const beforeMemoryStage = currentTime < timeline.memory;
   const plasmaPeak = memoryMatched ? 90 : 50;
@@ -235,12 +240,9 @@ export function getHumoralSnapshot(
         : 0,
     memoryCount: hasDifferentiated ? (memoryMatched ? 45 : 15) : 0,
     antibodyLevel,
-    antigenLevel: getAntigenLevel(
-      currentTime,
-      timeline,
-      response.antigenClearance,
-    ),
+    antigenLevel,
     memoryMatched,
-    antibodyTarget: antibodyLevel > 0 ? settings.antigen : null,
+    antibodyTarget:
+      antibodyLevel > 0 && antigenLevel > 0 ? settings.antigen : null,
   };
 }

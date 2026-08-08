@@ -231,3 +231,101 @@ An earlier full-suite attempt produced distributed five-second timeouts across s
 - Timing and quantities remain explicitly instructional rather than clinical/physiological measurements.
 - The Vinext build prints its existing informational `Unknown` route-classification note; the build exits successfully and emits all routes.
 - No Critical or Important concern remains.
+
+## Re-review fix at `48f3417`
+
+Re-review source: the appended `Re-review findings at 48f3417` section in `.superpowers/sdd/humoral-final-review-findings.md`.
+
+Follow-up commit subject: `fix: resolve humoral re-review findings`. The resulting SHA is recorded in the handoff because this report is itself included in that commit.
+
+### Phase 1 reproduction and root causes
+
+The existing focused baseline remained green before the new tests (`2` files, `40/40` tests), so the appended findings again described unprotected behavior.
+
+#### Important A: pending stops disclosed by styling and announcements
+
+- Reproduction: a time-zero mismatch snapshot correctly had `stopAt: "b-activation"`, `blockedAt: null`, and `stopReached: false`, but ProcessView derived `blockedIndex` directly from future `stopAt`; stages 4–7 therefore already had `is-disabled`. A time-zero helper-T intervention likewise had `stopReached: false`, while the live announcer said `过程受阻：抗原呈递`.
+- Trace: simulation correctly separated configured `stopAt` from reached `blockedAt`/`stopReached`; ProcessView collapsed them again for spine styling, and Lab selected announcement copy from `stopReason` without consulting `stopReached`.
+- Cellular comparison: the working delayed-recognition path exposes a non-null `blockedAt` only after its threshold. The humoral snapshot has the stronger explicit `stopReached` field, so consumers can follow the same reached-state boundary while retaining a stable future `stopAt`.
+- Root cause: consumers used configuration state to render reached failure state.
+
+#### Important B: persistent antibody described as actively binding cleared antigen
+
+- Reproduction: the matched-secondary snapshot at time `15` returned stage `memory`, antibody `90`, antigen `0`, and `antibodyTarget: "A"`. ProcessView consequently applied `is-bound`, rendered the antigen marker at full strength, and said antibody was specifically binding antigen A.
+- Trace: simulation set `antibodyTarget` whenever antibody quantity was positive, without requiring antigen to remain. ProcessView treated that field as current binding and rendered `AntigenMark` unconditionally.
+- Root cause: antibody persistence/specificity and current antibody–antigen coexistence were represented by the same condition.
+
+#### Minor A: helper/B-cell transition copy disagreed
+
+- Reproduction: at time `3`, `helperActive` was true and `bCellActive` false. The helper zone said it was already contacting the B cell and providing the second signal, while the B-cell zone said it was still waiting for that signal.
+- Root cause: helper copy treated `helperActive` as completed B-cell contact, although B-cell activation is the later authoritative transition.
+
+### RED evidence
+
+Focused command:
+
+```text
+npm test -- --run tests/models/humoral-immunity/simulation.test.ts tests/models/humoral-immunity/lab.test.tsx
+```
+
+Exact relevant result after adding tests and before production changes:
+
+```text
+Test Files  2 failed (2)
+Tests  5 failed | 39 passed (44)
+Duration  3.71s
+```
+
+The five failures were the expected active-binding snapshot, pre-stop mismatch class, pre/post intervention announcement and class transition, helper/B-cell transition wording, and secondary-memory scene behavior.
+
+### Minimal fixes and GREEN evidence
+
+- Important A: ProcessView now computes blocked/disabled spine state only when `snapshot.stopReached` is true. Lab announces a pending intervention as `当前阶段 X；将在 Y 受阻`, then switches at the exact threshold to `过程受阻：Y`. Tests cover mismatch at `0`, `4.9`, and `5`, plus helper-T intervention at `0` and `3`.
+- Important B: simulation now sets `antibodyTarget` only while antibody and antigen both remain. The memory scene distinguishes persistent free antibody (`抗原已清除，抗体仍留在体液中`) from completed primary response, removes `is-bound`, and hides the antigen marker when antigen reaches zero. Tests protect both the snapshot and rendered scene at secondary time `15`.
+- Minor A: between helper activation and B-cell activation, helper copy now says it is preparing to contact/provide the second signal; at B-cell activation it switches to actual contact/provision. The B-cell copy remains `等待` then `获得两个信号`, so both zones describe the same transition.
+
+Focused GREEN:
+
+```text
+Test Files  2 passed (2)
+Tests  44 passed (44)
+Duration  3.44s
+```
+
+### Fresh final verification
+
+```text
+npm test
+Test Files  18 passed (18)
+Tests  185 passed (185)
+Duration  23.12s
+exit 0
+
+npm run lint
+eslint . --ignore-pattern dist --ignore-pattern .next
+exit 0; no warnings or errors
+
+npm run build
+all 5 vinext build phases passed
+161 client-reference modules, 89 server-reference modules,
+167 RSC modules, 96 client modules, 95 SSR modules transformed
+6 application routes emitted
+Build complete; exit 0
+```
+
+### Re-review files changed
+
+- `models/05-humoral-immunity/simulation.ts`
+- `models/05-humoral-immunity/HumoralImmunityLab.tsx`
+- `models/05-humoral-immunity/HumoralProcessView.tsx`
+- `tests/models/humoral-immunity/simulation.test.ts`
+- `tests/models/humoral-immunity/lab.test.tsx`
+- `.superpowers/sdd/humoral-final-fix-report.md`
+
+### Re-review self-check and concerns
+
+- Both appended Important findings and the Minor finding have direct RED/GREEN regression evidence.
+- Configured stop destination, reached stop state, and current binding remain centralized in `HumoralSnapshot`; consumers do not infer them from raw settings.
+- The approved seven stages and textbook two-signal sequence are unchanged.
+- `.superpowers/sdd/task-2-report.md` remains untouched and excluded.
+- The build retains only Vinext's existing informational `Unknown` route-classification note. No Critical or Important concern remains.
