@@ -26,14 +26,11 @@ function makeCurve(settings: HumoralSettings, field: "antibodyLevel" | "antigenL
 }
 
 export function AntibodyChart({ settings, snapshot, time }: AntibodyChartProps) {
-  const recognitionLimited =
-    settings.condition === "normal" && !snapshot.bCellMatched;
-  const experimentallyBlocked = settings.condition !== "normal";
-  const matchedSecondary =
-    settings.exposure === "secondary" &&
-    snapshot.memoryMatched &&
-    !recognitionLimited &&
-    !experimentallyBlocked;
+  const mismatchConfigured = snapshot.stopReason === "bcr-mismatch";
+  const mismatchReached = mismatchConfigured && snapshot.stopReached;
+  const experimentallyBlocked =
+    snapshot.stopReason !== null && snapshot.stopReason !== "bcr-mismatch";
+  const matchedSecondary = snapshot.memoryMatched && snapshot.stopReason === null;
   const primaryComparison: HumoralSettings = {
     ...settings,
     exposure: "primary",
@@ -41,13 +38,15 @@ export function AntibodyChart({ settings, snapshot, time }: AntibodyChartProps) 
   const antibodyCurve = makeCurve(settings, "antibodyLevel");
   const antigenCurve = makeCurve(settings, "antigenLevel");
   const primaryCurve = matchedSecondary ? makeCurve(primaryComparison, "antibodyLevel") : null;
-  const chartSummary = recognitionLimited
-    ? "BCR 与抗原不匹配，抗体保持 0，抗原不下降。"
-    : experimentallyBlocked
-      ? "所选干预阻断下游抗体产生，抗体保持 0，抗原不下降。"
-      : matchedSecondary
-        ? "同一抗原的二次反应调用记忆 B 细胞，曲线显示更快、更强、更持久；虚线保留初次反应作对照。"
-        : "抗体升高后特异性结合当前抗原，抗原相对量随之下降。";
+  const chartSummary = experimentallyBlocked
+    ? "所选干预阻断下游抗体产生，抗体保持 0，抗原不下降。"
+    : mismatchReached
+      ? "BCR 与抗原不匹配，抗体保持 0，抗原不下降。"
+      : mismatchConfigured
+        ? "流程尚未到达特异性检验环节；当前抗体保持 0，抗原不下降。"
+        : matchedSecondary
+          ? "同一抗原的二次反应调用记忆 B 细胞，曲线显示更快、更强、更持久；虚线保留初次反应作对照。"
+          : "抗体升高后特异性结合当前抗原，抗原相对量随之下降。";
 
   return (
     <figure className="humoral-chart-card" aria-labelledby="humoral-chart-title">

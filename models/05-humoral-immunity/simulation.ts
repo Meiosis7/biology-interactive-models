@@ -3,6 +3,7 @@ import type {
   HumoralSettings,
   HumoralSnapshot,
   HumoralStage,
+  HumoralStopReason,
 } from "./types";
 
 export type {
@@ -12,6 +13,7 @@ export type {
   HumoralSettings,
   HumoralSnapshot,
   HumoralStage,
+  HumoralStopReason,
 } from "./types";
 
 export const HUMORAL_DURATION = 18;
@@ -35,7 +37,22 @@ const MATCHED_SECONDARY_TIMELINE: Timeline = {
   "clonal-expansion": 4,
   differentiation: 5,
   "antibody-binding": 6,
-  memory: 18,
+  memory: 15,
+};
+
+interface ResponseProfile {
+  antibodyEnd: number;
+  antigenClearance: number;
+}
+
+const PRIMARY_RESPONSE: ResponseProfile = {
+  antibodyEnd: 16,
+  antigenClearance: 16,
+};
+
+const MATCHED_SECONDARY_RESPONSE: ResponseProfile = {
+  antibodyEnd: HUMORAL_DURATION,
+  antigenClearance: 15,
 };
 
 const STAGES: HumoralStage[] = [
@@ -81,13 +98,17 @@ function getTimeline(settings: HumoralSettings): Timeline {
   return isMemoryMatched(settings) ? MATCHED_SECONDARY_TIMELINE : PRIMARY_TIMELINE;
 }
 
-function getAntibodyLevel(time: number, timeline: Timeline, memoryMatched: boolean): number {
+function getAntibodyLevel(
+  time: number,
+  timeline: Timeline,
+  memoryMatched: boolean,
+  response: ResponseProfile,
+): number {
   const releaseStart = timeline["antibody-binding"];
   const peakTime = memoryMatched ? 12 : 14;
-  const responseEnd = timeline.memory;
   const peak = memoryMatched ? 180 : 100;
 
-  if (time < releaseStart || time >= responseEnd) return 0;
+  if (time < releaseStart || time >= response.antibodyEnd) return 0;
   if (time <= peakTime) {
     return Math.round(
       peak * Math.min(1, (time - releaseStart + 1) / (peakTime - releaseStart + 1)),
@@ -95,38 +116,48 @@ function getAntibodyLevel(time: number, timeline: Timeline, memoryMatched: boole
   }
 
   return Math.round(
-    peak * Math.max(0, 1 - (time - peakTime) / (responseEnd - peakTime)),
+    peak *
+      Math.max(
+        0,
+        1 - (time - peakTime) / (response.antibodyEnd - peakTime),
+      ),
   );
 }
 
-function getAntigenLevel(time: number, timeline: Timeline): number {
+function getAntigenLevel(
+  time: number,
+  timeline: Timeline,
+  clearanceTime: number,
+): number {
   const releaseStart = timeline["antibody-binding"];
-  const responseEnd = timeline.memory;
 
   if (time < releaseStart) return 100;
-  if (time >= responseEnd) return 0;
+  if (time >= clearanceTime) return 0;
   return Math.round(
-    100 - (100 * (time - releaseStart)) / (responseEnd - releaseStart),
+    100 - (100 * (time - releaseStart)) / (clearanceTime - releaseStart),
   );
 }
 
 function getStoppedSnapshot(
   time: number,
-  settings: HumoralSettings,
   timeline: Timeline,
-  blockedAt: HumoralStage,
+  stopAt: HumoralStage,
+  stopReason: HumoralStopReason,
   bCellMatched: boolean,
 ): HumoralSnapshot {
-  const blockedStarted = time >= timeline[blockedAt];
-  const stage = blockedStarted ? blockedAt : stageAt(time, timeline);
+  const blockedStarted = time >= timeline[stopAt];
+  const stage = blockedStarted ? stopAt : stageAt(time, timeline);
   const helperActive =
     time >= timeline["helper-activation"] &&
-    blockedAt !== "helper-activation" &&
-    blockedAt !== "presentation";
+    stopAt !== "helper-activation" &&
+    stopAt !== "presentation";
 
   return {
     stage,
-    blockedAt,
+    stopAt,
+    blockedAt: blockedStarted ? stopAt : null,
+    stopReason,
+    stopReached: blockedStarted,
     helperActive,
     bCellActive: false,
     bCellMatched,
@@ -150,9 +181,9 @@ export function getHumoralSnapshot(
   if (settings.condition === "normal" && !bCellMatched) {
     return getStoppedSnapshot(
       currentTime,
-      settings,
       timeline,
       "b-activation",
+      "bcr-mismatch",
       false,
     );
   }
@@ -160,23 +191,34 @@ export function getHumoralSnapshot(
   if (settings.condition !== "normal") {
     return getStoppedSnapshot(
       currentTime,
-      settings,
       timeline,
       BLOCKED_STAGE[settings.condition],
+      settings.condition,
       bCellMatched,
     );
   }
 
   const memoryMatched = isMemoryMatched(settings);
+  const response = memoryMatched
+    ? MATCHED_SECONDARY_RESPONSE
+    : PRIMARY_RESPONSE;
   const stage = stageAt(currentTime, timeline);
-  const antibodyLevel = getAntibodyLevel(currentTime, timeline, memoryMatched);
+  const antibodyLevel = getAntibodyLevel(
+    currentTime,
+    timeline,
+    memoryMatched,
+    response,
+  );
   const hasDifferentiated = currentTime >= timeline.differentiation;
   const beforeMemoryStage = currentTime < timeline.memory;
   const plasmaPeak = memoryMatched ? 90 : 50;
 
   return {
     stage,
+    stopAt: null,
     blockedAt: null,
+    stopReason: null,
+    stopReached: false,
     helperActive: currentTime >= timeline["helper-activation"],
     bCellActive: currentTime >= timeline["b-activation"],
     bCellMatched: true,
@@ -191,9 +233,13 @@ export function getHumoralSnapshot(
               ),
           )
         : 0,
-    memoryCount: hasDifferentiated ? (memoryMatched ? 45 : 25) : 0,
+    memoryCount: hasDifferentiated ? (memoryMatched ? 45 : 15) : 0,
     antibodyLevel,
-    antigenLevel: getAntigenLevel(currentTime, timeline),
+    antigenLevel: getAntigenLevel(
+      currentTime,
+      timeline,
+      response.antigenClearance,
+    ),
     memoryMatched,
     antibodyTarget: antibodyLevel > 0 ? settings.antigen : null,
   };

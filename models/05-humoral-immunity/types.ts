@@ -16,6 +16,10 @@ export type HumoralStage =
   | "antibody-binding"
   | "memory";
 
+export type HumoralStopReason =
+  | Exclude<HumoralCondition, "normal">
+  | "bcr-mismatch";
+
 export interface HumoralSettings {
   antigen: AntigenType;
   bCellSpecificity: BCellSpecificity;
@@ -26,7 +30,10 @@ export interface HumoralSettings {
 
 export interface HumoralSnapshot {
   stage: HumoralStage;
+  stopAt: HumoralStage | null;
   blockedAt: HumoralStage | null;
+  stopReason: HumoralStopReason | null;
+  stopReached: boolean;
   helperActive: boolean;
   bCellActive: boolean;
   bCellMatched: boolean;

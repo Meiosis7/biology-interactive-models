@@ -32,13 +32,41 @@ const STAGE_TITLES: Record<HumoralStage, string> = {
 };
 
 const STAGE_COPY: Record<HumoralStage, { what: string; recognition: string; result: string }> = {
-  presentation: { what: "抗原呈递细胞处理抗原并展示抗原信息。", recognition: "辅助性 T 细胞通过呈递的抗原信息进行识别。", result: "为辅助性 T 细胞活化提供必要信息。" },
-  "helper-activation": { what: "辅助性 T 细胞被呈递的抗原信息活化。", recognition: "辅助性 T 细胞识别呈递的抗原信息。", result: "发出帮助匹配 B 细胞活化的信号。" },
-  "b-activation": { what: "能识别当前抗原的 B 细胞获得辅助性 T 细胞帮助。", recognition: "BCR 与当前抗原特异性匹配。", result: "B 细胞进入克隆增殖准备阶段。" },
-  "clonal-expansion": { what: "活化的 B 细胞大量增殖。", recognition: "同一特异性的 B 细胞被选择性扩增。", result: "形成许多具有相同特异性的细胞后代。" },
-  differentiation: { what: "B 细胞后代分化为浆细胞和记忆 B 细胞。", recognition: "后代保留对当前抗原的特异性。", result: "浆细胞准备分泌抗体，记忆 B 细胞形成。" },
-  "antibody-binding": { what: "浆细胞产生特异性抗体并与抗原结合。", recognition: "抗体的结合位点与当前抗原匹配。", result: "抗原被特异性结合并促进后续清除。" },
-  memory: { what: "本次应答留下记忆 B 细胞。", recognition: "记忆 B 细胞仍特异识别原抗原。", result: "同种抗原再次进入时可更快、更强、更持久地应答。" },
+  presentation: {
+    what: "部分病原体可直接接触 B 细胞并提供第一信号；另一些病原体由抗原呈递细胞摄取。",
+    recognition: "树突状细胞、B 细胞等抗原呈递细胞摄取并处理抗原，再将处理后的抗原呈递给辅助性 T 细胞。",
+    result: "辅助性 T 细胞获得活化信息，B 细胞也可通过匹配的 BCR 建立第一信号。",
+  },
+  "helper-activation": {
+    what: "辅助性 T 细胞识别呈递抗原后活化，开始增殖、分化并分泌细胞因子。",
+    recognition: "辅助性 T 细胞读取抗原呈递细胞展示的特异性抗原信息。",
+    result: "活化的辅助性 T 细胞接触 B 细胞并提供第二信号，细胞因子促进后续应答。",
+  },
+  "b-activation": {
+    what: "BCR 与抗原接触建立第一信号，活化的辅助性 T 细胞接触 B 细胞并提供第二信号。",
+    recognition: "BCR 必须与当前抗原特异性匹配，辅助性 T 细胞同时提供协同帮助。",
+    result: "只有同时获得第一、第二信号，B 细胞才会活化并进入增殖、分化阶段。",
+  },
+  "clonal-expansion": {
+    what: "获得两个信号的 B 细胞开始克隆增殖，细胞因子促进这一过程。",
+    recognition: "同一特异性的 B 细胞被选择性扩增，后代保留相同 BCR。",
+    result: "形成许多具有相同抗原特异性的 B 细胞后代。",
+  },
+  differentiation: {
+    what: "B 细胞后代在细胞因子促进下，大部分分化为浆细胞，少部分成为记忆 B 细胞。",
+    recognition: "浆细胞和记忆 B 细胞都保留对当前抗原的特异性。",
+    result: "浆细胞准备分泌抗体，记忆 B 细胞为再次应答保留特异性。",
+  },
+  "antibody-binding": {
+    what: "浆细胞将抗体分泌到体液中，抗体随体液到达相应抗原。",
+    recognition: "抗体的结合位点与当前抗原特异性匹配。",
+    result: "抗体与病原体结合后可抑制病原体增殖或对人体细胞的黏附。",
+  },
+  memory: {
+    what: "本次应答留下少部分记忆 B 细胞。",
+    recognition: "记忆 B 细胞仍特异识别原抗原。",
+    result: "同种抗原再次进入时可更快、更强、更持久地应答。",
+  },
 };
 
 const BLOCKED_COPY: Record<Exclude<HumoralCondition, "normal">, { what: string; recognition: string; result: string }> = {
@@ -58,25 +86,30 @@ export function HumoralImmunityLab() {
   const [speed, setSpeed] = useState<0.5 | 1 | 2>(1);
   const lastFrame = useRef<number | null>(null);
   const snapshot = useMemo(() => getHumoralSnapshot(time, settings), [settings, time]);
-  const recognitionLimited = settings.condition === "normal" && !snapshot.bCellMatched;
+  const mismatchConfigured = snapshot.stopReason === "bcr-mismatch";
+  const mismatchReached = mismatchConfigured && snapshot.stopReached;
+  const interventionReason =
+    snapshot.stopReason !== "bcr-mismatch" ? snapshot.stopReason : null;
   const mismatchCopy = {
     what: "当前 B 细胞存在，但它的受体与抗原特异性不一致。",
     recognition: `BCR ${settings.bCellSpecificity} 只能特异识别抗原 ${settings.bCellSpecificity}。`,
     result: "不能有效活化，不形成浆细胞、特异性抗体或新的记忆 B 细胞。",
   };
-  const copy = recognitionLimited
+  const copy = mismatchReached
     ? mismatchCopy
-    : (BLOCKED_COPY[settings.condition] ?? STAGE_COPY[snapshot.stage]);
-  const explanationTitle = snapshot.blockedAt
-    ? recognitionLimited
-      ? "未匹配"
-      : "过程受阻"
-    : STAGE_TITLES[snapshot.stage];
-  const announcedStage = snapshot.blockedAt
-    ? recognitionLimited
-      ? `未匹配：${STAGE_TITLES[snapshot.stage]}`
-      : `过程受阻：${STAGE_TITLES[snapshot.stage]}`
-    : STAGE_TITLES[snapshot.stage];
+    : interventionReason
+      ? BLOCKED_COPY[interventionReason]
+      : STAGE_COPY[snapshot.stage];
+  const explanationTitle = mismatchReached
+    ? "未匹配"
+    : interventionReason
+      ? "过程受阻"
+      : STAGE_TITLES[snapshot.stage];
+  const announcedStage = mismatchReached
+    ? `未匹配：${STAGE_TITLES[snapshot.stage]}`
+    : interventionReason
+      ? `过程受阻：${STAGE_TITLES[snapshot.stage]}`
+      : STAGE_TITLES[snapshot.stage];
 
   useEffect(() => {
     if (!playing) return;
@@ -102,7 +135,20 @@ export function HumoralImmunityLab() {
   };
   const changeTime = (value: number) => { setPlaying(false); setTime(clamp(value)); };
   const changeSpeed = (next: 0.5 | 1 | 2) => { setPlaying(false); setSpeed(next); };
-  const exposureText = settings.exposure === "secondary" && snapshot.memoryMatched ? "同种抗原二次免疫：记忆匹配" : settings.exposure === "secondary" ? "二次进入但记忆不匹配：按初次反应" : "初次免疫：建立记忆";
+  const stopStageTitle = snapshot.stopAt
+    ? STAGE_TITLES[snapshot.stopAt]
+    : STAGE_TITLES[snapshot.stage];
+  const exposureText = mismatchConfigured
+    ? mismatchReached
+      ? `BCR 未匹配：流程已在 ${stopStageTitle}阶段停止`
+      : `流程将在 ${stopStageTitle}阶段检验 BCR 与抗原是否匹配`
+    : interventionReason
+      ? `实验干预：${CONDITIONS.find(([condition]) => condition === interventionReason)?.[1]}`
+      : settings.exposure === "secondary" && snapshot.memoryMatched
+        ? "同种抗原二次免疫：记忆匹配"
+        : settings.exposure === "secondary"
+          ? "二次进入但记忆不匹配：按初次反应"
+          : "初次免疫：建立记忆";
 
   return (
     <main className="humoral-shell" aria-labelledby="humoral-title">
@@ -124,7 +170,7 @@ export function HumoralImmunityLab() {
           <h2>{explanationTitle}</h2>
           <dl><div><dt>发生了什么</dt><dd>{copy.what}</dd></div><div><dt>为什么能识别</dt><dd>{copy.recognition}</dd></div><div><dt>结果是什么</dt><dd>{copy.result}</dd></div></dl>
         </section>
-        <p className="humoral-live-values" aria-live="polite" aria-atomic="true">当前：浆细胞 {snapshot.plasmaCount}，记忆 B 细胞 {snapshot.memoryCount}，抗体相对量 {snapshot.antibodyLevel}，抗原相对量 {snapshot.antigenLevel}。</p>
+        <p className="humoral-live-values">当前：浆细胞 {snapshot.plasmaCount}，记忆 B 细胞 {snapshot.memoryCount}，抗体相对量 {snapshot.antibodyLevel}，抗原相对量 {snapshot.antigenLevel}。</p>
       </section>
 
       <section className="humoral-controls" aria-label="实验控制台">
