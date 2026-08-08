@@ -4,27 +4,61 @@ import { getHumoralSnapshot } from "../../../models/05-humoral-immunity/simulati
 describe("humoral immunity simulation", () => {
   const normal = {
     antigen: "A",
+    bCellSpecificity: "A",
     exposure: "primary",
+    memorySpecificity: "A",
     condition: "normal",
   } as const;
 
-  it("orders presentation, activation, expansion and antibody release", () => {
-    expect(getHumoralSnapshot(0, normal).stage).toBe("entry");
-    expect(getHumoralSnapshot(2, normal).stage).toBe("presentation");
+  it("orders the seven-stage humoral response", () => {
+    expect(getHumoralSnapshot(0, normal).stage).toBe("presentation");
     expect(getHumoralSnapshot(4, normal).stage).toBe("helper-activation");
     expect(getHumoralSnapshot(6, normal).stage).toBe("b-activation");
     expect(getHumoralSnapshot(8, normal).stage).toBe("clonal-expansion");
     expect(getHumoralSnapshot(10, normal).stage).toBe("differentiation");
-    expect(getHumoralSnapshot(11, normal).stage).toBe("antibody-release");
-    expect(getHumoralSnapshot(14, normal).stage).toBe("clearance");
+    expect(getHumoralSnapshot(12, normal).stage).toBe("antibody-binding");
     expect(getHumoralSnapshot(16, normal).stage).toBe("memory");
+  });
+
+  it("stops an unmatched BCR at B-cell activation", () => {
+    const mismatch = { ...normal, bCellSpecificity: "B" } as const;
+    const snapshot = getHumoralSnapshot(18, mismatch);
+
+    expect(snapshot).toMatchObject({
+      stage: "b-activation",
+      blockedAt: "b-activation",
+      bCellMatched: false,
+      bCellActive: false,
+      plasmaCount: 0,
+      memoryCount: 0,
+      antibodyLevel: 0,
+      antigenLevel: 100,
+      antibodyTarget: null,
+    });
+  });
+
+  it("only grants memory advantage when memory and BCR both match", () => {
+    const matched = {
+      ...normal,
+      exposure: "secondary",
+      memorySpecificity: "A",
+    } as const;
+    const wrongMemory = { ...matched, memorySpecificity: "B" } as const;
+    const wrongBcr = { ...matched, bCellSpecificity: "B" } as const;
+
+    expect(getHumoralSnapshot(10, matched).memoryMatched).toBe(true);
+    expect(getHumoralSnapshot(10, wrongMemory).memoryMatched).toBe(false);
+    expect(getHumoralSnapshot(10, wrongBcr).memoryMatched).toBe(false);
+    expect(getHumoralSnapshot(10, matched).antibodyLevel).toBeGreaterThan(
+      getHumoralSnapshot(10, wrongMemory).antibodyLevel,
+    );
   });
 
   it("makes a matched secondary response faster, stronger, and longer", () => {
     const matchedSecondary = {
       ...normal,
       exposure: "secondary",
-      memoryAntigen: "A",
+      memorySpecificity: "A",
     } as const;
 
     expect(getHumoralSnapshot(6, matchedSecondary).antibodyLevel).toBeGreaterThan(0);
@@ -39,10 +73,11 @@ describe("humoral immunity simulation", () => {
     const secondaryBWithMemoryA = {
       ...normal,
       antigen: "B",
+      bCellSpecificity: "B",
       exposure: "secondary",
-      memoryAntigen: "A",
+      memorySpecificity: "A",
     } as const;
-    const primaryB = { ...normal, antigen: "B" } as const;
+    const primaryB = { ...normal, antigen: "B", bCellSpecificity: "B" } as const;
 
     expect(getHumoralSnapshot(10, secondaryBWithMemoryA).memoryMatched).toBe(false);
     expect(getHumoralSnapshot(10, secondaryBWithMemoryA).antibodyLevel).toBe(
@@ -55,7 +90,11 @@ describe("humoral immunity simulation", () => {
 
   it("releases antibodies specific to the current antigen only", () => {
     const againstA = getHumoralSnapshot(12, normal);
-    const againstB = getHumoralSnapshot(12, { ...normal, antigen: "B" });
+    const againstB = getHumoralSnapshot(12, {
+      ...normal,
+      antigen: "B",
+      bCellSpecificity: "B",
+    });
 
     expect(againstA.antibodyTarget).toBe("A");
     expect(againstB.antibodyTarget).toBe("B");

@@ -1,4 +1,5 @@
 export type AntigenType = "A" | "B";
+export type BCellSpecificity = AntigenType;
 
 export type HumoralCondition =
   | "normal"
@@ -7,20 +8,19 @@ export type HumoralCondition =
   | "b-cell-missing";
 
 export type HumoralStage =
-  | "entry"
   | "presentation"
   | "helper-activation"
   | "b-activation"
   | "clonal-expansion"
   | "differentiation"
-  | "antibody-release"
-  | "clearance"
+  | "antibody-binding"
   | "memory";
 
 export interface HumoralSettings {
   antigen: AntigenType;
+  bCellSpecificity: BCellSpecificity;
   exposure: "primary" | "secondary";
-  memoryAntigen?: AntigenType;
+  memorySpecificity: AntigenType;
   condition: HumoralCondition;
 }
 
@@ -29,6 +29,7 @@ export interface HumoralSnapshot {
   blockedAt: HumoralStage | null;
   helperActive: boolean;
   bCellActive: boolean;
+  bCellMatched: boolean;
   plasmaCount: number;
   memoryCount: number;
   antibodyLevel: number;
