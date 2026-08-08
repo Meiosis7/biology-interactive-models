@@ -1,6 +1,9 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { HumoralImmunityLab } from "../../../models/05-humoral-immunity/HumoralImmunityLab";
+
+const humoralStyles = readFileSync("models/05-humoral-immunity/humoral-immunity.css", "utf8");
 
 describe("HumoralImmunityLab", () => {
   it("shows the aligned seven-stage process", () => {
@@ -10,6 +13,27 @@ describe("HumoralImmunityLab", () => {
     expect(spine.getAllByText(/抗原呈递|辅助性 T 细胞活化|B 细胞活化|克隆增殖|分化|抗体产生与结合|免疫记忆/)).toHaveLength(7);
     expect(screen.queryByText("抗原进入")).not.toBeInTheDocument();
     expect(screen.queryByText("抗体结合并清除抗原")).not.toBeInTheDocument();
+  });
+
+  it("renders the four focused humoral scene regions", () => {
+    render(<HumoralImmunityLab />);
+
+    const scene = screen.getByLabelText("B 细胞与抗原的体液免疫相互作用示意");
+    expect(within(scene).getByText("辅助性 T 细胞")).toBeInTheDocument();
+    expect(within(scene).getByText("匹配 B 细胞")).toBeInTheDocument();
+    expect(within(scene).getByText("克隆与分化")).toBeInTheDocument();
+    expect(within(scene).getByText("抗体—抗原结合")).toBeInTheDocument();
+    expect(within(scene).getByLabelText("B 细胞受体：特异识别抗原 A")).toBeInTheDocument();
+  });
+
+  it("marks an unmatched B-cell step without marking it as experimentally blocked", () => {
+    render(<HumoralImmunityLab />);
+    fireEvent.click(screen.getByRole("button", { name: "BCR B" }));
+    fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "18" } });
+
+    const spine = within(screen.getByLabelText("体液免疫有序流程"));
+    expect(spine.getByText("未匹配")).toBeInTheDocument();
+    expect(spine.queryByText("受阻")).not.toBeInTheDocument();
   });
 
   it("offers independent antigen and BCR controls", () => {
@@ -111,5 +135,15 @@ describe("HumoralImmunityLab", () => {
     fireEvent.change(screen.getByLabelText("教学时间"), { target: { value: "11" } });
     expect(announcer).toHaveTextContent("抗体产生与结合");
     expect(announcer).toHaveAccessibleName("阶段播报：抗体产生与结合");
+  });
+
+  it("uses seven desktop process columns and keeps the process accessible on small screens", () => {
+    expect(humoralStyles).toContain(
+      "grid-template-columns: repeat(7, minmax(78px, 1fr))",
+    );
+    expect(humoralStyles).toMatch(
+      /@media \(max-width: 720px\)[\s\S]*?\.humoral-process-spine\s*\{[\s\S]*?grid-template-columns:\s*1fr;/,
+    );
+    expect(humoralStyles).toContain("@media (prefers-reduced-motion: reduce)");
   });
 });
