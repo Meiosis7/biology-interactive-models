@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const scopedLabStyles = [
+  ["components/action-potential/action-potential.css", ".lab-shell"],
   ["models/03-membrane-potential-curve/membrane-curve.css", ".membrane-shell"],
   ["models/04-meter-deflection/meter-deflection.css", ".meter-shell"],
   ["models/05-humoral-immunity/humoral-immunity.css", ".humoral-shell"],

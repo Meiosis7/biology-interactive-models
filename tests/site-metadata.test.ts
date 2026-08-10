@@ -23,14 +23,16 @@ describe("site metadata and presentation assets", () => {
     expect(socialCard.readUInt32BE(20)).toBe(630);
   });
 
-  it("gives the chart canvas an explicit responsive CSS height", () => {
+  it("keeps the action-potential workspace responsive without chart rules", () => {
     const css = readFileSync(
       "components/action-potential/action-potential.css",
       "utf8",
     );
-    const canvasRule = css.match(/\.chart-card canvas\s*\{([^}]*)\}/)?.[1] ?? "";
 
-    expect(canvasRule).toMatch(/height:\s*clamp\(/);
-    expect(canvasRule).not.toMatch(/min-height:/);
+    expect(css).toMatch(/\.ap-workspace\s*\{[^}]*grid-template-columns:/s);
+    expect(css).toMatch(
+      /@media\s*\(max-width:\s*760px\)[\s\S]*\.ap-workspace\s*\{[^}]*grid-template-columns:\s*1fr/s,
+    );
+    expect(css).not.toMatch(/\.chart-card|canvas/);
   });
 });
