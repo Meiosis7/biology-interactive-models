@@ -15,6 +15,7 @@ export function ActionPotentialLab() {
   const [progress, setProgress] = useState(0);
   const [reducedMotion, setReducedMotion] = useState(false);
   const previousTime = useRef<number | null>(null);
+  const progressRef = useRef(0);
 
   const content = ACTION_POTENTIAL_MODES.find((item) => item.id === mode)!;
   const staticProgress =
@@ -39,11 +40,16 @@ export function ActionPotentialLab() {
     const tick = (now: number) => {
       const before = previousTime.current ?? now;
       previousTime.current = now;
-      setProgress((current) => {
-        const next = current + (now - before) / MODE_DURATION_MS;
-        if (mode === "generation") return Math.min(1, next);
-        return next % 1;
-      });
+      const next = progressRef.current + (now - before) / MODE_DURATION_MS;
+      if (mode === "generation" && next >= 1) {
+        progressRef.current = 1;
+        setProgress(1);
+        setPlaying(false);
+        return;
+      }
+      const nextProgress = mode === "generation" ? next : next % 1;
+      progressRef.current = nextProgress;
+      setProgress(nextProgress);
       frameId = requestAnimationFrame(tick);
     };
     frameId = requestAnimationFrame(tick);
@@ -53,12 +59,9 @@ export function ActionPotentialLab() {
     };
   }, [mode, playing, reducedMotion]);
 
-  useEffect(() => {
-    if (mode === "generation" && progress >= 1) setPlaying(false);
-  }, [mode, progress]);
-
   const restart = () => {
     previousTime.current = null;
+    progressRef.current = 0;
     setProgress(0);
     setPlaying(true);
   };
