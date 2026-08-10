@@ -1,117 +1,72 @@
-import type {
-  ActionPotentialStage,
-  ExperimentSettings,
-  IonFlow,
-  SimulationSnapshot,
-  StimulusIntensity,
-} from "./types";
+import type { ActionPotentialFrame, ActionPotentialMode } from "./types";
 
-const PROPAGATION_SPEED = 0.16;
-export const LOCAL_WAVEFORM_DURATION = 6;
-export const MIN_EXPERIMENT_DURATION = 8;
-
-export function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value));
+export function normalizeProgress(progress: number) {
+  if (!Number.isFinite(progress)) return 0;
+  return Math.max(0, Math.min(1, progress));
 }
 
-export function getArrivalTime(
-  stimulusPosition: number,
-  electrodePosition: number,
-) {
-  return 1 + Math.abs(electrodePosition - stimulusPosition) / PROPAGATION_SPEED;
-}
+export function getActionPotentialFrame(
+  mode: ActionPotentialMode,
+  progress: number,
+): ActionPotentialFrame {
+  const normalized = normalizeProgress(progress);
 
-export function getExperimentDuration(settings: ExperimentSettings) {
-  if (settings.intensity === "weak") return MIN_EXPERIMENT_DURATION;
-  const requiredDuration =
-    getArrivalTime(settings.stimulusPosition, settings.electrodePosition) +
-    LOCAL_WAVEFORM_DURATION;
-  return Math.max(
-    MIN_EXPERIMENT_DURATION,
-    Math.ceil(requiredDuration * 2) / 2,
-  );
-}
-
-export function getMembranePotential(
-  localTime: number,
-  intensity: StimulusIntensity,
-) {
-  if (localTime < 0) return -70;
-  if (intensity === "weak") {
-    if (localTime <= 1) return -70 + 12 * Math.sin(Math.PI * localTime);
-    return -70;
+  if (mode === "resting") {
+    return {
+      phase: "resting",
+      ionMotion: "potassium-out",
+      polarity: "outside-positive",
+      openChannel: "potassium",
+      stimulusVisible: false,
+      excitedCenters: [],
+      localCurrentVisible: false,
+    };
   }
-  if (localTime < 1) return -70;
-  if (localTime < 2) return -70 + 15 * (localTime - 1);
-  if (localTime < 3) return -55 + 85 * (localTime - 2);
-  if (localTime < 3.5) return 30;
-  if (localTime < 5) return 30 - (100 / 1.5) * (localTime - 3.5);
-  if (localTime < 6) return -70 - 8 * Math.sin(Math.PI * (localTime - 5));
-  return -70;
-}
 
-function getStage(
-  localTime: number,
-  intensity: StimulusIntensity,
-): ActionPotentialStage {
-  if (localTime < 0) return "resting";
-  if (intensity === "weak") return localTime <= 1 ? "local" : "resting";
-  if (localTime < 1) return "threshold";
-  if (localTime < 3) return "depolarization";
-  if (localTime < 3.5) return "peak";
-  if (localTime < 5) return "repolarization";
-  if (localTime < 6) return "recovery";
-  return "resting";
-}
-
-function getIonFlow(stage: ActionPotentialStage): IonFlow {
-  if (
-    stage === "local" ||
-    stage === "threshold" ||
-    stage === "depolarization"
-  ) {
-    return "sodium-in";
+  if (mode === "conduction") {
+    const distance = normalized * 0.38;
+    return {
+      phase: "conducting",
+      ionMotion: "none",
+      polarity: "inside-positive",
+      openChannel: "none",
+      stimulusVisible: true,
+      excitedCenters: [0.5 - distance, 0.5 + distance],
+      localCurrentVisible: true,
+    };
   }
-  if (stage === "repolarization" || stage === "recovery") {
-    return "potassium-out";
+
+  if (normalized < 0.14) {
+    return {
+      phase: "stimulus",
+      ionMotion: "none",
+      polarity: "outside-positive",
+      openChannel: "none",
+      stimulusVisible: true,
+      excitedCenters: [],
+      localCurrentVisible: false,
+    };
   }
-  return "none";
-}
 
-function getWavefronts(time: number, stimulusPosition: number) {
-  if (time < 1) return [];
-  const distance = (time - 1) * PROPAGATION_SPEED;
-  const left = clamp(stimulusPosition - distance, 0, 1);
-  const right = clamp(stimulusPosition + distance, 0, 1);
-  return [left, right];
-}
-
-export function getSimulationSnapshot(
-  time: number,
-  settings: ExperimentSettings,
-): SimulationSnapshot {
-  const propagating = settings.intensity !== "weak" && time >= 1;
-  const arrivalTime =
-    settings.intensity === "weak"
-      ? 0
-      : getArrivalTime(settings.stimulusPosition, settings.electrodePosition);
-  const recordsLocalPotential =
-    Math.abs(settings.electrodePosition - settings.stimulusPosition) <= 0.08;
-  const localTime =
-    settings.intensity === "weak"
-      ? recordsLocalPotential
-        ? time
-        : -1
-      : time - arrivalTime;
-  const stage = getStage(localTime, settings.intensity);
+  if (normalized < 0.66) {
+    return {
+      phase: "sodium-in",
+      ionMotion: "sodium-in",
+      polarity: "outside-positive",
+      openChannel: "sodium",
+      stimulusVisible: true,
+      excitedCenters: [],
+      localCurrentVisible: false,
+    };
+  }
 
   return {
-    stage,
-    ionFlow: getIonFlow(stage),
-    membranePotential: getMembranePotential(localTime, settings.intensity),
-    propagating,
-    wavefronts: propagating ? getWavefronts(time, settings.stimulusPosition) : [],
-    arrivalTime,
-    localTime,
+    phase: "excited",
+    ionMotion: "none",
+    polarity: "inside-positive",
+    openChannel: "sodium",
+    stimulusVisible: true,
+    excitedCenters: [0.5],
+    localCurrentVisible: false,
   };
 }
