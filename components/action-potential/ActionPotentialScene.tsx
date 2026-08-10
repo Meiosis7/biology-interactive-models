@@ -1,17 +1,10 @@
 import type { ActionPotentialFrame, ActionPotentialMode } from "./types";
 
-const ION_POSITIONS = [12, 28, 44, 60, 76, 90];
-
+const CHANNEL_POSITIONS = [16, 34, 50, 66, 84];
 const MODE_LABELS: Record<ActionPotentialMode, string> = {
   resting: "静息电位",
   generation: "动作电位产生",
   conduction: "动作电位传导",
-};
-
-const MODE_CAPTIONS: Record<ActionPotentialMode, string> = {
-  resting: "K⁺外流，形成外正内负",
-  generation: "Na⁺先内流，随后K⁺外流",
-  conduction: "刺激点两侧的相邻部位依次兴奋",
 };
 
 interface ActionPotentialSceneProps {
@@ -25,90 +18,110 @@ export function ActionPotentialScene({
   frame,
   playing,
 }: ActionPotentialSceneProps) {
-  const outsideSign =
-    mode === "conduction" || frame.polarity === "outside-positive" ? "+" : "−";
-  const insideSign =
-    mode === "conduction" || frame.polarity === "outside-positive" ? "−" : "+";
+  const outsideSign = "+";
+  const insideSign = "−";
 
   return (
     <section
       className={`ap-scene ap-scene--${mode}`}
       data-phase={frame.phase}
-      data-ion-motion={frame.ionMotion}
       data-playing={playing}
-      data-polarity={frame.polarity}
+      data-ion-motion={frame.ionMotion}
+      data-open-channel={frame.openChannel}
       aria-label={`${MODE_LABELS[mode]}动态示意`}
     >
-      <div className="ap-polarity ap-polarity--outside">
-        <span>膜外</span>
-        <b>{outsideSign}</b>
-        <b>{outsideSign}</b>
-        <b>{outsideSign}</b>
+      <div className="ap-diagram-heading">
+        <span>{MODE_LABELS[mode]}</span>
+        <b>
+          {mode === "resting"
+            ? "外正内负"
+            : mode === "generation"
+              ? "局部外负内正"
+              : "双向传导"}
+        </b>
       </div>
 
-      <div className="ap-membrane">
-        {ION_POSITIONS.map((left, index) => (
-          <i
-            key={`channel-${left}`}
-            className={`ap-channel ${index % 2 ? "ap-channel--k" : "ap-channel--na"}`}
-            style={{ left: `${left}%` }}
-          />
-        ))}
-        {mode === "conduction" && (
-          <i className="ap-stimulus-point" aria-label="刺激点" />
-        )}
-        {mode === "conduction" &&
-          frame.excitedCenters.map((center, index) => (
+      <div className="ap-fiber-stage">
+        <div
+          className="ap-charge-row ap-charge-row--outside"
+          aria-label={`膜外${outsideSign === "+" ? "正" : "负"}`}
+        >
+          <span>膜外</span>
+          {[0, 1, 2, 3, 4, 5, 6].map((item) => (
+            <b key={item}>{outsideSign}</b>
+          ))}
+        </div>
+
+        <div className="ap-fiber" data-testid="shared-fiber">
+          <div className="ap-fiber-cap" aria-hidden="true" />
+          <div className="ap-fiber-lumen" aria-hidden="true" />
+          {CHANNEL_POSITIONS.map((left, index) => (
             <i
-              key={index}
+              key={left}
+              className={`ap-channel ${index % 2 ? "ap-channel--k" : "ap-channel--na"}`}
+              data-open={frame.openChannel === (index % 2 ? "potassium" : "sodium")}
+              style={{ left: `${left}%` }}
+            />
+          ))}
+          {frame.stimulusVisible && (
+            <i className="ap-stimulus" aria-label="刺激点">
+              <span>刺激</span>
+            </i>
+          )}
+          {frame.excitedCenters.map((center, index) => (
+            <i
+              key={`${mode}-${index}`}
               data-testid="excited-zone"
-              aria-label="兴奋区外负内正"
               className="ap-excited-zone"
+              aria-label="兴奋区外负内正"
               style={{ left: `${center * 100}%` }}
             >
-              <span>−</span>
-              <span>+</span>
+              <span className="ap-excited-sign ap-excited-sign--outside">−</span>
+              <span className="ap-excited-sign ap-excited-sign--inside">+</span>
             </i>
           ))}
-      </div>
-
-      <div className="ap-polarity ap-polarity--inside">
-        <span>膜内</span>
-        <b>{insideSign}</b>
-        <b>{insideSign}</b>
-        <b>{insideSign}</b>
-      </div>
-
-      <div className="ap-ion-layer" aria-hidden="true">
-        {ION_POSITIONS.slice(0, 4).map((left) => (
-          <i
-            key={`na-${left}`}
-            className="ap-ion ap-ion--na"
-            style={{ left: `${left}%` }}
-          >
-            Na⁺
-          </i>
-        ))}
-        {ION_POSITIONS.slice(2).map((left) => (
-          <i
-            key={`k-${left}`}
-            className="ap-ion ap-ion--k"
-            style={{ left: `${left}%` }}
-          >
-            K⁺
-          </i>
-        ))}
-      </div>
-
-      {frame.localCurrentVisible && (
-        <div className="ap-local-current" aria-label="局部电流方向">
-          <span>←</span>
-          <b>局部电流</b>
-          <span>→</span>
         </div>
-      )}
 
-      <p className="ap-scene-caption">{MODE_CAPTIONS[mode]}</p>
+        <div
+          className="ap-charge-row ap-charge-row--inside"
+          aria-label={`膜内${insideSign === "+" ? "正" : "负"}`}
+        >
+          <span>膜内</span>
+          {[0, 1, 2, 3, 4, 5, 6].map((item) => (
+            <b key={item}>{insideSign}</b>
+          ))}
+        </div>
+
+        {mode === "resting" && (
+          <div className="ap-ion-flow ap-ion-flow--k" aria-label="K⁺外流">
+            <i>K⁺</i>
+            <span>↑</span>
+            <b>K⁺外流</b>
+          </div>
+        )}
+        {mode === "generation" && frame.phase !== "stimulus" && (
+          <div className="ap-ion-flow ap-ion-flow--na" aria-label="Na⁺内流">
+            <i>Na⁺</i>
+            <span>↓</span>
+            <b>Na⁺内流</b>
+          </div>
+        )}
+        {frame.localCurrentVisible && (
+          <div className="ap-local-current" aria-label="局部电流方向">
+            <span>←</span>
+            <b>局部电流</b>
+            <span>→</span>
+          </div>
+        )}
+        {mode === "conduction" && (
+          <div className="ap-region-labels">
+            <span>未兴奋区</span>
+            <b>兴奋区</b>
+            <span>未兴奋区</span>
+          </div>
+        )}
+        {mode === "conduction" && <p className="ap-bidirectional">← 双向传导 →</p>}
+      </div>
     </section>
   );
 }
