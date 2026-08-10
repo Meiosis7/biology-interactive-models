@@ -17,6 +17,9 @@ export function ActionPotentialScene({
   frame,
   playing,
 }: ActionPotentialSceneProps) {
+  const conductionComplete =
+    mode === "conduction" && frame.phase === "conducted";
+
   return (
     <section
       className={`ap-scene ap-scene--${mode}`}
@@ -128,9 +131,15 @@ export function ActionPotentialScene({
 
         {mode === "conduction" && (
           <div className="ap-region-labels">
-            <span>未兴奋区</span>
-            <b>兴奋区</b>
-            <span>未兴奋区</span>
+            {conductionComplete ? (
+              <b>全部膜段已兴奋</b>
+            ) : (
+              <>
+                <span>未兴奋区</span>
+                <b>兴奋区</b>
+                <span>未兴奋区</span>
+              </>
+            )}
           </div>
         )}
         {mode === "conduction" && (

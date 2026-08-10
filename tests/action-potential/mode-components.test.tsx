@@ -174,6 +174,22 @@ describe("action-potential shared-fiber components", () => {
     expect(screen.queryByText(firstFrame.instruction)).not.toBeInTheDocument();
   });
 
+  it("shows the completed conduction state without unexcited regions", () => {
+    const { container } = render(
+      <ActionPotentialScene
+        mode="conduction"
+        frame={getActionPotentialFrame("conduction", 1)}
+        playing={false}
+      />,
+    );
+
+    expect(
+      container.querySelectorAll('[data-segment-polarity="excited"]'),
+    ).toHaveLength(7);
+    expect(screen.queryAllByText("未兴奋区")).toHaveLength(0);
+    expect(screen.getByText("全部膜段已兴奋")).toBeInTheDocument();
+  });
+
   it("renders the exact generation knowledge facts without recovery", () => {
     render(
       <ActionPotentialKnowledgeCard content={ACTION_POTENTIAL_MODES[1]} />,
