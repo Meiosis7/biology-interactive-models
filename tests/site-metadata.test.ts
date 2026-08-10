@@ -23,12 +23,14 @@ describe("site metadata and presentation assets", () => {
     expect(socialCard.readUInt32BE(20)).toBe(630);
   });
 
-  it("keeps the action-potential workspace responsive without chart rules", () => {
+  it("uses one responsive textbook-style shared-fiber diagram", () => {
     const css = readFileSync(
       "components/action-potential/action-potential.css",
       "utf8",
     );
 
+    expect(css).toMatch(/--ap-paper:\s*#f6f3eb/);
+    expect(css).toMatch(/\.ap-fiber\s*\{[^}]*border-radius:\s*999px/s);
     expect(css).toMatch(/\.ap-workspace\s*\{[^}]*grid-template-columns:/s);
     expect(css).toMatch(
       /@media\s*\(max-width:\s*760px\)[\s\S]*\.ap-workspace\s*\{[^}]*grid-template-columns:\s*1fr/s,
