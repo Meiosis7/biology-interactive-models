@@ -5,6 +5,11 @@ import { ActionPotentialLab } from "../../components/action-potential/ActionPote
 describe("ActionPotentialLab", () => {
   let callbacks = new Map<number, FrameRequestCallback>();
   let id = 0;
+  const runNextFrame = (now: number) => {
+    const [frameId, callback] = callbacks.entries().next().value!;
+    callbacks.delete(frameId);
+    act(() => callback(now));
+  };
 
   beforeEach(() => {
     callbacks = new Map();
@@ -53,25 +58,45 @@ describe("ActionPotentialLab", () => {
     expect(screen.getByLabelText("局部电流方向")).toBeInTheDocument();
   });
 
+  it("stops generation at the excited frame without returning to rest", () => {
+    render(<ActionPotentialLab />);
+    fireEvent.click(screen.getByRole("button", { name: /动作电位产生/ }));
+    runNextFrame(0);
+    runNextFrame(7000);
+    const scene = screen.getByLabelText("动作电位产生动态示意");
+    expect(scene).toHaveAttribute("data-phase", "excited");
+    expect(screen.getByRole("button", { name: "播放" })).toBeInTheDocument();
+    expect(screen.getByLabelText("当前模式知识卡")).not.toHaveTextContent(/K⁺|恢复/);
+    expect(screen.queryByLabelText("K⁺外流")).not.toBeInTheDocument();
+  });
+
+  it("restarts a completed generation animation from the stimulus", () => {
+    render(<ActionPotentialLab />);
+    fireEvent.click(screen.getByRole("button", { name: /动作电位产生/ }));
+    runNextFrame(0);
+    runNextFrame(7000);
+    fireEvent.click(screen.getByRole("button", { name: "播放" }));
+    expect(screen.getByLabelText("动作电位产生动态示意")).toHaveAttribute(
+      "data-phase",
+      "stimulus",
+    );
+    expect(screen.getByRole("button", { name: "暂停" })).toBeInTheDocument();
+  });
+
   it("resets generation progress when the user returns to that mode", () => {
     render(<ActionPotentialLab />);
     fireEvent.click(screen.getByRole("button", { name: /动作电位产生/ }));
-    const runNextFrame = (now: number) => {
-      const [frameId, callback] = callbacks.entries().next().value!;
-      callbacks.delete(frameId);
-      act(() => callback(now));
-    };
     runNextFrame(0);
     runNextFrame(3000);
     expect(screen.getByLabelText("动作电位产生动态示意")).toHaveAttribute(
       "data-phase",
-      "potassium-out",
+      "sodium-in",
     );
     fireEvent.click(screen.getByRole("button", { name: /静息电位/ }));
     fireEvent.click(screen.getByRole("button", { name: /动作电位产生/ }));
     expect(screen.getByLabelText("动作电位产生动态示意")).toHaveAttribute(
       "data-phase",
-      "sodium-in",
+      "stimulus",
     );
   });
 

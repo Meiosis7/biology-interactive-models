@@ -18,7 +18,7 @@ export function ActionPotentialLab() {
 
   const content = ACTION_POTENTIAL_MODES.find((item) => item.id === mode)!;
   const staticProgress =
-    mode === "generation" ? 0.38 : mode === "conduction" ? 0.55 : 0;
+    mode === "generation" ? 1 : mode === "conduction" ? 0.55 : 0;
   const displayedProgress = reducedMotion ? staticProgress : progress;
   const frame = useMemo(
     () => getActionPotentialFrame(mode, displayedProgress),
@@ -39,9 +39,11 @@ export function ActionPotentialLab() {
     const tick = (now: number) => {
       const before = previousTime.current ?? now;
       previousTime.current = now;
-      setProgress(
-        (current) => (current + (now - before) / MODE_DURATION_MS) % 1,
-      );
+      setProgress((current) => {
+        const next = current + (now - before) / MODE_DURATION_MS;
+        if (mode === "generation") return Math.min(1, next);
+        return next % 1;
+      });
       frameId = requestAnimationFrame(tick);
     };
     frameId = requestAnimationFrame(tick);
@@ -49,7 +51,11 @@ export function ActionPotentialLab() {
       cancelAnimationFrame(frameId);
       previousTime.current = null;
     };
-  }, [playing, reducedMotion]);
+  }, [mode, playing, reducedMotion]);
+
+  useEffect(() => {
+    if (mode === "generation" && progress >= 1) setPlaying(false);
+  }, [mode, progress]);
 
   const restart = () => {
     previousTime.current = null;
@@ -60,6 +66,14 @@ export function ActionPotentialLab() {
   const changeMode = (nextMode: ActionPotentialMode) => {
     setMode(nextMode);
     restart();
+  };
+
+  const togglePlaying = () => {
+    if (mode === "generation" && progress >= 1) {
+      restart();
+      return;
+    }
+    setPlaying((current) => !current);
   };
 
   const effectivePlaying = playing && !reducedMotion;
@@ -82,7 +96,7 @@ export function ActionPotentialLab() {
       </section>
       <LabControls
         playing={effectivePlaying}
-        onTogglePlaying={() => setPlaying((current) => !current)}
+        onTogglePlaying={togglePlaying}
         onReplay={restart}
       />
     </main>
