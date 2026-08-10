@@ -1,160 +1,47 @@
 import { describe, expect, it } from "vitest";
-import {
-  getArrivalTime,
-  getExperimentDuration,
-  getMembranePotential,
-  getSimulationSnapshot,
-} from "../../components/action-potential/simulation";
-import type { ExperimentSettings } from "../../components/action-potential/types";
+import { ACTION_POTENTIAL_MODES } from "../../components/action-potential/modeData";
+import { getActionPotentialFrame } from "../../components/action-potential/simulation";
 
-describe("action-potential simulation", () => {
-  it("keeps subthreshold stimulation local", () => {
-    const result = getSimulationSnapshot(0.5, {
-      intensity: "weak",
-      stimulusPosition: 0.5,
-      electrodePosition: 0.52,
+describe("action-potential three-mode frames", () => {
+  it("defines exactly the three requested modes", () => {
+    expect(ACTION_POTENTIAL_MODES.map((item) => item.label)).toEqual([
+      "静息电位",
+      "动作电位产生",
+      "动作电位传导",
+    ]);
+  });
+
+  it("keeps resting mode outside-positive with potassium moving out", () => {
+    expect(getActionPotentialFrame("resting", 0.4)).toMatchObject({
+      phase: "resting",
+      polarity: "outside-positive",
+      ionMotion: "potassium-out",
     });
-    expect(result.propagating).toBe(false);
-    expect(result.stage).toBe("local");
-    expect(result.membranePotential).toBeLessThan(-55);
   });
 
-  it("does not record a weak local potential at a distant electrode", () => {
-    const result = getSimulationSnapshot(0.5, {
-      intensity: "weak",
-      stimulusPosition: 0.5,
-      electrodePosition: 0.8,
+  it.each([
+    [0.12, "sodium-in", "outside-positive"],
+    [0.38, "polarity-reversed", "inside-positive"],
+    [0.68, "potassium-out", "inside-positive"],
+    [0.92, "recovered", "outside-positive"],
+  ] as const)("maps generation progress %s to %s", (progress, phase, polarity) => {
+    expect(getActionPotentialFrame("generation", progress)).toMatchObject({
+      phase,
+      polarity,
     });
-    expect(result.stage).toBe("resting");
-    expect(result.membranePotential).toBe(-70);
   });
 
-  it("gives threshold and strong stimuli the same action-potential peak", () => {
-    const threshold = getMembranePotential(3, "threshold");
-    const strong = getMembranePotential(3, "strong");
-    expect(threshold).toBe(30);
-    expect(strong).toBe(30);
+  it("moves two excited regions away from the stimulus point", () => {
+    const early = getActionPotentialFrame("conduction", 0.2).excitedCenters;
+    const late = getActionPotentialFrame("conduction", 0.8).excitedCenters;
+    expect(late[0]).toBeLessThan(early[0]);
+    expect(late[1]).toBeGreaterThan(early[1]);
   });
 
-  it("delays the recording when the electrode is farther away", () => {
-    expect(getArrivalTime(0.1, 0.8)).toBeGreaterThan(
-      getArrivalTime(0.1, 0.3),
+  it("never exposes voltage values", () => {
+    expect(JSON.stringify(ACTION_POTENTIAL_MODES)).not.toMatch(/mV|−70|-70/);
+    expect(JSON.stringify(getActionPotentialFrame("generation", 0.5))).not.toMatch(
+      /voltage|mV/,
     );
-  });
-
-  it("keeps the electrode at rest until the wavefront arrives", () => {
-    const result = getSimulationSnapshot(2.5, {
-      intensity: "threshold",
-      stimulusPosition: 0.5,
-      electrodePosition: 0.8,
-    });
-    expect(result.stage).toBe("resting");
-    expect(result.membranePotential).toBe(-70);
-  });
-
-  it("reports sodium influx during depolarization", () => {
-    const result = getSimulationSnapshot(2.4, {
-      intensity: "threshold",
-      stimulusPosition: 0.5,
-      electrodePosition: 0.5,
-    });
-    expect(result.stage).toBe("depolarization");
-    expect(result.ionFlow).toBe("sodium-in");
-  });
-
-  it("reports sodium influx for local and threshold sodium-channel opening", () => {
-    const local = getSimulationSnapshot(0.5, {
-      intensity: "weak",
-      stimulusPosition: 0.5,
-      electrodePosition: 0.5,
-    });
-    const threshold = getSimulationSnapshot(1.5, {
-      intensity: "threshold",
-      stimulusPosition: 0.5,
-      electrodePosition: 0.5,
-    });
-
-    expect(local.stage).toBe("local");
-    expect(local.ionFlow).toBe("sodium-in");
-    expect(threshold.stage).toBe("threshold");
-    expect(threshold.ionFlow).toBe("sodium-in");
-  });
-
-  it("reports potassium efflux during repolarization", () => {
-    const result = getSimulationSnapshot(5.2, {
-      intensity: "threshold",
-      stimulusPosition: 0.5,
-      electrodePosition: 0.5,
-    });
-    expect(result.stage).toBe("repolarization");
-    expect(result.ionFlow).toBe("potassium-out");
-  });
-
-  it("propagates in both directions from a middle stimulus", () => {
-    const result = getSimulationSnapshot(5, {
-      intensity: "threshold",
-      stimulusPosition: 0.5,
-      electrodePosition: 0.7,
-    });
-    expect(result.wavefronts).toHaveLength(2);
-    expect(result.wavefronts[0]).toBeLessThan(0.5);
-    expect(result.wavefronts[1]).toBeGreaterThan(0.5);
-  });
-
-  it("keeps both wavefronts from a left-side stimulus while the shorter path clamps", () => {
-    const result = getSimulationSnapshot(2, {
-      intensity: "threshold",
-      stimulusPosition: 0.1,
-      electrodePosition: 0.5,
-    });
-    expect(result.wavefronts).toHaveLength(2);
-    expect(result.wavefronts[0]).toBe(0);
-    expect(result.wavefronts[1]).toBeGreaterThan(0.1);
-  });
-
-  it("keeps both wavefronts from a right-side stimulus while the shorter path clamps", () => {
-    const result = getSimulationSnapshot(2, {
-      intensity: "threshold",
-      stimulusPosition: 0.9,
-      electrodePosition: 0.5,
-    });
-    expect(result.wavefronts).toHaveLength(2);
-    expect(result.wavefronts[0]).toBeLessThan(0.9);
-    expect(result.wavefronts[1]).toBe(1);
-  });
-
-  it("derives enough experiment time for a distant recording to recover", () => {
-    const settings: ExperimentSettings = {
-      intensity: "threshold",
-      stimulusPosition: 0.1,
-      electrodePosition: 1,
-    };
-    const arrivalTime = getArrivalTime(
-      settings.stimulusPosition,
-      settings.electrodePosition,
-    );
-    const duration = getExperimentDuration(settings);
-
-    expect(duration).toBeGreaterThanOrEqual(arrivalTime + 6);
-    expect(getSimulationSnapshot(arrivalTime + 4, settings).stage).toBe("repolarization");
-    expect(getSimulationSnapshot(arrivalTime + 5.5, settings).stage).toBe("recovery");
-    expect(arrivalTime + 5.5).toBeLessThan(duration);
-    expect(getSimulationSnapshot(duration, settings).stage).toBe("resting");
-  });
-
-  it("uses a sensible minimum duration for weak and nearby recordings", () => {
-    const weakDuration = getExperimentDuration({
-      intensity: "weak",
-      stimulusPosition: 0.5,
-      electrodePosition: 0.5,
-    });
-    const nearDuration = getExperimentDuration({
-      intensity: "threshold",
-      stimulusPosition: 0.5,
-      electrodePosition: 0.5,
-    });
-
-    expect(weakDuration).toBeGreaterThanOrEqual(7);
-    expect(nearDuration).toBe(weakDuration);
   });
 });

@@ -1,26 +1,32 @@
-export type StimulusIntensity = "weak" | "threshold" | "strong";
-export type ActionPotentialStage =
-  | "resting"
-  | "local"
-  | "threshold"
-  | "depolarization"
-  | "peak"
-  | "repolarization"
-  | "recovery";
-export type IonFlow = "none" | "sodium-in" | "potassium-out";
+export type ActionPotentialMode = "resting" | "generation" | "conduction";
 
-export interface ExperimentSettings {
-  intensity: StimulusIntensity;
-  stimulusPosition: number;
-  electrodePosition: number;
+export type ActionPotentialPhase =
+  | "resting"
+  | "sodium-in"
+  | "polarity-reversed"
+  | "potassium-out"
+  | "recovered"
+  | "conducting";
+
+export type IonMotion = "potassium-out" | "sodium-in" | "none";
+export type MembranePolarity = "outside-positive" | "inside-positive";
+
+export interface ActionPotentialFrame {
+  phase: ActionPotentialPhase;
+  ionMotion: IonMotion;
+  polarity: MembranePolarity;
+  excitedCenters: readonly [number, number];
+  localCurrentVisible: boolean;
 }
 
-export interface SimulationSnapshot {
-  stage: ActionPotentialStage;
-  ionFlow: IonFlow;
-  membranePotential: number;
-  propagating: boolean;
-  wavefronts: number[];
-  arrivalTime: number;
-  localTime: number;
+export interface ModeContent {
+  id: ActionPotentialMode;
+  label: string;
+  title: string;
+  summary: string;
+  facts: readonly [
+    { label: string; value: string },
+    { label: string; value: string },
+    { label: string; value: string },
+  ];
 }
