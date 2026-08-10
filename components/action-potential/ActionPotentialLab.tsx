@@ -16,10 +16,11 @@ export function ActionPotentialLab() {
   const [reducedMotion, setReducedMotion] = useState(false);
   const previousTime = useRef<number | null>(null);
   const progressRef = useRef(0);
+  const isOneShotMode = mode === "generation" || mode === "conduction";
 
   const content = ACTION_POTENTIAL_MODES.find((item) => item.id === mode)!;
   const staticProgress =
-    mode === "generation" ? 1 : mode === "conduction" ? 0.55 : 0;
+    mode === "generation" ? 1 : mode === "conduction" ? 0.3 : 0;
   const displayedProgress = reducedMotion ? staticProgress : progress;
   const frame = useMemo(
     () => getActionPotentialFrame(mode, displayedProgress),
@@ -41,13 +42,13 @@ export function ActionPotentialLab() {
       const before = previousTime.current ?? now;
       previousTime.current = now;
       const next = progressRef.current + (now - before) / MODE_DURATION_MS;
-      if (mode === "generation" && next >= 1) {
+      if (isOneShotMode && next >= 1) {
         progressRef.current = 1;
         setProgress(1);
         setPlaying(false);
         return;
       }
-      const nextProgress = mode === "generation" ? next : next % 1;
+      const nextProgress = mode === "resting" ? next % 1 : next;
       progressRef.current = nextProgress;
       setProgress(nextProgress);
       frameId = requestAnimationFrame(tick);
@@ -57,7 +58,7 @@ export function ActionPotentialLab() {
       cancelAnimationFrame(frameId);
       previousTime.current = null;
     };
-  }, [mode, playing, reducedMotion]);
+  }, [isOneShotMode, mode, playing, reducedMotion]);
 
   const restart = () => {
     previousTime.current = null;
@@ -72,7 +73,7 @@ export function ActionPotentialLab() {
   };
 
   const togglePlaying = () => {
-    if (mode === "generation" && progress >= 1) {
+    if (isOneShotMode && progress >= 1) {
       restart();
       return;
     }
