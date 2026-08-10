@@ -275,12 +275,19 @@
 .ap-ion-flow {
   position: absolute;
   z-index: 8;
-  left: 49%;
-  top: 29%;
+  top: -67px;
   display: grid;
   place-items: center;
   color: var(--ap-red);
   transform: translateX(-50%);
+}
+
+.ap-ion-flow--k {
+  left: 34%;
+}
+
+.ap-ion-flow--na {
+  left: 50%;
 }
 
 .ap-ion-flow i {
@@ -441,6 +448,11 @@
   font-weight: 850;
 }
 
+.ap-control:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 @keyframes ap-na-in {
   from {
     transform: translate(-50%, -34px);
@@ -503,6 +515,10 @@
   .ap-fiber-cap {
     width: 43px;
     height: 72px;
+  }
+
+  .ap-ion-flow {
+    top: -60px;
   }
 
   .ap-charge-row {

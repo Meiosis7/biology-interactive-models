@@ -1,11 +1,13 @@
 interface LabControlsProps {
   playing: boolean;
+  playbackDisabled?: boolean;
   onTogglePlaying: () => void;
   onReplay: () => void;
 }
 
 export function LabControls({
   playing,
+  playbackDisabled = false,
   onTogglePlaying,
   onReplay,
 }: LabControlsProps) {
@@ -14,11 +16,17 @@ export function LabControls({
       <button
         type="button"
         className="ap-control ap-control--primary"
+        disabled={playbackDisabled}
         onClick={onTogglePlaying}
       >
         {playing ? "暂停" : "播放"}
       </button>
-      <button type="button" className="ap-control" onClick={onReplay}>
+      <button
+        type="button"
+        className="ap-control"
+        disabled={playbackDisabled}
+        onClick={onReplay}
+      >
         重新播放
       </button>
       <p>离子、通道和传导方向均为教学示意。</p>

@@ -99,6 +99,7 @@ export function ActionPotentialLab() {
       </section>
       <LabControls
         playing={effectivePlaying}
+        playbackDisabled={reducedMotion}
         onTogglePlaying={togglePlaying}
         onReplay={restart}
       />

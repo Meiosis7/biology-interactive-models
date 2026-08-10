@@ -139,7 +139,16 @@ describe("ActionPotentialLab", () => {
       "data-playing",
       "false",
     );
+    const playButton = screen.getByRole("button", { name: "播放" });
+    const replayButton = screen.getByRole("button", { name: "重新播放" });
+    expect(playButton).toBeDisabled();
+    expect(replayButton).toBeDisabled();
+    fireEvent.click(playButton);
+    fireEvent.click(replayButton);
+    expect(callbacks.size).toBe(0);
     fireEvent.click(screen.getByRole("button", { name: /动作电位传导/ }));
     expect(screen.getAllByTestId("excited-zone")).toHaveLength(2);
+    expect(screen.getByRole("button", { name: "播放" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "重新播放" })).toBeDisabled();
   });
 });

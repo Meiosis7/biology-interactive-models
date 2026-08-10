@@ -44,6 +44,56 @@ describe("action-potential shared-fiber components", () => {
     expect(screen.queryByText(/恢复/)).not.toBeInTheDocument();
   });
 
+  it("opens only the central sodium channel during generation", () => {
+    const { container } = render(
+      <ActionPotentialScene
+        mode="generation"
+        frame={getActionPotentialFrame("generation", 0.4)}
+        playing
+      />,
+    );
+
+    const openSodiumChannels = container.querySelectorAll(
+      '[data-channel-species="sodium"][data-open="true"]',
+    );
+    expect(openSodiumChannels).toHaveLength(1);
+    expect(openSodiumChannels[0]).toHaveAttribute("data-channel-position", "50");
+  });
+
+  it("links resting potassium flow to the potassium channel at 34%", () => {
+    const { container } = render(
+      <ActionPotentialScene
+        mode="resting"
+        frame={getActionPotentialFrame("resting", 0.2)}
+        playing
+      />,
+    );
+
+    const channel = container.querySelector(
+      '[data-channel-species="potassium"][data-channel-position="34"]',
+    );
+    expect(channel).toHaveAttribute("data-channel-id", "potassium-34");
+    expect(screen.getByLabelText("K⁺外流")).toHaveAttribute(
+      "data-channel-target",
+      "potassium-34",
+    );
+  });
+
+  it("derives excited-zone signs from frame polarity without changing baseline charges", () => {
+    const frame = {
+      ...getActionPotentialFrame("generation", 1),
+      polarity: "outside-positive" as const,
+    };
+    render(
+      <ActionPotentialScene mode="generation" frame={frame} playing={false} />,
+    );
+
+    const excitedZone = screen.getByTestId("excited-zone");
+    expect(excitedZone).toHaveTextContent("+−");
+    expect(screen.getByLabelText("膜外正")).toBeInTheDocument();
+    expect(screen.getByLabelText("膜内负")).toBeInTheDocument();
+  });
+
   it("renders two wavefronts and local-current arrows for conduction", () => {
     render(
       <ActionPotentialScene

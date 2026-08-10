@@ -1,6 +1,12 @@
 import type { ActionPotentialFrame, ActionPotentialMode } from "./types";
 
-const CHANNEL_POSITIONS = [16, 34, 50, 66, 84];
+const CHANNELS = [
+  { species: "sodium", position: 16 },
+  { species: "potassium", position: 34 },
+  { species: "sodium", position: 50 },
+  { species: "potassium", position: 66 },
+  { species: "sodium", position: 84 },
+] as const;
 const MODE_LABELS: Record<ActionPotentialMode, string> = {
   resting: "静息电位",
   generation: "动作电位产生",
@@ -20,6 +26,8 @@ export function ActionPotentialScene({
 }: ActionPotentialSceneProps) {
   const outsideSign = "+";
   const insideSign = "−";
+  const excitedOutsideSign = frame.polarity === "inside-positive" ? "−" : "+";
+  const excitedInsideSign = frame.polarity === "inside-positive" ? "+" : "−";
 
   return (
     <section
@@ -55,14 +63,24 @@ export function ActionPotentialScene({
         <div className="ap-fiber" data-testid="shared-fiber">
           <div className="ap-fiber-cap" aria-hidden="true" />
           <div className="ap-fiber-lumen" aria-hidden="true" />
-          {CHANNEL_POSITIONS.map((left, index) => (
-            <i
-              key={left}
-              className={`ap-channel ${index % 2 ? "ap-channel--k" : "ap-channel--na"}`}
-              data-open={frame.openChannel === (index % 2 ? "potassium" : "sodium")}
-              style={{ left: `${left}%` }}
-            />
-          ))}
+          {CHANNELS.map((channel) => {
+            const channelId = `${channel.species}-${channel.position}`;
+            const isOpen =
+              frame.openChannel === channel.species &&
+              (channel.species === "potassium" || channel.position === 50);
+
+            return (
+              <i
+                key={channelId}
+                className={`ap-channel ap-channel--${channel.species === "potassium" ? "k" : "na"}`}
+                data-channel-id={channelId}
+                data-channel-position={channel.position}
+                data-channel-species={channel.species}
+                data-open={isOpen}
+                style={{ left: `${channel.position}%` }}
+              />
+            );
+          })}
           {frame.stimulusVisible && (
             <i className="ap-stimulus" aria-label="刺激点">
               <span>刺激</span>
@@ -73,13 +91,39 @@ export function ActionPotentialScene({
               key={`${mode}-${index}`}
               data-testid="excited-zone"
               className="ap-excited-zone"
-              aria-label="兴奋区外负内正"
+              aria-label={`兴奋区外${excitedOutsideSign === "+" ? "正" : "负"}内${excitedInsideSign === "+" ? "正" : "负"}`}
               style={{ left: `${center * 100}%` }}
             >
-              <span className="ap-excited-sign ap-excited-sign--outside">−</span>
-              <span className="ap-excited-sign ap-excited-sign--inside">+</span>
+              <span className="ap-excited-sign ap-excited-sign--outside">
+                {excitedOutsideSign}
+              </span>
+              <span className="ap-excited-sign ap-excited-sign--inside">
+                {excitedInsideSign}
+              </span>
             </i>
           ))}
+          {mode === "resting" && (
+            <div
+              className="ap-ion-flow ap-ion-flow--k"
+              aria-label="K⁺外流"
+              data-channel-target="potassium-34"
+            >
+              <i>K⁺</i>
+              <span>↑</span>
+              <b>K⁺外流</b>
+            </div>
+          )}
+          {mode === "generation" && frame.phase !== "stimulus" && (
+            <div
+              className="ap-ion-flow ap-ion-flow--na"
+              aria-label="Na⁺内流"
+              data-channel-target="sodium-50"
+            >
+              <i>Na⁺</i>
+              <span>↓</span>
+              <b>Na⁺内流</b>
+            </div>
+          )}
         </div>
 
         <div
@@ -92,20 +136,6 @@ export function ActionPotentialScene({
           ))}
         </div>
 
-        {mode === "resting" && (
-          <div className="ap-ion-flow ap-ion-flow--k" aria-label="K⁺外流">
-            <i>K⁺</i>
-            <span>↑</span>
-            <b>K⁺外流</b>
-          </div>
-        )}
-        {mode === "generation" && frame.phase !== "stimulus" && (
-          <div className="ap-ion-flow ap-ion-flow--na" aria-label="Na⁺内流">
-            <i>Na⁺</i>
-            <span>↓</span>
-            <b>Na⁺内流</b>
-          </div>
-        )}
         {frame.localCurrentVisible && (
           <div className="ap-local-current" aria-label="局部电流方向">
             <span>←</span>
