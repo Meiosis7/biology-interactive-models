@@ -26,6 +26,11 @@
   min-height: 44px;
 }
 
+.ap-mode-nav button,
+.ap-control {
+  min-height: 44px;
+}
+
 .lab-header,
 .ap-mode-nav,
 .ap-workspace,
@@ -132,6 +137,14 @@
   color: var(--ap-red);
 }
 
+.ap-phase-caption {
+  margin: 14px 0 0;
+  color: var(--ap-green);
+  font-size: clamp(13px, 1.4vw, 16px);
+  font-weight: 850;
+  text-align: center;
+}
+
 .ap-fiber-stage {
   position: relative;
   min-height: 370px;
@@ -142,7 +155,7 @@
   position: absolute;
   left: 1%;
   color: var(--ap-muted);
-  font-size: 12px;
+  font-size: clamp(10px, 1.1vw, 12px);
   font-weight: 750;
 }
 
@@ -387,7 +400,7 @@
 }
 
 .ap-current-row--inside {
-  top: 59px;
+  top: calc(100% + 8px);
 }
 
 .ap-current-row span {
@@ -402,7 +415,7 @@
   padding: 2px 5px;
   border-radius: 4px;
   background: rgba(255, 254, 250, 0.88);
-  font-size: 11px;
+  font-size: clamp(9px, 1.1vw, 11px);
   transform: translateX(-50%);
 }
 
@@ -410,11 +423,11 @@
   position: absolute;
   left: 8%;
   right: 4%;
-  top: 79%;
+  top: 83%;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   text-align: center;
-  font-size: 12px;
+  font-size: clamp(10px, 1.15vw, 12px);
 }
 
 .ap-region-labels b {
@@ -430,6 +443,14 @@
   color: var(--ap-red);
   font-weight: 850;
   text-align: center;
+}
+
+.ap-bidirectional::before {
+  content: "← ";
+}
+
+.ap-bidirectional::after {
+  content: " →";
 }
 
 .ap-knowledge {
@@ -536,7 +557,7 @@
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 720px) {
   .lab-shell {
     padding: 18px 12px 32px;
   }
@@ -546,6 +567,7 @@
   }
 
   .ap-mode-nav {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 6px;
   }
 
@@ -561,12 +583,12 @@
   }
 
   .ap-scene {
-    min-height: 410px;
+    min-height: 430px;
     padding: 16px 12px;
   }
 
   .ap-fiber-stage {
-    min-height: 330px;
+    min-height: 350px;
   }
 
   .ap-fiber {
@@ -584,7 +606,7 @@
   }
 
   .ap-segment-charge {
-    font-size: 16px;
+    font-size: clamp(13px, 4vw, 16px);
   }
 
   .ap-segment-charge--outside {
@@ -596,11 +618,44 @@
   }
 
   .ap-current-row--inside {
-    top: 49px;
+    top: calc(100% + 12px);
   }
 
   .ap-current-row b {
-    font-size: 9px;
+    position: static;
+    font-size: clamp(8px, 2.4vw, 10px);
+    transform: none;
+  }
+
+  .ap-current-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+  }
+
+  .ap-current-row span:first-child {
+    justify-self: start;
+  }
+
+  .ap-current-row span:last-child {
+    justify-self: end;
+  }
+
+  .ap-gated-channel {
+    width: 16px;
+    height: 27px;
+  }
+
+  .ap-gated-channel::before,
+  .ap-gated-channel::after {
+    width: 16px;
+    height: 12px;
+  }
+
+  .ap-segment-na-flow,
+  .ap-segment-k-flow {
+    min-width: 30px;
+    min-height: 24px;
+    font-size: clamp(8px, 2.5vw, 10px);
   }
 
   .ap-controls p {
@@ -613,8 +668,7 @@
   .lab-shell *,
   .lab-shell *::before,
   .lab-shell *::after {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
+    transition: none !important;
+    animation: none !important;
   }
 }

@@ -7,6 +7,17 @@ import { ACTION_POTENTIAL_MODES } from "../../components/action-potential/modeDa
 import { getActionPotentialFrame } from "../../components/action-potential/simulation";
 
 describe("action-potential shared-fiber components", () => {
+  it("uses the approved ion and relay teaching summaries", () => {
+    expect(ACTION_POTENTIAL_MODES[0].summary).toContain("K⁺外流");
+    expect(ACTION_POTENTIAL_MODES[1].summary).toContain("局部Na⁺通道开放");
+    expect(ACTION_POTENTIAL_MODES[2].summary).toContain(
+      "相邻Na⁺通道依次开放",
+    );
+    expect(JSON.stringify(ACTION_POTENTIAL_MODES)).not.toMatch(
+      /曲线|mV|−70|-70|复极化|超极化|恢复/,
+    );
+  });
+
   it("announces the selected mode and reports clicks", () => {
     const onModeChange = vi.fn();
     render(
@@ -140,6 +151,27 @@ describe("action-potential shared-fiber components", () => {
     expect(screen.getByLabelText("膜外局部电流返回兴奋区")).toHaveTextContent(
       "→膜外回流←",
     );
+  });
+
+  it("shows the approved conduction statement and the active phase caption", () => {
+    const firstFrame = getActionPotentialFrame("conduction", 0.05);
+    const { rerender } = render(
+      <ActionPotentialScene mode="conduction" frame={firstFrame} playing />,
+    );
+
+    expect(
+      screen.getByText("兴奋由刺激点向两侧逐段传导"),
+    ).toBeInTheDocument();
+    expect(screen.getByText(firstFrame.instruction)).toBeInTheDocument();
+    expect(screen.queryByText("兴奋区移动")).not.toBeInTheDocument();
+    expect(screen.queryByText("动作电位整体平移")).not.toBeInTheDocument();
+
+    const nextFrame = getActionPotentialFrame("conduction", 0.18);
+    rerender(
+      <ActionPotentialScene mode="conduction" frame={nextFrame} playing />,
+    );
+    expect(screen.getByText(nextFrame.instruction)).toBeInTheDocument();
+    expect(screen.queryByText(firstFrame.instruction)).not.toBeInTheDocument();
   });
 
   it("renders the exact generation knowledge facts without recovery", () => {

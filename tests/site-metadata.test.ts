@@ -31,9 +31,15 @@ describe("site metadata and presentation assets", () => {
 
     expect(css).toMatch(/--ap-paper:\s*#f6f3eb/);
     expect(css).toMatch(/\.ap-fiber\s*\{[^}]*border-radius:\s*999px/s);
+    expect(css).toMatch(
+      /\.ap-fiber\s*\{[^}]*grid-template-columns:\s*repeat\(7,\s*minmax\(0,\s*1fr\)\)/s,
+    );
     expect(css).toMatch(/\.ap-workspace\s*\{[^}]*grid-template-columns:/s);
     expect(css).toMatch(
-      /@media\s*\(max-width:\s*760px\)[\s\S]*\.ap-workspace\s*\{[^}]*grid-template-columns:\s*1fr/s,
+      /@media\s*\(max-width:\s*720px\)[\s\S]*\.ap-workspace\s*\{[^}]*grid-template-columns:\s*1fr/s,
+    );
+    expect(css).toMatch(
+      /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*transition:\s*none\s*!important[\s\S]*animation:\s*none\s*!important/s,
     );
     expect(css).not.toMatch(/\.chart-card|canvas/);
   });

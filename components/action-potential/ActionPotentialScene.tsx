@@ -35,6 +35,10 @@ export function ActionPotentialScene({
         </b>
       </div>
 
+      <p className="ap-phase-caption" aria-live="polite">
+        {frame.instruction}
+      </p>
+
       <div className="ap-fiber-stage">
         <span className="ap-compartment-label ap-compartment-label--outside">
           膜外
@@ -129,7 +133,9 @@ export function ActionPotentialScene({
             <span>未兴奋区</span>
           </div>
         )}
-        {mode === "conduction" && <p className="ap-bidirectional">← 双向传导 →</p>}
+        {mode === "conduction" && (
+          <p className="ap-bidirectional">兴奋由刺激点向两侧逐段传导</p>
+        )}
       </div>
     </section>
   );
