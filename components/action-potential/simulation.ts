@@ -16,7 +16,9 @@ export function getActionPotentialFrame(
       phase: "resting",
       ionMotion: "potassium-out",
       polarity: "outside-positive",
-      excitedCenters: [0.5, 0.5],
+      openChannel: "potassium",
+      stimulusVisible: false,
+      excitedCenters: [],
       localCurrentVisible: false,
     };
   }
@@ -25,48 +27,46 @@ export function getActionPotentialFrame(
     const distance = normalized * 0.38;
     return {
       phase: "conducting",
-      ionMotion: "sodium-in",
+      ionMotion: "none",
       polarity: "inside-positive",
+      openChannel: "none",
+      stimulusVisible: true,
       excitedCenters: [0.5 - distance, 0.5 + distance],
       localCurrentVisible: true,
     };
   }
 
-  if (normalized < 0.28) {
+  if (normalized < 0.14) {
+    return {
+      phase: "stimulus",
+      ionMotion: "none",
+      polarity: "outside-positive",
+      openChannel: "none",
+      stimulusVisible: true,
+      excitedCenters: [],
+      localCurrentVisible: false,
+    };
+  }
+
+  if (normalized < 0.66) {
     return {
       phase: "sodium-in",
       ionMotion: "sodium-in",
       polarity: "outside-positive",
-      excitedCenters: [0.5, 0.5],
-      localCurrentVisible: false,
-    };
-  }
-
-  if (normalized < 0.5) {
-    return {
-      phase: "polarity-reversed",
-      ionMotion: "none",
-      polarity: "inside-positive",
-      excitedCenters: [0.5, 0.5],
-      localCurrentVisible: false,
-    };
-  }
-
-  if (normalized < 0.78) {
-    return {
-      phase: "potassium-out",
-      ionMotion: "potassium-out",
-      polarity: "inside-positive",
-      excitedCenters: [0.5, 0.5],
+      openChannel: "sodium",
+      stimulusVisible: true,
+      excitedCenters: [],
       localCurrentVisible: false,
     };
   }
 
   return {
-    phase: "recovered",
+    phase: "excited",
     ionMotion: "none",
-    polarity: "outside-positive",
-    excitedCenters: [0.5, 0.5],
+    polarity: "inside-positive",
+    openChannel: "sodium",
+    stimulusVisible: true,
+    excitedCenters: [0.5],
     localCurrentVisible: false,
   };
 }

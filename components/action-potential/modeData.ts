@@ -17,12 +17,12 @@ export const ACTION_POTENTIAL_MODES: readonly ModeContent[] = [
   {
     id: "generation",
     label: "动作电位产生",
-    title: "动作电位在局部产生",
-    summary: "Na⁺先内流，随后K⁺外流，使局部膜经历兴奋并恢复静息状态。",
+    title: "局部动作电位产生",
+    summary: "刺激使局部Na⁺通道开放，Na⁺内流后，局部膜变为外负内正。",
     facts: [
-      { label: "兴奋形成", value: "Na⁺内流" },
-      { label: "恢复过程", value: "K⁺外流" },
-      { label: "结果", value: "局部产生一次动作电位" },
+      { label: "刺激后的变化", value: "Na⁺通道开放" },
+      { label: "主要离子运动", value: "Na⁺内流" },
+      { label: "结果", value: "局部形成外负内正的动作电位" },
     ],
   },
   {

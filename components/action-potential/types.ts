@@ -2,20 +2,22 @@ export type ActionPotentialMode = "resting" | "generation" | "conduction";
 
 export type ActionPotentialPhase =
   | "resting"
+  | "stimulus"
   | "sodium-in"
-  | "polarity-reversed"
-  | "potassium-out"
-  | "recovered"
+  | "excited"
   | "conducting";
 
 export type IonMotion = "potassium-out" | "sodium-in" | "none";
 export type MembranePolarity = "outside-positive" | "inside-positive";
+export type OpenChannel = "potassium" | "sodium" | "none";
 
 export interface ActionPotentialFrame {
   phase: ActionPotentialPhase;
   ionMotion: IonMotion;
   polarity: MembranePolarity;
-  excitedCenters: readonly [number, number];
+  openChannel: OpenChannel;
+  stimulusVisible: boolean;
+  excitedCenters: readonly number[];
   localCurrentVisible: boolean;
 }
 
