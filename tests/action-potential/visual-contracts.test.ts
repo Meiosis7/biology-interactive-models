@@ -193,6 +193,49 @@ describe("action-potential ion visual contracts", () => {
     ).toMatch(/animation-play-state:\s*running/);
   });
 
+  it("opens channel petals with horizontal translation and no rotation", () => {
+    const leftOpenRule = ruleBody(
+      '.ap-ion-channel[data-open="true"] .ap-ion-channel__petal--left',
+    );
+    const rightOpenRule = ruleBody(
+      '.ap-ion-channel[data-open="true"] .ap-ion-channel__petal--right',
+    );
+    const leftKeyframes = stylesheet.match(
+      /@keyframes ap-channel-open-left\s*\{([\s\S]*?)\n\}/,
+    )?.[1];
+    const rightKeyframes = stylesheet.match(
+      /@keyframes ap-channel-open-right\s*\{([\s\S]*?)\n\}/,
+    )?.[1];
+
+    expect(leftKeyframes).toBeDefined();
+    expect(rightKeyframes).toBeDefined();
+    const openingTransforms = [
+      leftOpenRule,
+      rightOpenRule,
+      leftKeyframes!,
+      rightKeyframes!,
+    ].join("\n");
+    const nonZeroRotations = Array.from(
+      openingTransforms.matchAll(
+        /rotate\(\s*([-+]?\d*\.?\d+)(?:deg|rad|turn)\s*\)/g,
+      ),
+      (match) => Number(match[1]),
+    ).filter((angle) => angle !== 0);
+    expect(
+      nonZeroRotations,
+      "channel petals must not rotate while opening",
+    ).toEqual([]);
+
+    expect(leftOpenRule).toMatch(/transform:\s*translateX\(-6px\)\s*;/);
+    expect(rightOpenRule).toMatch(/transform:\s*translateX\(6px\)\s*;/);
+    expect(leftKeyframes).toMatch(
+      /from\s*\{\s*transform:\s*translateX\(1px\)\s*;\s*\}\s*to\s*\{\s*transform:\s*translateX\(-6px\)\s*;/,
+    );
+    expect(rightKeyframes).toMatch(
+      /from\s*\{\s*transform:\s*translateX\(-1px\)\s*;\s*\}\s*to\s*\{\s*transform:\s*translateX\(6px\)\s*;/,
+    );
+  });
+
   it("keeps four charge rows fixed around the two membrane lines", () => {
     expect(ruleBody(".ap-segment-charge--outside-top")).toMatch(
       /top:\s*-34px\s*;/,
