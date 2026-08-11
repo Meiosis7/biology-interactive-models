@@ -49,6 +49,12 @@ describe("action-potential shared-fiber frames", () => {
     expect(CONDUCTION_ACTION_POTENTIAL_MS).toBe(1400);
   });
 
+  it("uses one concise instruction for every local-current step", () => {
+    expect(getConductionStepFrame(1, 1).instruction).toBe("形成局部电流");
+    expect(getConductionStepFrame(3, 1).instruction).toBe("形成局部电流");
+    expect(getConductionStepFrame(5, 1).instruction).toBe("形成局部电流");
+  });
+
   it.each([
     [0, 1, "excited", [3], null],
     [1, 0, "local-current", [3], 1],

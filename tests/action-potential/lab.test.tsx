@@ -257,6 +257,21 @@ describe("ActionPotentialLab", () => {
     }
   });
 
+  it("removes header, helper, round, and step-status copy", () => {
+    render(<ActionPotentialLab />);
+    expect(document.body).not.toHaveTextContent(
+      /切换三个模式，分别观察静息、产生和传导|离子、通道和传导方向均为教学示意/,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /动作电位传导/ }));
+    expect(document.body).not.toHaveTextContent(
+      /当前第|共7步|本步动画播放中|传导演示完成/,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "下一步" }));
+    expect(screen.getByText("形成局部电流")).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent(/第[123]轮/);
+  });
+
   it("uses representative static ion frames with disabled playback for reduced motion", () => {
     vi.stubGlobal(
       "matchMedia",

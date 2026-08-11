@@ -29,7 +29,6 @@ export function LabControls({
       >
         重新播放
       </button>
-      <p>离子、通道和传导方向均为教学示意。</p>
     </section>
   );
 }

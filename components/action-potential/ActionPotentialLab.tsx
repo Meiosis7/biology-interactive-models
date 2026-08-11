@@ -169,7 +169,6 @@ export function ActionPotentialLab() {
       <header className="lab-header">
         <p className="eyebrow">选择性必修 1 · 神经调节</p>
         <h1 id="lab-title">动作电位的形成和传导</h1>
-        <p>切换三个模式，分别观察静息、产生和传导。</p>
       </header>
       <ActionPotentialModeNav mode={mode} onModeChange={changeMode} />
       <section className="ap-workspace">
@@ -183,7 +182,6 @@ export function ActionPotentialLab() {
       </section>
       {mode === "conduction" ? (
         <ConductionControls
-          step={conductionStep}
           busy={conductionBusy}
           complete={conductionComplete}
           onNext={nextConductionStep}

@@ -176,11 +176,9 @@ export function ActionPotentialScene({
             )}
           </div>
         )}
-        {mode === "conduction" && (
+        {conductionComplete && (
           <p className="ap-bidirectional">
-            {conductionComplete
-              ? "神经冲动以电信号（局部电流）的形式在神经纤维上双向传导。"
-              : "兴奋由刺激点向两侧逐段传导"}
+            神经冲动以电信号（局部电流）的形式在神经纤维上双向传导。
           </p>
         )}
       </div>

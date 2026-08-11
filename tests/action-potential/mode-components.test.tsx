@@ -715,16 +715,16 @@ describe("action-potential shared-fiber components", () => {
     );
   });
 
-  it("shows the approved conduction statement and the active phase caption", () => {
+  it("shows only the active phase caption before conduction completes", () => {
     const firstFrame = getConductionStepFrame(1, 0);
-    const { rerender } = render(
+    const { container, rerender } = render(
       <ActionPotentialScene mode="conduction" frame={firstFrame} playing />,
     );
 
+    expect(screen.getByText("形成局部电流")).toBeInTheDocument();
     expect(
-      screen.getByText("兴奋由刺激点向两侧逐段传导"),
-    ).toBeInTheDocument();
-    expect(screen.getByText(firstFrame.instruction)).toBeInTheDocument();
+      screen.queryByText("兴奋由刺激点向两侧逐段传导"),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText("兴奋区移动")).not.toBeInTheDocument();
     expect(screen.queryByText("动作电位整体平移")).not.toBeInTheDocument();
 
@@ -733,7 +733,8 @@ describe("action-potential shared-fiber components", () => {
       <ActionPotentialScene mode="conduction" frame={nextFrame} playing />,
     );
     expect(screen.getByText(nextFrame.instruction)).toBeInTheDocument();
-    expect(screen.queryByText(firstFrame.instruction)).not.toBeInTheDocument();
+    expect(screen.queryByText("形成局部电流")).not.toBeInTheDocument();
+    expect(container.querySelector(".ap-bidirectional")).toBeNull();
   });
 
   it("shows the completed conduction state without unexcited regions", () => {

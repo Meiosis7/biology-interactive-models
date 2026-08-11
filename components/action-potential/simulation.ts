@@ -88,7 +88,7 @@ export function getConductionStepFrame(
       potassiumOutflow: false,
       stimulusVisible: true,
       localCurrentStep: round.currentStep,
-      instruction: `第${round.currentStep}轮局部电流形成`,
+      instruction: "形成局部电流",
     };
   }
 
