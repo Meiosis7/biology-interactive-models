@@ -24,13 +24,15 @@ describe("interactive lab touch targets", () => {
     },
   );
 
-  it("keeps action-potential controls and all three modes mobile-safe", () => {
+  it("keeps all five action-potential controls at least 44 by 44 CSS pixels", () => {
     const styles = readFileSync(
       "components/action-potential/action-potential.css",
       "utf8",
     );
 
-    expect(styles).toMatch(/\.lab-shell\s+button\s*\{[^}]*min-height:\s*44px;/s);
+    expect(styles).toMatch(
+      /\.lab-shell\s+button\s*\{[^}]*min-width:\s*44px;[^}]*min-height:\s*44px;/s,
+    );
     expect(styles).toMatch(
       /@media\s*\(max-width:\s*720px\)[\s\S]*\.ap-mode-nav\s*\{[^}]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/s,
     );

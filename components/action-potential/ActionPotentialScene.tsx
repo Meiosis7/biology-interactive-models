@@ -1,6 +1,7 @@
 import type { ActionPotentialFrame, ActionPotentialMode } from "./types";
 import { IonChannel } from "./IonChannel";
 import { IonStream } from "./IonStream";
+import { LocalCurrentFlow } from "./LocalCurrentFlow";
 
 const MODE_LABELS: Record<ActionPotentialMode, string> = {
   resting: "静息电位",
@@ -110,22 +111,8 @@ export function ActionPotentialScene({
               data-current-step={frame.localCurrentStep}
               aria-label="局部电流方向"
             >
-              <div
-                className="ap-current-row ap-current-row--outside"
-                aria-label="膜外局部电流返回兴奋区"
-              >
-                <span>→</span>
-                <b>膜外回流</b>
-                <span>←</span>
-              </div>
-              <div
-                className="ap-current-row ap-current-row--inside"
-                aria-label="膜内局部电流向两侧未兴奋区"
-              >
-                <span>←</span>
-                <b>膜内局部电流</b>
-                <span>→</span>
-              </div>
+              <LocalCurrentFlow layer="outside" />
+              <LocalCurrentFlow layer="inside" />
             </div>
           )}
         </div>

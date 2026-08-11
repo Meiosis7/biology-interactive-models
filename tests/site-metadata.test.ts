@@ -29,7 +29,7 @@ describe("site metadata and presentation assets", () => {
       "utf8",
     );
 
-    expect(css).toMatch(/--ap-paper:\s*#f6f3eb/);
+    expect(css).toMatch(/--ap-paper:\s*#fffdf8/);
     expect(css).toMatch(/\.ap-fiber\s*\{[^}]*border-radius:\s*999px/s);
     expect(css).toMatch(
       /\.ap-fiber\s*\{[^}]*grid-template-columns:\s*repeat\(7,\s*minmax\(0,\s*1fr\)\)/s,

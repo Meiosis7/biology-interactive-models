@@ -228,7 +228,7 @@ describe("action-potential shared-fiber components", () => {
     ).toHaveLength(3);
   });
 
-  it("shows opposite extracellular and intracellular current directions", () => {
+  it("renders opposite animated paths for intracellular and extracellular current", () => {
     render(
       <ActionPotentialScene
         mode="conduction"
@@ -236,12 +236,15 @@ describe("action-potential shared-fiber components", () => {
         playing
       />,
     );
-    expect(
-      screen.getByLabelText("膜内局部电流向两侧未兴奋区"),
-    ).toHaveTextContent("←膜内局部电流→");
-    expect(screen.getByLabelText("膜外局部电流返回兴奋区")).toHaveTextContent(
-      "→膜外回流←",
-    );
+
+    const inside = screen.getByLabelText("膜内局部电流向两侧未兴奋区");
+    const outside = screen.getByLabelText("膜外局部电流返回兴奋区");
+    expect(inside).toHaveAttribute("data-current-direction", "outward");
+    expect(outside).toHaveAttribute("data-current-direction", "inward");
+    expect(inside.querySelectorAll("[data-current-branch]")).toHaveLength(2);
+    expect(outside.querySelectorAll("[data-current-branch]")).toHaveLength(2);
+    expect(inside).toHaveTextContent("膜内局部电流");
+    expect(outside).toHaveTextContent("膜外回流");
   });
 
   it("shows the approved conduction statement and the active phase caption", () => {
