@@ -187,6 +187,18 @@ Pause was repeated during `neighbor-sodium-in`. Immediately after pause and afte
 
 Every recorded value was unchanged after 820 ms. After Play and 180 ms, both play states became `running`; the ion reached the invisible endpoint and the current marker moved, with no snap to origin. Replay had created the fresh six-particle sequence used for this pause sample.
 
+Generation was then replayed once after the final generation schedule fix. A continuous page-clock trace observed:
+
+| Observed transition | Page-clock time | Evidence |
+| --- | ---: | --- |
+| Stimulus → channel opening | 650 ms after trace start | only central segment 3 opened; zero particles |
+| Channel opening → Na⁺ influx | 2155 ms | exactly three Na⁺ particles; central channel remained open; no segment excited |
+| Third particle visibly crossing | 2417…2910 ms | opacity rose to 1 while transform y advanced from `-16.729` to `33.2396` |
+| Third particle completed | 3015 ms | opacity `0`; transform y=`34`; iteration `1`; fill `both` |
+| Central excitation | 3198 ms | particles unmounted; only segment 3 became excited |
+
+The observed sodium-in phase lasted approximately 1043 ms, and the causal tail from the third particle's invisible endpoint to central excitation was approximately 183 ms. This matched the schedule-derived 1050 ms phase / 200 ms tail contract within sampling granularity. The particle never restarted, the caption remained causally aligned, and replay created a fresh stimulus-first sequence.
+
 Desktop K⁺ particles retained white labels on `rgb(90, 62, 145)` at 8 px. The three particles reported 720 ms duration, delays `0`, `125`, and `250` ms, and infinite iteration, confirming the intended visibly slower continuous resting outflow relative to the 650 ms Na⁺ pass.
 
 ### Mobile — exactly 390 × 844
