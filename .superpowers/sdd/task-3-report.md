@@ -89,3 +89,47 @@ Result: exit 0 with no whitespace errors.
 ## Concerns
 
 No code or automated-verification concerns. Exact browser geometry, pause snapshots, and viewport screenshots remain the explicit scope of Task 4.
+
+## Review fix: separate current and region-label lanes
+
+The Task 3 visual review found that the intracellular-current label and conduction region labels intersected vertically at both the desktop and mobile verification widths.
+
+### RED evidence
+
+Added a focused CSS regression requiring a 400 px fiber stage at both desktop and mobile widths and a distinct bottom-anchored lane for `.ap-region-labels`.
+
+```text
+npm test -- tests/action-potential/mode-components.test.tsx tests/models/touch-targets.test.ts
+```
+
+Result before the CSS fix: 1 failed and 22 passed tests. The new lane regression failed because the stage still used 370 px on desktop, 350 px on mobile, and positioned region labels at `top: 83%`.
+
+### Fix details
+
+- Increased `.ap-fiber-stage` minimum height to 400 px at desktop and mobile widths.
+- Replaced the percentage-based region-label position with a dedicated lane using `top: auto` and `bottom: 32px`.
+- Left all horizontal fiber/current geometry, seven segments, current text/directions, and pause-aware animation selectors unchanged.
+
+### GREEN and verification evidence
+
+```text
+npm test -- tests/action-potential/mode-components.test.tsx tests/models/touch-targets.test.ts
+```
+
+Result after the CSS fix: 2 files passed, 23 tests passed.
+
+```text
+npm run lint
+```
+
+Result: exit 0 with no lint errors.
+
+```text
+git diff --check
+```
+
+Result: exit 0 with no whitespace errors.
+
+### Review-fix concerns
+
+None. The fix changes vertical allocation only, so it introduces no new horizontal overflow path.

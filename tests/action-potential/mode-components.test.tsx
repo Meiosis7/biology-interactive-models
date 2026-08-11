@@ -247,6 +247,23 @@ describe("action-potential shared-fiber components", () => {
     expect(outside).toHaveTextContent("膜外回流");
   });
 
+  it("reserves separate vertical lanes for current and region labels", () => {
+    const stylesheet = readFileSync(
+      "components/action-potential/action-potential.css",
+      "utf8",
+    );
+
+    expect(stylesheet).toMatch(
+      /\.ap-fiber-stage\s*\{[^}]*min-height:\s*400px;/s,
+    );
+    expect(stylesheet).toMatch(
+      /\.ap-region-labels\s*\{[^}]*top:\s*auto;[^}]*bottom:\s*32px;/s,
+    );
+    expect(stylesheet).toMatch(
+      /@media\s*\(max-width:\s*720px\)[\s\S]*\.ap-fiber-stage\s*\{[^}]*min-height:\s*400px;/s,
+    );
+  });
+
   it("shows the approved conduction statement and the active phase caption", () => {
     const firstFrame = getActionPotentialFrame("conduction", 0.05);
     const { rerender } = render(

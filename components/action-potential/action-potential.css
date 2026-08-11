@@ -156,7 +156,7 @@
 
 .ap-fiber-stage {
   position: relative;
-  min-height: 370px;
+  min-height: 400px;
   padding-top: 75px;
 }
 
@@ -530,7 +530,8 @@
   position: absolute;
   left: 8%;
   right: 4%;
-  top: 83%;
+  top: auto;
+  bottom: 32px;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   text-align: center;
@@ -785,7 +786,7 @@
   }
 
   .ap-fiber-stage {
-    min-height: 350px;
+    min-height: 400px;
   }
 
   .ap-fiber {
