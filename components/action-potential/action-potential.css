@@ -268,13 +268,15 @@
   --channel-color: #2597a6;
   --channel-dark: #147481;
   position: absolute;
-  top: -15px;
   left: 50%;
   width: 30px;
   height: 34px;
   transform: translateX(-50%);
   z-index: 5;
 }
+
+.ap-ion-channel--top { top: -15px; bottom: auto; }
+.ap-ion-channel--bottom { top: auto; bottom: -15px; }
 
 .ap-ion-channel__petal {
   position: absolute;
@@ -341,8 +343,6 @@
 }
 
 .ap-ion-channel--potassium {
-  top: auto;
-  bottom: -18px;
   left: 100%;
   --channel-color: #a68ade;
   --channel-dark: #7456b3;
@@ -371,15 +371,29 @@
 
 .ap-ion-stream {
   --ion-color: #168fa0;
-  --ion-start-y: -20px;
-  --ion-end-y: 34px;
   position: absolute;
-  top: -18px;
   left: 50%;
   width: 1px;
   height: 58px;
   z-index: 7;
   pointer-events: none;
+}
+
+.ap-ion-stream--top { top: -18px; bottom: auto; }
+.ap-ion-stream--bottom { top: auto; bottom: -18px; }
+
+.ap-ion-stream--top.ap-ion-stream--inward,
+.ap-ion-stream--bottom.ap-ion-stream--outward {
+  --ion-start-y: -20px;
+  --ion-end-y: 34px;
+  --ion-static-y: 6px;
+}
+
+.ap-ion-stream--top.ap-ion-stream--outward,
+.ap-ion-stream--bottom.ap-ion-stream--inward {
+  --ion-start-y: 34px;
+  --ion-end-y: -20px;
+  --ion-static-y: -20px;
 }
 
 .ap-ion-stream--sodium {
@@ -407,16 +421,12 @@
 }
 
 .ap-ion-stream--potassium {
-  top: auto;
-  bottom: -18px;
   --ion-color: #7958b8;
   --ion-particle-fill: var(--ap-potassium-particle-fill);
   --ion-duration: 720ms;
   --ion-stagger: 125ms;
   --ion-iteration-count: infinite;
   --ion-fill-mode: none;
-  --ion-start-y: -20px;
-  --ion-end-y: 34px;
   left: 100%;
 }
 
@@ -776,7 +786,7 @@
   .ap-ion-particle {
     --ion-static-x: 0px;
     opacity: 1;
-    transform: translate(calc(-50% + var(--ion-static-x)), 6px) scale(.9);
+    transform: translate(calc(-50% + var(--ion-static-x)), var(--ion-static-y)) scale(.9);
   }
 
   .ap-ion-particle:nth-of-type(1) {

@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import type { ActionPotentialFrame, ActionPotentialMode } from "./types";
 import { IonChannel } from "./IonChannel";
 import { IonStream } from "./IonStream";
@@ -97,22 +98,30 @@ export function ActionPotentialScene({
                   </span>
                 );
               })}
-              <IonChannel
-                species="sodium"
-                open={segment.sodiumChannelOpen}
-                label={`第${segment.id + 1}膜段Na⁺通道${segment.sodiumChannelOpen ? "开放" : "关闭"}`}
-              />
-              {segment.sodiumInflux && (
-                <IonStream
-                  species="sodium"
-                  direction="inward"
-                  label={`Na⁺进入第${segment.id + 1}膜段`}
-                />
-              )}
+              {(["top", "bottom"] as const).map((surface) => (
+                <Fragment key={`sodium-${surface}`}>
+                  <IonChannel
+                    species="sodium"
+                    surface={surface}
+                    open={segment.sodiumChannelOpen}
+                    label={`第${segment.id + 1}膜段${surface === "top" ? "上膜" : "下膜"} Na⁺通道${segment.sodiumChannelOpen ? "开放" : "关闭"}`}
+                  />
+                  {segment.sodiumInflux && (
+                    <IonStream
+                      key={`sodium-stream-${surface}-${animationEpoch}`}
+                      species="sodium"
+                      surface={surface}
+                      direction="inward"
+                      label={`Na⁺经第${segment.id + 1}膜段${surface === "top" ? "上膜" : "下膜"}进入膜内`}
+                    />
+                  )}
+                </Fragment>
+              ))}
               {mode === "resting" && segment.id === 1 && (
                 <>
                   <IonChannel
                     species="potassium"
+                    surface="bottom"
                     open={frame.potassiumChannelOpen}
                     label={`K⁺通道${frame.potassiumChannelOpen ? "开放" : "关闭"}`}
                   />
@@ -120,6 +129,7 @@ export function ActionPotentialScene({
                     <IonStream
                       key={`potassium-stream-${animationEpoch}`}
                       species="potassium"
+                      surface="bottom"
                       direction="outward"
                       label="K⁺外流"
                     />

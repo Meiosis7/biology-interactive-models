@@ -238,11 +238,19 @@ describe("ActionPotentialLab", () => {
       generationScene.querySelectorAll(
         '[data-channel-species="sodium"][data-open="true"]',
       ),
-    ).toHaveLength(1);
+    ).toHaveLength(2);
+    expect(
+      generationScene.querySelectorAll('[data-ion-species="sodium"]'),
+    ).toHaveLength(2);
     expect(
       generationScene.querySelectorAll('[data-ion-particle="sodium"]'),
-    ).toHaveLength(3);
-    expect(screen.getByLabelText("Na⁺进入第4膜段")).toBeInTheDocument();
+    ).toHaveLength(6);
+    expect(
+      screen.getByLabelText("Na⁺经第4膜段上膜进入膜内"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByLabelText("Na⁺经第4膜段下膜进入膜内"),
+    ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "播放" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "重新播放" })).toBeDisabled();
     expect(callbacks.size).toBe(0);

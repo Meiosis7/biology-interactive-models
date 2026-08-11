@@ -119,7 +119,82 @@ describe("action-potential shared-fiber components", () => {
     ).toHaveLength(7);
     expect(
       container.querySelectorAll('[data-channel-species="sodium"]'),
-    ).toHaveLength(7);
+    ).toHaveLength(14);
+  });
+
+  it("renders stable top and bottom sodium channels for every segment", () => {
+    const { container } = render(
+      <ActionPotentialScene
+        mode="resting"
+        frame={getActionPotentialFrame("resting", 0)}
+        playing
+      />,
+    );
+    expect(
+      container.querySelectorAll('[data-channel-species="sodium"]'),
+    ).toHaveLength(14);
+    for (let id = 0; id < 7; id += 1) {
+      const segment = container.querySelector(`[data-segment-id="${id}"]`)!;
+      expect(
+        segment.querySelectorAll(
+          '[data-channel-species="sodium"][data-membrane-surface="top"]',
+        ),
+      ).toHaveLength(1);
+      expect(
+        segment.querySelectorAll(
+          '[data-channel-species="sodium"][data-membrane-surface="bottom"]',
+        ),
+      ).toHaveLength(1);
+    }
+  });
+
+  it("opens both central sodium channels and sends six ions inward", () => {
+    const { container } = render(
+      <ActionPotentialScene
+        mode="generation"
+        frame={getActionPotentialFrame("generation", 0.55)}
+        playing
+      />,
+    );
+    const center = container.querySelector('[data-segment-id="3"]')!;
+    expect(
+      center.querySelectorAll(
+        '[data-channel-species="sodium"][data-open="true"]',
+      ),
+    ).toHaveLength(2);
+    expect(
+      center.querySelectorAll('[data-ion-species="sodium"]'),
+    ).toHaveLength(2);
+    expect(
+      center.querySelectorAll('[data-ion-particle="sodium"]'),
+    ).toHaveLength(6);
+    expect(
+      screen.getByLabelText("Na⁺经第4膜段上膜进入膜内"),
+    ).toHaveAttribute("data-screen-direction", "down");
+    expect(
+      screen.getByLabelText("Na⁺经第4膜段下膜进入膜内"),
+    ).toHaveAttribute("data-screen-direction", "up");
+  });
+
+  it("mirrors sodium influx on every conduction target", () => {
+    const { container } = render(
+      <ActionPotentialScene
+        mode="conduction"
+        frame={getActionPotentialFrame("conduction", 0.16)}
+        playing
+      />,
+    );
+    expect(
+      container.querySelectorAll(
+        '[data-channel-species="sodium"][data-open="true"]',
+      ),
+    ).toHaveLength(4);
+    expect(
+      container.querySelectorAll('[data-ion-species="sodium"]'),
+    ).toHaveLength(4);
+    expect(
+      container.querySelectorAll('[data-ion-particle="sodium"]'),
+    ).toHaveLength(12);
   });
 
   it("renders four vertically ordered charges for every resting segment", () => {
@@ -252,7 +327,7 @@ describe("action-potential shared-fiber components", () => {
       container.querySelectorAll(
         '[data-channel-species="sodium"][data-open="true"]',
       ),
-    ).toHaveLength(1);
+    ).toHaveLength(2);
     expect(
       container.querySelector(
         '[data-segment-id="3"] [data-channel-species="sodium"]',
@@ -317,7 +392,7 @@ describe("action-potential shared-fiber components", () => {
     ).toBeTruthy();
   });
 
-  it("positions potassium outflow at a continuous membrane segment boundary", () => {
+  it("positions potassium outflow on the bottom surface at a continuous membrane segment boundary", () => {
     const stylesheet = readFileSync(
       "components/action-potential/action-potential.css",
       "utf8",
@@ -327,10 +402,10 @@ describe("action-potential shared-fiber components", () => {
       /\.ap-ion-channel--potassium\s*\{[^}]*left:\s*100%;/s,
     );
     expect(stylesheet).toMatch(
-      /\.ap-ion-channel--potassium\s*\{[^}]*top:\s*auto;[^}]*bottom:\s*-18px;/s,
+      /\.ap-ion-channel--bottom\s*\{[^}]*top:\s*auto;[^}]*bottom:\s*-15px;/s,
     );
     expect(stylesheet).toMatch(
-      /\.ap-ion-stream--potassium\s*\{[^}]*top:\s*auto;[^}]*bottom:\s*-18px;[^}]*--ion-start-y:\s*-20px;[^}]*--ion-end-y:\s*34px;/s,
+      /\.ap-ion-stream--bottom\s*\{[^}]*top:\s*auto;[^}]*bottom:\s*-18px;/s,
     );
     expect(stylesheet).toMatch(
       /\.ap-ion-stream--potassium\s*\{[^}]*left:\s*100%;/s,
@@ -373,7 +448,7 @@ describe("action-potential shared-fiber components", () => {
       />,
     );
 
-    const stream = screen.getByLabelText("Na⁺进入第4膜段");
+    const stream = screen.getByLabelText("Na⁺经第4膜段上膜进入膜内");
     expect(stream).toHaveAttribute("data-ion-direction", "inward");
     expect(stream).toHaveAttribute("data-ion-species", "sodium");
     expect(
@@ -480,10 +555,16 @@ describe("action-potential shared-fiber components", () => {
       screen.getByRole("group", { name: "第4膜段外正内负" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("img", { name: "第4膜段Na⁺通道开放" }),
+      screen.getByRole("img", { name: "第4膜段上膜 Na⁺通道开放" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("img", { name: "Na⁺进入第4膜段" }),
+      screen.getByRole("img", { name: "第4膜段下膜 Na⁺通道开放" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: "Na⁺经第4膜段上膜进入膜内" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: "Na⁺经第4膜段下膜进入膜内" }),
     ).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "刺激点" })).toBeInTheDocument();
 

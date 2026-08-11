@@ -1,14 +1,18 @@
+export type MembraneSurface = "top" | "bottom";
+
 interface IonChannelProps {
   species: "sodium" | "potassium";
   open: boolean;
   label: string;
+  surface: MembraneSurface;
 }
 
-export function IonChannel({ species, open, label }: IonChannelProps) {
+export function IonChannel({ species, open, label, surface }: IonChannelProps) {
   return (
     <i
-      className={`ap-ion-channel ap-ion-channel--${species}`}
+      className={`ap-ion-channel ap-ion-channel--${species} ap-ion-channel--${surface}`}
       data-channel-species={species}
+      data-membrane-surface={surface}
       data-open={open}
       role="img"
       aria-label={label}

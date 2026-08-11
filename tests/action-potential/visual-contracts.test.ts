@@ -267,6 +267,39 @@ describe("action-potential ion visual contracts", () => {
     expect(mobileParticleRule).not.toMatch(/(?:background|color)\s*:/);
   });
 
+  it("maps both membrane surfaces to exact inward and outward travel directions", () => {
+    const downwardRule = ruleBody(
+      ".ap-ion-stream--top.ap-ion-stream--inward,\n.ap-ion-stream--bottom.ap-ion-stream--outward",
+    );
+    const upwardRule = ruleBody(
+      ".ap-ion-stream--top.ap-ion-stream--outward,\n.ap-ion-stream--bottom.ap-ion-stream--inward",
+    );
+
+    for (const rule of [downwardRule, upwardRule]) {
+      expect(rule).toMatch(/--ion-static-y:\s*(?:6|-20)px\s*;/);
+    }
+    expect(downwardRule).toMatch(/--ion-start-y:\s*-20px\s*;/);
+    expect(downwardRule).toMatch(/--ion-end-y:\s*34px\s*;/);
+    expect(downwardRule).toMatch(/--ion-static-y:\s*6px\s*;/);
+    expect(upwardRule).toMatch(/--ion-start-y:\s*34px\s*;/);
+    expect(upwardRule).toMatch(/--ion-end-y:\s*-20px\s*;/);
+    expect(upwardRule).toMatch(/--ion-static-y:\s*-20px\s*;/);
+
+    const sodiumRule = ruleBody(".ap-ion-stream--sodium");
+    expect(sodiumRule).toMatch(/--ion-duration:\s*650ms\s*;/);
+    expect(sodiumRule).toMatch(/--ion-stagger:\s*100ms\s*;/);
+    expect(sodiumRule).toMatch(/--ion-iteration-count:\s*1\s*;/);
+    expect(sodiumRule).toMatch(/--ion-fill-mode:\s*both\s*;/);
+
+    const reducedMotionParticleRule = stylesheet.match(
+      /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.ap-ion-particle\s*\{([^}]*)\}/,
+    )?.[1];
+    expect(reducedMotionParticleRule).toBeDefined();
+    expect(reducedMotionParticleRule).toMatch(
+      /transform:\s*translate\(calc\(-50% \+ var\(--ion-static-x\)\), var\(--ion-static-y\)\) scale\(\.9\)\s*;/,
+    );
+  });
+
   it("finishes every sodium particle with margin inside each schedule-derived influx phase", () => {
     const sodiumRule = ruleBody(".ap-ion-stream--sodium");
     const potassiumRule = ruleBody(".ap-ion-stream--potassium");
