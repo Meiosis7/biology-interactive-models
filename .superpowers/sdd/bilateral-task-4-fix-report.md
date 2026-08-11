@@ -99,3 +99,16 @@ The full `npm test`, `npm run lint`, and `npm run build` chain was intentionally
 ## Commit
 
 Fix commit: this report is included in the single fix commit. Its final SHA is reported in the handoff because a Git commit cannot contain its own hash.
+
+## Documentation and continuity follow-up
+
+The follow-up reconciles all Task 4 evidence without changing product code or animation behavior:
+
+- `action-potential-visual-polish-verification.md` now contains the required `Bilateral membrane follow-up` section for `5dc0fe9`, including the 20-file/214-test current-HEAD automation, exact-IAB 1280/390 geometry, phase/charge/channel/particle counts and directions, pause/replay, reduced motion, accessibility, console, forbidden-scope, and limitations evidence.
+- `bilateral-task-4-report.md` now leads with `PASS` at `5dc0fe9`; the unavailable-IAB attempt is labeled historical/inconclusive, and the `89e5889` BLOCKED measurements and conclusion are explicitly historical and superseded.
+- Channel pause/resume continuity is documented from the combined deterministic automated contract: the same central segment, petal, and pore subtree remains mounted across play-state changes; the petal/pore keep the same 300 ms keyframe declaration and `both` fill; and the only playing-dependent CSS change is `animation-play-state: paused ↔ running`. This proves resumption of the existing animation rather than remount or restart.
+- Direct exact-IAB transform sampling remains limited by the measured 267 ms Play click call. Since the 300 ms animation was already partly complete, the endpoint visible when the call returned is not evidence of an instantaneous jump and did not justify a product change.
+
+No additional automated test was added: the existing component identity and visual keyframe/play-state contracts already cover the missing deterministic assertion when read together. Because only Markdown evidence changed, the required focused verification was `git diff --check`; it exited 0 with no output.
+
+Follow-up commit: this section is included in the single documentation follow-up commit; its final SHA is reported in the handoff.

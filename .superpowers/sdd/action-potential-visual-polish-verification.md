@@ -300,3 +300,84 @@ Both visibly show the uncapped left/right ends and all four charge rows.
 Rendered text in each of resting, generation, and conduction was scanned for `mV`, `-70`, `−70`, `曲线`, `复极化`, `超极化`, and `恢复`; each mode returned 0 matches.
 
 The in-app Browser cannot emulate `prefers-reduced-motion`, so no media-preference browser evidence is claimed and no system setting was changed. The dedicated zero-RAF test above is the accepted evidence. The screenshots and detailed Task 5 report are ignored verification artifacts under `.superpowers/sdd/.gitignore`; they remain at the stated paths. No product defect or acceptance blocker was found.
+
+## Bilateral membrane follow-up
+
+This follow-up records the final bilateral-membrane acceptance at commit `5dc0fe90c47c711cc67647a09268537ad5c07a67`. It supersedes the historical `89e5889` BLOCKED result in `bilateral-task-4-report.md`.
+
+### Current-HEAD automation
+
+The final verifier ran the complete chain once on `5dc0fe9`:
+
+| Command | Result |
+| --- | --- |
+| `npm test` | PASS — 20/20 files, 214/214 tests |
+| `npm run lint` | PASS — exit 0, no diagnostics |
+| `npm run build` | PASS — all five Vinext stages completed; action-potential route listed |
+| `git diff --check` | PASS — exit 0, no output |
+
+The focused RED/GREEN history is preserved in `bilateral-task-4-fix-report.md`: the initial visual contract failed 14/15 because the Na⁺ bypass path did not exist; after the first GREEN, exact IAB caught two remaining subpixel intersections (`0.4295654296875 px²` and `0.6957854405045509 px²`); tightened timing windows failed the old contract and then passed 15/15. The covering focused suite subsequently passed 67/67 tests across visual contracts, mode components, and the lab.
+
+### Exact IAB geometry at `1280×720`
+
+The repaired page was measured from live `getBoundingClientRect()` values and visible computed styles.
+
+- Generation: 30 dense observations; maximum charge–particle intersection `0 px²`; particle counts progressed `2 → 4 → 6 → 0` as staggered particles appeared and the phase completed.
+- Conduction: 30 dense observations; maximum charge–particle, charge–petal, Na–K petal, and label–fiber-content intersection `0 px²`.
+- Open-end intrusions by visible channels or particles: `0`.
+- `clientWidth = scrollWidth = 1280`.
+- An independent current-HEAD pass sampled 70 generation observations and 85 conduction observations and again found `0 px²` intersections.
+
+The historical blocker at `89e5889` was a maximum `267.046875 px²` generation overlap and `324 px²` conduction overlap. The final values above are the direct zero-overlap resolution, not an inference from CSS text.
+
+### Exact IAB geometry at `390×844`
+
+- Generation: 30 dense observations; maximum charge–particle, charge–petal, Na–K petal, and label–fiber-content intersection `0 px²`.
+- Conduction: 30 dense observations; all four intersection classes again had a maximum of `0 px²`.
+- Open-end intrusions by visible channels or particles: `0`.
+- All tracked segments, charges, channels, particles, labels, and controls remained within viewport width.
+- `clientWidth = scrollWidth = 390`.
+- An independent 70-sample generation pass and 85-sample conduction pass confirmed the same zero-overlap result.
+
+The historical mobile blocker at `89e5889` reached `243.40875244140625 px²` in both generation and conduction, with up to 16 intersecting pairs during conduction. No such pair remained at `5dc0fe9`. The fixed `±21 px` mobile bypass therefore has direct current-layout evidence at the required viewport in addition to its automated CSS contract.
+
+### Bilateral structure, phases, charges, and directions
+
+- Stable structure: one shared fiber, seven stable membrane segments, 28 charge nodes/four charge slots per segment, and 14 stable Na⁺ channels.
+- Compartment labels from top to bottom: `膜外、膜内、膜外`.
+- Resting: exactly two K⁺ channels and two three-particle streams; top is `screen-direction=up`, bottom is `screen-direction=down`; K⁺ is absent from generation and conduction.
+- Generation sequence: `stimulus → sodium-channel-opening → sodium-in → excited`.
+- The central charge quartet stayed `＋−−＋` through opening and influx and changed atomically to `−＋＋−` only at `excited`.
+- Generation influx used two open Na⁺ channels and six particles: three top-down and three bottom-up.
+- Conduction recruited `[2,4]`, then `[1,5]`, then `[0,6]`. Each two-target influx had four open channels and 12 particle nodes, while each target remained `＋−−＋` until `neighbor-excited`.
+- Every `local-current` frame contained exactly four approved short arcs; the terminal frame stopped with all seven segments excited.
+- No particle, stream, or channel was hidden, clipped, deleted, or removed to obtain the geometry result.
+
+### Pause, resume, and replay continuity
+
+Exact IAB influx evidence froze all six Na⁺ particles for 720 ms: vertical transforms, horizontal translates, opacity, and bounding positions were byte-for-byte unchanged. On resume, transform and translate values advanced, and they advanced again at the next 50 ms observation. Replay returned `sodium-in / 6 particles` to `stimulus / 0`, then mounted a fresh two-stream/six-particle influx with top `down` and bottom `up` directions.
+
+Channel-opening continuity is closed by the combined deterministic automated contract:
+
+1. `keeps pauseable channel and membrane nodes mounted across play-state changes` renders one opening frame and verifies the same central segment, left petal, and pore nodes remain mounted when `playing` changes from true to false; React reconciliation retains that same keyed channel subtree when play returns to true.
+2. `uses 300ms keyframes whose play state follows the scene` fixes the petal and pore animation declarations to the same 300 ms keyframes with `both` fill and no transitions.
+3. The only playing-dependent CSS change is `animation-play-state`: the base open-channel rules are `paused`, and the `data-playing="true"` rules are `running` for those same petal and pore animations.
+
+Together these prove pause/resume of the existing CSS animation rather than remount, restart, transition replacement, or a different terminal transform. No product behavior was changed to make the Browser easier to observe.
+
+The direct IAB opening sample remains a tooling limitation: petal and pore transforms froze exactly for 720 ms, but the resume click call took 267 ms (pause click 272 ms) against a 300 ms total animation that was already partly complete. The endpoint seen when that call returned is consistent with normal continuation during the call and cannot establish an instantaneous jump. This latency limitation does not contradict the node-identity and play-state-only automated proof.
+
+### Reduced motion, accessibility, forbidden scope, and console
+
+- The dedicated reduced-motion test passed in the 214-test suite: zero RAF calls/queued callbacks, two static open central Na⁺ channels, two streams/six particles, disabled Play and Replay, and usable mode switches. Conduction uses its approved static `neighbor-excited` frame.
+- Exact surface names remained available for upper/lower Na⁺ channels and streams and upper/lower K⁺ channels and streams. Component coverage verifies valid graphic/group roles and exact local-current accessible descriptions.
+- All three modes were scanned for `mV`, `-70`, `−70`, `曲线`, `复极化`, `超极化`, and `恢复`; every match count was 0.
+- Page console warnings/errors: 0. One Browser-client Statsig telemetry timeout occurred outside the page console and did not originate in the application.
+
+### Limitations and conclusion
+
+- The in-app Browser does not expose reduced-motion emulation; the dedicated zero-RAF component test is the accepted evidence and no system preference was changed.
+- Geometry evidence consists of dense live temporal observations, including independent 70/85-sample repeats, rather than a mathematical proof of every compositor sub-frame.
+- Direct channel-resume sampling is limited by the 267 ms interaction-call latency; deterministic same-node/keyframe/play-state contracts provide the continuity proof.
+
+**Bilateral membrane acceptance: PASS at `5dc0fe9`.** The former particle–charge blocker is resolved at both required viewports, bilateral scientific direction/counts are preserved, pause/replay and reduced motion remain covered, and no contradictory current BLOCKED status remains.
