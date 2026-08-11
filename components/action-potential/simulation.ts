@@ -1,4 +1,5 @@
 import type { ActionPotentialFrame, ActionPotentialMode } from "./types";
+import { MODE_DURATION_MS } from "./modeData";
 
 export const SEGMENT_COUNT = 7;
 export const CENTER_SEGMENT = 3;
@@ -19,13 +20,21 @@ function makeSegments(
 }
 
 const CONDUCTION_STAGES = [
-  { until: 0.12, phase: "local-current", excited: [3], step: 1, targets: [2, 4], open: [], influx: [] },
-  { until: 0.24, phase: "neighbor-sodium-in", excited: [3], step: 1, targets: [2, 4], open: [2, 4], influx: [2, 4] },
-  { until: 0.36, phase: "local-current", excited: [2, 3, 4], step: 2, targets: [1, 5], open: [], influx: [] },
-  { until: 0.48, phase: "neighbor-sodium-in", excited: [2, 3, 4], step: 2, targets: [1, 5], open: [1, 5], influx: [1, 5] },
-  { until: 0.60, phase: "local-current", excited: [1, 2, 3, 4, 5], step: 3, targets: [0, 6], open: [], influx: [] },
-  { until: 0.72, phase: "neighbor-sodium-in", excited: [1, 2, 3, 4, 5], step: 3, targets: [0, 6], open: [0, 6], influx: [0, 6] },
+  { durationMs: 580, phase: "local-current", excited: [3], step: 1, targets: [2, 4], open: [], influx: [] },
+  { durationMs: 920, phase: "neighbor-sodium-in", excited: [3], step: 1, targets: [2, 4], open: [2, 4], influx: [2, 4] },
+  { durationMs: 580, phase: "local-current", excited: [2, 3, 4], step: 2, targets: [1, 5], open: [], influx: [] },
+  { durationMs: 920, phase: "neighbor-sodium-in", excited: [2, 3, 4], step: 2, targets: [1, 5], open: [1, 5], influx: [1, 5] },
+  { durationMs: 580, phase: "local-current", excited: [1, 2, 3, 4, 5], step: 3, targets: [0, 6], open: [], influx: [] },
+  { durationMs: 920, phase: "neighbor-sodium-in", excited: [1, 2, 3, 4, 5], step: 3, targets: [0, 6], open: [0, 6], influx: [0, 6] },
 ] as const;
+
+const CONDUCTION_STAGE_ENDS_MS = CONDUCTION_STAGES.map(
+  (_, index) =>
+    CONDUCTION_STAGES.slice(0, index + 1).reduce(
+      (total, stage) => total + stage.durationMs,
+      0,
+    ),
+);
 
 export function normalizeProgress(progress: number) {
   if (!Number.isFinite(progress)) return 0;
@@ -51,7 +60,11 @@ export function getActionPotentialFrame(
   }
 
   if (mode === "conduction") {
-    const stage = CONDUCTION_STAGES.find((item) => normalized < item.until);
+    const elapsedMs = normalized * MODE_DURATION_MS;
+    const stageIndex = CONDUCTION_STAGE_ENDS_MS.findIndex(
+      (stageEndMs) => elapsedMs < stageEndMs,
+    );
+    const stage = CONDUCTION_STAGES[stageIndex];
     if (stage) {
       return {
         phase: stage.phase,

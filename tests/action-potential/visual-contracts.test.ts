@@ -1,5 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { MODE_DURATION_MS } from "../../components/action-potential/modeData";
+import { getActionPotentialFrame } from "../../components/action-potential/simulation";
 
 const stylesheet = readFileSync(
   "components/action-potential/action-potential.css",
@@ -51,6 +53,25 @@ function milliseconds(rule: string, property: string) {
   return Number(match![1]);
 }
 
+function conductionPhaseWindows() {
+  const windows: Array<{ phase: string; durationMs: number }> = [];
+
+  for (let elapsedMs = 0; elapsedMs < MODE_DURATION_MS; elapsedMs += 1) {
+    const phase = getActionPotentialFrame(
+      "conduction",
+      elapsedMs / MODE_DURATION_MS,
+    ).phase;
+    const current = windows.at(-1);
+    if (current?.phase === phase) {
+      current.durationMs += 1;
+    } else {
+      windows.push({ phase, durationMs: 1 });
+    }
+  }
+
+  return windows;
+}
+
 describe("action-potential ion visual contracts", () => {
   it("uses explicit sodium and potassium fill tokens with 4.5:1 label contrast at desktop and mobile", () => {
     const label = hexToken("--ap-ion-particle-label");
@@ -79,15 +100,40 @@ describe("action-potential ion visual contracts", () => {
     expect(mobileParticleRule).not.toMatch(/(?:background|color)\s*:/);
   });
 
-  it("finishes every sodium particle within a 720ms influx phase and keeps potassium slower", () => {
+  it("finishes every sodium particle with margin inside each schedule-derived influx phase", () => {
     const sodiumRule = ruleBody(".ap-ion-stream--sodium");
     const potassiumRule = ruleBody(".ap-ion-stream--potassium");
     const sodiumDuration = milliseconds(sodiumRule, "--ion-duration");
     const sodiumStagger = milliseconds(sodiumRule, "--ion-stagger");
     const potassiumDuration = milliseconds(potassiumRule, "--ion-duration");
     const potassiumStagger = milliseconds(potassiumRule, "--ion-stagger");
+    const windows = conductionPhaseWindows();
+    const influxDurations = windows
+      .filter(({ phase }) => phase === "neighbor-sodium-in")
+      .map(({ durationMs }) => durationMs);
+    const lastSodiumCompletion = sodiumDuration + 2 * sodiumStagger;
 
-    expect(sodiumDuration + 2 * sodiumStagger).toBeLessThanOrEqual(720);
+    expect(MODE_DURATION_MS).toBeGreaterThanOrEqual(5500);
+    expect(MODE_DURATION_MS).toBeLessThanOrEqual(6500);
+    expect(windows.map(({ phase }) => phase)).toEqual([
+      "local-current",
+      "neighbor-sodium-in",
+      "local-current",
+      "neighbor-sodium-in",
+      "local-current",
+      "neighbor-sodium-in",
+      "conducted",
+    ]);
+    expect(influxDurations).toHaveLength(3);
+    for (const influxDuration of influxDurations) {
+      expect(influxDuration).toBeGreaterThanOrEqual(850);
+      expect(influxDuration).toBeLessThanOrEqual(1000);
+      expect(influxDuration - lastSodiumCompletion).toBeGreaterThanOrEqual(50);
+    }
+    expect(sodiumDuration).toBeGreaterThanOrEqual(650);
+    expect(sodiumDuration).toBeLessThanOrEqual(850);
+    expect(sodiumStagger).toBeGreaterThanOrEqual(100);
+    expect(sodiumStagger).toBeLessThanOrEqual(130);
     expect(potassiumDuration).toBeGreaterThan(sodiumDuration);
     expect(potassiumStagger).toBeGreaterThan(sodiumStagger);
     expect(ruleBody(".ap-ion-particle")).toMatch(

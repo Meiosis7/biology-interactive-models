@@ -361,7 +361,7 @@
 
 .ap-ion-stream--sodium {
   --ion-particle-fill: var(--ap-sodium-particle-fill);
-  --ion-duration: 520ms;
+  --ion-duration: 650ms;
   --ion-stagger: 100ms;
 }
 
@@ -384,8 +384,8 @@
 .ap-ion-stream--potassium {
   --ion-color: #7958b8;
   --ion-particle-fill: var(--ap-potassium-particle-fill);
-  --ion-duration: 660ms;
-  --ion-stagger: 130ms;
+  --ion-duration: 720ms;
+  --ion-stagger: 125ms;
   --ion-start-y: 34px;
   --ion-end-y: -20px;
   left: 76%;

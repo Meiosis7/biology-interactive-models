@@ -20,7 +20,7 @@ The implementation fixes only the final-review visual/accessibility findings. It
 - `tests/action-potential/lab.test.tsx`
   - Verifies exact reduced-motion phases, open-channel/particle counts, conduction segments/targets, disabled controls, usable mode changes, and zero RAF calls.
 - `tests/action-potential/visual-contracts.test.ts`
-  - Verifies calculated contrast ratios, desktop/mobile color inheritance, 720ms sodium completion, slower potassium timing, and paused/running CSS rules.
+  - Verifies calculated contrast ratios, desktop/mobile color inheritance, schedule-derived sodium completion, slower potassium timing, and paused/running CSS rules.
 
 ## TDD evidence
 
@@ -82,8 +82,8 @@ The shared desktop/mobile label token is `#ffffff`. Sodium uses solid fill `#0b6
 
 ### Timing and pause behavior
 
-- Sodium: `520ms` duration and `100ms` stagger. The third particle completes at `520 + 2×100 = 720ms`, within each 720ms conduction influx phase.
-- Potassium: species-specific `660ms` duration and `130ms` stagger, slower than sodium.
+- Sodium: `650ms` duration and `100ms` stagger. The third particle completes at `650 + 2×100 = 850ms`, 70ms before each 920ms conduction influx phase ends.
+- Potassium: species-specific `720ms` duration and `125ms` stagger, slower than sodium.
 - `.ap-ion-particle` remains paused by default.
 - `.ap-scene[data-playing="true"] .ap-ion-particle` remains the only rule that sets it running.
 
@@ -91,7 +91,7 @@ The shared desktop/mobile label token is `#ffffff`. Sodium uses solid fill `#0b6
 
 The reviewer approved the reduced-motion frame choice, conduction neighborhood, contrast tokens, timing separation, pause contract, and biological scope. The only Important issue was the initial request/cancel RAF behavior; it was reproduced with a failing test and fixed before final verification. No Critical or remaining Important issues were reported.
 
-The reviewer noted that an optional future timing margin below 720ms could add scheduling slack. The current explicit requirement is met (`<=720ms`) and no out-of-scope timing redesign was added.
+The first follow-up review identified that the original 520ms sodium duration was below the approved 650–850ms range and had no phase-boundary margin. The schedule-derived follow-up below resolves that issue without changing biological phase order.
 
 ## Final verification
 
@@ -121,3 +121,55 @@ Overall exit code: `0`.
 
 - No browser re-verification was performed for the changed colors, timing, or strict reduced-motion RAF behavior. No new browser claim is made for those changes; automated tests, stylesheet calculation, lint, and build are the evidence.
 - The previously approved Task 4 browser observations at commit `24eec93` remain historical evidence for unchanged layout, channel geometry, current direction, pause retention, controls, and responsive bounds. They are preserved separately in `action-potential-visual-polish-verification.md` with an explicit post-fix addendum.
+
+## Follow-up timing and evidence-file fix
+
+### Scope
+
+- Replaced fractional conduction thresholds with the same six phases expressed as explicit millisecond durations: three repetitions of `580ms local-current` followed by `920ms neighbor-sodium-in`.
+- Kept `MODE_DURATION_MS` at 6000ms. Recruitment ends at 4500ms and the existing `conducted` terminal frame remains visible for 1500ms.
+- Changed Na⁺ timing to `650ms` duration / `100ms` stagger. All three particles finish at 850ms, leaving a 70ms margin in every 920ms influx window.
+- Changed K⁺ timing to the slightly slower `720ms` duration / `125ms` stagger.
+- Restored `.superpowers/sdd/task-2-report.md` byte-for-byte from `9be3ff7`; that file again contains only the pre-existing synapse-transmission report.
+- Assigned all action-potential evidence to the unique `final-fix-report.md` and `action-potential-visual-polish-verification.md` names. The plan-path verification file is force-added so worktree cleanup cannot remove it.
+
+### TDD RED
+
+The hard-coded 720ms assertion was first replaced by a test that samples the real `getActionPotentialFrame("conduction", elapsed / MODE_DURATION_MS)` behavior for every millisecond, groups contiguous phase windows, and compares CSS timing against each discovered influx window.
+
+```text
+npm test -- tests/action-potential/visual-contracts.test.ts tests/action-potential/simulation.test.ts tests/action-potential/lab.test.tsx
+```
+
+Exit code: `1`. Three files ran; 1 test failed and 26 passed. The expected failure observed an actual influx duration of 720ms where the approved schedule-derived lower bound was 850ms. Simulation and lab behavior remained green.
+
+### TDD GREEN
+
+After the minimal schedule/timing change, the identical focused command exited `0`: 3/3 files and 27/27 tests passed.
+
+The contract now asserts:
+
+- total conduction duration remains between 5.5 and 6.5 seconds (actual: 6000ms);
+- exact phase order remains local/influx repeated three times, then conducted;
+- all three discovered influx windows are 850–1000ms (actual: 920ms);
+- Na⁺ duration is 650–850ms and stagger is 100–130ms (actual: 650ms/100ms);
+- the final Na⁺ particle finishes at least 50ms before every influx phase ends (actual margin: 70ms);
+- potassium duration and stagger remain greater than sodium's.
+
+### Follow-up automation
+
+```text
+npm test && npm run lint && npm run build
+```
+
+Exit code: `0`.
+
+- Tests: 20/20 files passed; 171/171 tests passed.
+- Lint: ESLint exited with no diagnostics.
+- Build: Vinext completed all five stages and listed `/models/action-potential`.
+
+After every evidence file was staged, `git diff --cached --check` exited `0` with no output.
+
+### Follow-up evidence limit
+
+No browser re-verification was performed or claimed. Browser validation of the new phase allocation and particle timing remains assigned to the next review stage.
