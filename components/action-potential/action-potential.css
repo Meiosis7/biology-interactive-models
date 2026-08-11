@@ -8,6 +8,9 @@
   --ap-green: #3f8d2b;
   --ap-blue: #168aad;
   --ap-purple: #7657b9;
+  --ap-ion-particle-label: #ffffff;
+  --ap-sodium-particle-fill: #0b6673;
+  --ap-potassium-particle-fill: #5a3e91;
   --ap-border: rgba(38, 43, 48, 0.18);
 }
 
@@ -356,6 +359,12 @@
   pointer-events: none;
 }
 
+.ap-ion-stream--sodium {
+  --ion-particle-fill: var(--ap-sodium-particle-fill);
+  --ion-duration: 520ms;
+  --ion-stagger: 100ms;
+}
+
 .ap-ion-stream::before {
   position: absolute;
   top: 4px;
@@ -374,6 +383,9 @@
 
 .ap-ion-stream--potassium {
   --ion-color: #7958b8;
+  --ion-particle-fill: var(--ap-potassium-particle-fill);
+  --ion-duration: 660ms;
+  --ion-stagger: 130ms;
   --ion-start-y: 34px;
   --ion-end-y: -20px;
   left: 76%;
@@ -388,17 +400,17 @@
   height: 25px;
   border: 1px solid color-mix(in srgb, var(--ion-color) 75%, white);
   border-radius: 50%;
-  background: radial-gradient(circle at 34% 28%, white 0 12%, color-mix(in srgb, var(--ion-color) 45%, white) 26%, var(--ion-color) 100%);
+  background: var(--ion-particle-fill);
   box-shadow: 0 4px 12px color-mix(in srgb, var(--ion-color) 30%, transparent);
   place-items: center;
-  color: white;
+  color: var(--ap-ion-particle-label);
   font-size: 8px;
   font-style: normal;
   font-weight: 800;
   transform: translate(-50%, var(--ion-start-y)) scale(.82);
   opacity: 0;
-  animation: ap-ion-cross 780ms cubic-bezier(.3, .1, .25, 1) infinite;
-  animation-delay: calc(var(--ion-index) * 190ms);
+  animation: ap-ion-cross var(--ion-duration) cubic-bezier(.3, .1, .25, 1) infinite;
+  animation-delay: calc(var(--ion-index) * var(--ion-stagger));
   animation-play-state: paused;
   will-change: transform, opacity;
 }

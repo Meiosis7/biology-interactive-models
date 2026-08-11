@@ -164,7 +164,7 @@ describe("ActionPotentialLab", () => {
     }
   });
 
-  it("uses a static key frame for reduced motion", () => {
+  it("uses representative static ion frames with disabled playback for reduced motion", () => {
     vi.stubGlobal(
       "matchMedia",
       vi.fn(() => ({
@@ -175,6 +175,7 @@ describe("ActionPotentialLab", () => {
     );
     render(<ActionPotentialLab />);
     expect(callbacks.size).toBe(0);
+    expect(requestAnimationFrame).not.toHaveBeenCalled();
     expect(screen.getByLabelText("静息电位动态示意")).toHaveAttribute(
       "data-playing",
       "false",
@@ -186,15 +187,54 @@ describe("ActionPotentialLab", () => {
     fireEvent.click(playButton);
     fireEvent.click(replayButton);
     expect(callbacks.size).toBe(0);
-    fireEvent.click(screen.getByRole("button", { name: /动作电位传导/ }));
+
+    fireEvent.click(screen.getByRole("button", { name: /动作电位产生/ }));
+    const generationScene = screen.getByLabelText("动作电位产生动态示意");
+    expect(generationScene).toHaveAttribute("data-phase", "sodium-in");
     expect(
-      Array.from(
-        screen
-          .getByLabelText("动作电位传导动态示意")
-          .querySelectorAll('[data-segment-polarity="excited"]'),
-      ).map((segment) => segment.getAttribute("data-segment-id")),
-    ).toEqual(["2", "3", "4"]);
+      generationScene.querySelectorAll(
+        '[data-channel-species="sodium"][data-open="true"]',
+      ),
+    ).toHaveLength(1);
+    expect(
+      generationScene.querySelectorAll('[data-ion-particle="sodium"]'),
+    ).toHaveLength(3);
+    expect(screen.getByLabelText("Na⁺进入第4膜段")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "播放" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "重新播放" })).toBeDisabled();
+    expect(callbacks.size).toBe(0);
+
+    fireEvent.click(screen.getByRole("button", { name: /动作电位传导/ }));
+    const conductionScene = screen.getByLabelText("动作电位传导动态示意");
+    expect(conductionScene).toHaveAttribute(
+      "data-phase",
+      "neighbor-sodium-in",
+    );
+    expect(
+      Array.from(
+        conductionScene.querySelectorAll('[data-segment-polarity="excited"]'),
+      ).map((segment) => segment.getAttribute("data-segment-id")),
+    ).toEqual(["2", "3", "4"]);
+    expect(
+      Array.from(
+        conductionScene.querySelectorAll(
+          '[data-channel-species="sodium"][data-open="true"]',
+        ),
+      ).map((channel) =>
+        channel.closest("[data-segment-id]")?.getAttribute("data-segment-id"),
+      ),
+    ).toEqual(["1", "5"]);
+    expect(
+      conductionScene.querySelectorAll('[data-ion-particle="sodium"]'),
+    ).toHaveLength(6);
+    expect(
+      Array.from(
+        conductionScene.querySelectorAll('[data-current-target="true"]'),
+      ).map((segment) => segment.getAttribute("data-segment-id")),
+    ).toEqual(["1", "5"]);
+    expect(screen.getByRole("button", { name: "播放" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "重新播放" })).toBeDisabled();
+    expect(callbacks.size).toBe(0);
+    expect(requestAnimationFrame).not.toHaveBeenCalled();
   });
 });

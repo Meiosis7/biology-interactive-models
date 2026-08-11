@@ -14,13 +14,14 @@ export function ActionPotentialLab() {
   const [playing, setPlaying] = useState(true);
   const [progress, setProgress] = useState(0);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [motionPreferenceReady, setMotionPreferenceReady] = useState(false);
   const previousTime = useRef<number | null>(null);
   const progressRef = useRef(0);
   const isOneShotMode = mode === "generation" || mode === "conduction";
 
   const content = ACTION_POTENTIAL_MODES.find((item) => item.id === mode)!;
   const staticProgress =
-    mode === "generation" ? 1 : mode === "conduction" ? 0.3 : 0;
+    mode === "generation" ? 0.55 : mode === "conduction" ? 0.42 : 0;
   const displayedProgress = reducedMotion ? staticProgress : progress;
   const frame = useMemo(
     () => getActionPotentialFrame(mode, displayedProgress),
@@ -29,14 +30,17 @@ export function ActionPotentialLab() {
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const sync = () => setReducedMotion(media.matches);
+    const sync = () => {
+      setReducedMotion(media.matches);
+      setMotionPreferenceReady(true);
+    };
     sync();
     media.addEventListener("change", sync);
     return () => media.removeEventListener("change", sync);
   }, []);
 
   useEffect(() => {
-    if (!playing || reducedMotion) return;
+    if (!motionPreferenceReady || !playing || reducedMotion) return;
     let frameId = 0;
     const tick = (now: number) => {
       const before = previousTime.current ?? now;
@@ -58,7 +62,7 @@ export function ActionPotentialLab() {
       cancelAnimationFrame(frameId);
       previousTime.current = null;
     };
-  }, [isOneShotMode, mode, playing, reducedMotion]);
+  }, [isOneShotMode, mode, motionPreferenceReady, playing, reducedMotion]);
 
   const restart = () => {
     previousTime.current = null;
