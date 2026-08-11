@@ -227,3 +227,67 @@ After this report was staged, `git diff --cached --check` exited `0` with no out
 ### Evidence limit
 
 No browser evidence was added or updated. The in-app browser controller will reverify computed animation iteration/fill behavior after this commit.
+
+## Follow-up generation causal-tail fix
+
+### Root cause
+
+After Na⁺ became a one-shot animation, generation still used its original fractional phase boundaries. With the unchanged 6000ms mode duration, those boundaries produced:
+
+- stimulus: 0–960ms (960ms);
+- sodium-channel-opening: 960–2160ms (1200ms);
+- sodium-in: 2160–4320ms (2160ms);
+- excited terminal frame: 4320–6000ms (1680ms).
+
+The third Na⁺ particle completes after `650 + 2×100 = 850ms`, leaving a 1310ms interval with an influx caption but no visible moving ions. The defect was generation scheduling, not the one-shot CSS or conduction schedule.
+
+The generation boundaries are now expressed in milliseconds without changing phase count/order:
+
+| Phase | Boundary | Duration |
+| --- | ---: | ---: |
+| stimulus | 0–1000ms | 1000ms |
+| sodium-channel-opening | 1000–2500ms | 1500ms |
+| sodium-in | 2500–3550ms | 1050ms |
+| excited terminal frame | 3550–6000ms | 2450ms |
+
+The last particle completes 850ms into the 1050ms influx window, so center excitation follows after an exact 200ms causal pause. Total generation remains 6000ms. Conduction data/timing was not changed.
+
+### TDD RED
+
+The new generation contract samples the real `getActionPotentialFrame("generation", elapsed / MODE_DURATION_MS)` result for every millisecond, groups actual phase windows, and derives the causal tail from those windows plus the real Na⁺ CSS duration/stagger.
+
+```text
+npm test -- tests/action-potential/visual-contracts.test.ts tests/action-potential/simulation.test.ts tests/action-potential/lab.test.tsx
+```
+
+Exit code: `1`. One test failed and 28 passed. The new assertion observed a 1310ms tail and failed only the approved `<=250ms` bound.
+
+### TDD GREEN and focused verification
+
+After changing only the generation boundaries, the identical focused command exited `0`: 3/3 files and 29/29 tests passed.
+
+The complete action-potential directory then passed:
+
+```text
+npm test -- tests/action-potential
+```
+
+Exit code: `0`; 4/4 files and 45/45 tests passed. This includes existing terminal one-center-excited stop, replay, reduced-motion static generation particles/open channel, and conduction schedule contracts.
+
+### Full verification
+
+```text
+npm test && npm run lint && npm run build
+```
+
+Exit code: `0`.
+
+- Tests: 20/20 files and 173/173 tests passed.
+- Lint: ESLint exited with no diagnostics.
+- Build: Vinext completed all five stages and listed `/models/action-potential`.
+
+After this report was staged, `git diff --cached --check` exited `0` with no output.
+
+### Evidence limit
+
+No browser report was updated and no new browser result is claimed. The in-app browser controller will replay the final generation sequence after this commit.

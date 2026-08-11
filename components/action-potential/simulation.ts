@@ -36,6 +36,12 @@ const CONDUCTION_STAGE_ENDS_MS = CONDUCTION_STAGES.map(
     ),
 );
 
+const GENERATION_PHASE_ENDS_MS = {
+  stimulus: 1000,
+  sodiumChannelOpening: 2500,
+  sodiumIn: 3550,
+} as const;
+
 export function normalizeProgress(progress: number) {
   if (!Number.isFinite(progress)) return 0;
   return Math.max(0, Math.min(1, progress));
@@ -88,7 +94,9 @@ export function getActionPotentialFrame(
     };
   }
 
-  if (normalized < 0.16) {
+  const generationElapsedMs = normalized * MODE_DURATION_MS;
+
+  if (generationElapsedMs < GENERATION_PHASE_ENDS_MS.stimulus) {
     return {
       phase: "stimulus",
       segments: makeSegments([]),
@@ -100,7 +108,9 @@ export function getActionPotentialFrame(
     };
   }
 
-  if (normalized < 0.36) {
+  if (
+    generationElapsedMs < GENERATION_PHASE_ENDS_MS.sodiumChannelOpening
+  ) {
     return {
       phase: "sodium-channel-opening",
       segments: makeSegments([], [CENTER_SEGMENT]),
@@ -112,7 +122,7 @@ export function getActionPotentialFrame(
     };
   }
 
-  if (normalized < 0.72) {
+  if (generationElapsedMs < GENERATION_PHASE_ENDS_MS.sodiumIn) {
     return {
       phase: "sodium-in",
       segments: makeSegments([], [CENTER_SEGMENT], [CENTER_SEGMENT]),

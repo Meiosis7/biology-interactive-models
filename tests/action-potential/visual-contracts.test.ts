@@ -72,6 +72,29 @@ function conductionPhaseWindows() {
   return windows;
 }
 
+function generationPhaseWindows() {
+  const windows: Array<{
+    phase: string;
+    startMs: number;
+    durationMs: number;
+  }> = [];
+
+  for (let elapsedMs = 0; elapsedMs < MODE_DURATION_MS; elapsedMs += 1) {
+    const phase = getActionPotentialFrame(
+      "generation",
+      elapsedMs / MODE_DURATION_MS,
+    ).phase;
+    const current = windows.at(-1);
+    if (current?.phase === phase) {
+      current.durationMs += 1;
+    } else {
+      windows.push({ phase, startMs: elapsedMs, durationMs: 1 });
+    }
+  }
+
+  return windows;
+}
+
 describe("action-potential ion visual contracts", () => {
   it("uses explicit sodium and potassium fill tokens with 4.5:1 label contrast at desktop and mobile", () => {
     const label = hexToken("--ap-ion-particle-label");
@@ -165,6 +188,34 @@ describe("action-potential ion visual contracts", () => {
     );
     expect(stylesheet).toMatch(
       /@keyframes ap-ion-cross\s*\{[\s\S]*?0%\s*\{[^}]*var\(--ion-start-y\)[^}]*opacity:\s*0\s*;[^}]*\}[\s\S]*?100%\s*\{[^}]*var\(--ion-end-y\)[^}]*opacity:\s*0\s*;[^}]*\}/,
+    );
+  });
+
+  it("excites the center 150–250ms after the generation sodium particles finish", () => {
+    const sodiumRule = ruleBody(".ap-ion-stream--sodium");
+    const lastParticleCompletion =
+      milliseconds(sodiumRule, "--ion-duration") +
+      2 * milliseconds(sodiumRule, "--ion-stagger");
+    const windows = generationPhaseWindows();
+    const sodiumWindow = windows.find(({ phase }) => phase === "sodium-in")!;
+    const causalTail = sodiumWindow.durationMs - lastParticleCompletion;
+
+    expect(windows.map(({ phase }) => phase)).toEqual([
+      "stimulus",
+      "sodium-channel-opening",
+      "sodium-in",
+      "excited",
+    ]);
+    expect(windows.reduce((total, window) => total + window.durationMs, 0)).toBe(
+      MODE_DURATION_MS,
+    );
+    expect(windows[0].durationMs).toBeGreaterThanOrEqual(900);
+    expect(windows[1].durationMs).toBeGreaterThanOrEqual(1000);
+    expect(windows[3].durationMs).toBeGreaterThanOrEqual(1500);
+    expect(causalTail).toBeGreaterThanOrEqual(150);
+    expect(causalTail).toBeLessThanOrEqual(250);
+    expect(windows[3].startMs).toBe(
+      sodiumWindow.startMs + sodiumWindow.durationMs,
     );
   });
 });
