@@ -149,6 +149,70 @@ describe("action-potential shared-fiber components", () => {
     ]);
   });
 
+  it("labels top outside, fiber inside, and bottom outside in vertical order", () => {
+    render(
+      <ActionPotentialScene
+        mode="generation"
+        frame={getActionPotentialFrame("generation", 0.55)}
+        playing={false}
+      />,
+    );
+
+    const labels = screen.getAllByTestId("membrane-compartment-label");
+    expect(labels.map((label) => label.getAttribute("data-compartment"))).toEqual([
+      "outside-top",
+      "inside",
+      "outside-bottom",
+    ]);
+    expect(labels.map((label) => label.textContent)).toEqual(["膜外", "膜内", "膜外"]);
+  });
+
+  it.each([
+    [0, ["＋", "−", "−", "＋"]],
+    [0.2, ["＋", "−", "−", "＋"]],
+    [0.55, ["＋", "−", "−", "＋"]],
+    [0.9, ["−", "＋", "＋", "−"]],
+  ] as const)("keeps the generation charge quartet atomic at progress %s", (progress, expected) => {
+    const { container } = render(
+      <ActionPotentialScene
+        mode="generation"
+        frame={getActionPotentialFrame("generation", progress)}
+        playing={false}
+      />,
+    );
+    const center = container.querySelector('[data-segment-id="3"]')!;
+    expect(
+      Array.from(center.querySelectorAll("[data-charge-position]"), (node) => node.textContent),
+    ).toEqual(expected);
+  });
+
+  it("switches conduction targets only after sodium influx finishes", () => {
+    const { container, rerender } = render(
+      <ActionPotentialScene
+        mode="conduction"
+        frame={getActionPotentialFrame("conduction", 0.16)}
+        playing={false}
+      />,
+    );
+    const signs = (id: number) =>
+      Array.from(
+        container.querySelector(`[data-segment-id="${id}"]`)!.querySelectorAll("[data-charge-position]"),
+        (node) => node.textContent,
+      );
+    expect(signs(2)).toEqual(["＋", "−", "−", "＋"]);
+    expect(signs(4)).toEqual(["＋", "−", "−", "＋"]);
+
+    rerender(
+      <ActionPotentialScene
+        mode="conduction"
+        frame={getActionPotentialFrame("conduction", 0.26)}
+        playing={false}
+      />,
+    );
+    expect(signs(2)).toEqual(["−", "＋", "＋", "−"]);
+    expect(signs(4)).toEqual(["−", "＋", "＋", "−"]);
+  });
+
   it("reverses all four charge signs without moving their slots when excited", () => {
     const { container } = render(
       <ActionPotentialScene

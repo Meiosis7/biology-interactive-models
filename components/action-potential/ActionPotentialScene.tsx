@@ -49,12 +49,20 @@ export function ActionPotentialScene({
       </p>
 
       <div className="ap-fiber-stage">
-        <span className="ap-compartment-label ap-compartment-label--outside">
-          膜外
-        </span>
-        <span className="ap-compartment-label ap-compartment-label--inside">
-          膜内
-        </span>
+        {([
+          ["outside-top", "膜外"],
+          ["inside", "膜内"],
+          ["outside-bottom", "膜外"],
+        ] as const).map(([compartment, label]) => (
+          <span
+            key={compartment}
+            className={`ap-compartment-label ap-compartment-label--${compartment}`}
+            data-testid="membrane-compartment-label"
+            data-compartment={compartment}
+          >
+            {label}
+          </span>
+        ))}
 
         <div className="ap-fiber" data-testid="shared-fiber">
           {frame.segments.map((segment) => (

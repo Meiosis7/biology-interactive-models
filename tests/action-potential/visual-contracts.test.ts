@@ -195,17 +195,28 @@ describe("action-potential ion visual contracts", () => {
 
   it("keeps four charge rows fixed around the two membrane lines", () => {
     expect(ruleBody(".ap-segment-charge--outside-top")).toMatch(
-      /top:\s*-29px\s*;/,
+      /top:\s*-34px\s*;/,
     );
     expect(ruleBody(".ap-segment-charge--inside-top")).toMatch(
-      /top:\s*10px\s*;/,
+      /top:\s*22px\s*;/,
     );
     expect(ruleBody(".ap-segment-charge--inside-bottom")).toMatch(
-      /bottom:\s*10px\s*;/,
+      /bottom:\s*22px\s*;/,
     );
     expect(ruleBody(".ap-segment-charge--outside-bottom")).toMatch(
-      /bottom:\s*-29px\s*;/,
+      /bottom:\s*-34px\s*;/,
     );
+  });
+
+  it("reserves three compartment lanes around a taller bilateral fiber", () => {
+    expect(ruleBody(".ap-fiber")).toMatch(/height:\s*108px\s*;/);
+    expect(ruleBody(".ap-compartment-label--outside-top")).toMatch(/47% - 42px/);
+    expect(ruleBody(".ap-compartment-label--inside")).toMatch(/47% \+ 48px/);
+    expect(ruleBody(".ap-compartment-label--outside-bottom")).toMatch(/47% \+ 126px/);
+    expect(ruleBody(".ap-segment-charge--outside-top")).toMatch(/top:\s*-34px\s*;/);
+    expect(ruleBody(".ap-segment-charge--inside-top")).toMatch(/top:\s*22px\s*;/);
+    expect(ruleBody(".ap-segment-charge--inside-bottom")).toMatch(/bottom:\s*22px\s*;/);
+    expect(ruleBody(".ap-segment-charge--outside-bottom")).toMatch(/bottom:\s*-34px\s*;/);
   });
 
   it("draws short current arcs without step-dependent full-width lanes", () => {
