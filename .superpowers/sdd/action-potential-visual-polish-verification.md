@@ -163,6 +163,40 @@ Visual inspection confirmed the warm light textbook style, legible channel/charg
 - [x] Exact desktop/mobile Task 4 layout checks remain preserved as historical browser evidence
 - [x] Post-fix full automated test/lint/build/diff-check chain passes
 
-## Remaining evidence limit
+## Post-fix focused browser re-verification
 
-Browser re-verification was intentionally deferred to the next review stage. The final color, revised schedule/timing, and strict reduced-motion changes are supported here by automated/CSS/build evidence only; the preserved browser measurements are explicitly scoped to the unchanged geometry and behavior observed at `24eec93`.
+The final worktree build at `a7b18a3` was reloaded in the in-app Browser after the revised schedule, contrast, and one-shot sodium fixes. The focused pass intentionally repeated only the visual inputs changed after the original Task 4 acceptance.
+
+### Desktop — exactly 1280 × 720
+
+One complete third-round `neighbor-sodium-in` frame was sampled atomically from start through recruitment:
+
+| Sample | Phase | Excited segments | Third Na⁺ particle |
+| --- | --- | --- | --- |
+| Delayed start | `neighbor-sodium-in` | `[1,2,3,4,5]` | opacity `0`; transform y=`-20`; iteration `1`; fill `both` |
+| Crossing | `neighbor-sodium-in` | `[1,2,3,4,5]` | opacity `1`; transform y=`14.2947` |
+| 70 ms tail | `neighbor-sodium-in` | `[1,2,3,4,5]` | opacity `0`; transform y=`34`; remained at the completed endpoint without restarting |
+| Recruitment | `conducted` | `[0,1,2,3,4,5,6]` | stream unmounted; zero Na⁺ particles |
+
+The sampled sodium animation reported duration `0.65s`, 100 ms particle staggering, `animation-iteration-count: 1`, and `animation-fill-mode: both`. This directly confirmed the third particle completed before recruitment and did not restart in the 70 ms phase tail.
+
+Pause was repeated during `neighbor-sodium-in`. Immediately after pause and after 820 ms:
+
+- Ion: opacity `1`; transform `matrix(0.973254, 0, 0, 0.973254, -12.5, 27.435)`; x=`356.1234`, y=`348.7928`; play state `paused`.
+- Current marker: opacity `1`; transform `matrix(1, 0, 0, 1, -13.2327, 0)`; x=`451.7186`, y=`300.0234`; play state `paused`.
+
+Every recorded value was unchanged after 820 ms. After Play and 180 ms, both play states became `running`; the ion reached the invisible endpoint and the current marker moved, with no snap to origin. Replay had created the fresh six-particle sequence used for this pause sample.
+
+Desktop K⁺ particles retained white labels on `rgb(90, 62, 145)` at 8 px. The three particles reported 720 ms duration, delays `0`, `125`, and `250` ms, and infinite iteration, confirming the intended visibly slower continuous resting outflow relative to the 650 ms Na⁺ pass.
+
+### Mobile — exactly 390 × 844
+
+The final page reported `innerWidth=clientWidth=scrollWidth=390`, so the timing/color changes introduced no horizontal overflow.
+
+- Na⁺: white 7 px label on `rgb(11, 102, 115)` (`#0b6673`), contrast approximately 6.64:1; one iteration with fill mode `both`; all six sampled particles remained within x=0…390.
+- K⁺: white 7 px label on `rgb(90, 62, 145)` (`#5a3e91`), contrast approximately 8.29:1; infinite iteration; sampled particle remained within x=0…390.
+- The sampled Na⁺ ball measured approximately 21.24×21.24 px and the sampled K⁺ ball approximately 17.47×17.47 px. Both labels were visually distinct, centered, and aligned with their pores.
+
+Reduced-motion media emulation remained unavailable in the in-app Browser. No system preference was changed; the strict zero-RAF, open-channel, and static-particle automated/CSS evidence remains the accepted reduced-motion proof.
+
+This focused post-fix pass found no timing, contrast, pause, replay, overflow, or alignment regression.
