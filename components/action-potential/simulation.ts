@@ -20,12 +20,15 @@ function makeSegments(
 }
 
 const CONDUCTION_STAGES = [
-  { durationMs: 580, phase: "local-current", excited: [3], step: 1, targets: [2, 4], open: [], influx: [] },
-  { durationMs: 920, phase: "neighbor-sodium-in", excited: [3], step: 1, targets: [2, 4], open: [2, 4], influx: [2, 4] },
-  { durationMs: 580, phase: "local-current", excited: [2, 3, 4], step: 2, targets: [1, 5], open: [], influx: [] },
-  { durationMs: 920, phase: "neighbor-sodium-in", excited: [2, 3, 4], step: 2, targets: [1, 5], open: [1, 5], influx: [1, 5] },
-  { durationMs: 580, phase: "local-current", excited: [1, 2, 3, 4, 5], step: 3, targets: [0, 6], open: [], influx: [] },
-  { durationMs: 920, phase: "neighbor-sodium-in", excited: [1, 2, 3, 4, 5], step: 3, targets: [0, 6], open: [0, 6], influx: [0, 6] },
+  { durationMs: 520, phase: "local-current", excited: [3], step: 1, targets: [2, 4], open: [], influx: [] },
+  { durationMs: 920, phase: "neighbor-sodium-in", excited: [3], step: null, targets: [2, 4], open: [2, 4], influx: [2, 4] },
+  { durationMs: 360, phase: "neighbor-excited", excited: [2, 3, 4], step: null, targets: [], open: [2, 4], influx: [] },
+  { durationMs: 520, phase: "local-current", excited: [2, 3, 4], step: 2, targets: [1, 5], open: [], influx: [] },
+  { durationMs: 920, phase: "neighbor-sodium-in", excited: [2, 3, 4], step: null, targets: [1, 5], open: [1, 5], influx: [1, 5] },
+  { durationMs: 360, phase: "neighbor-excited", excited: [1, 2, 3, 4, 5], step: null, targets: [], open: [1, 5], influx: [] },
+  { durationMs: 520, phase: "local-current", excited: [1, 2, 3, 4, 5], step: 3, targets: [0, 6], open: [], influx: [] },
+  { durationMs: 920, phase: "neighbor-sodium-in", excited: [1, 2, 3, 4, 5], step: null, targets: [0, 6], open: [0, 6], influx: [0, 6] },
+  { durationMs: 360, phase: "neighbor-excited", excited: [0, 1, 2, 3, 4, 5, 6], step: null, targets: [], open: [0, 6], influx: [] },
 ] as const;
 
 const CONDUCTION_STAGE_ENDS_MS = CONDUCTION_STAGES.map(
@@ -79,7 +82,12 @@ export function getActionPotentialFrame(
         potassiumOutflow: false,
         stimulusVisible: true,
         localCurrentStep: stage.step,
-        instruction: stage.phase === "local-current" ? "形成局部电流" : "相邻 Na⁺通道开放",
+        instruction:
+          stage.phase === "local-current"
+            ? "形成局部电流，兴奋向两侧传递"
+            : stage.phase === "neighbor-sodium-in"
+              ? "局部电流使两侧 Na⁺通道开放，Na⁺内流"
+              : "两侧相邻膜段形成动作电位",
       };
     }
 
@@ -90,7 +98,7 @@ export function getActionPotentialFrame(
       potassiumOutflow: false,
       stimulusVisible: true,
       localCurrentStep: null,
-      instruction: "兴奋已由刺激点传到两侧",
+      instruction: "全部膜段已形成动作电位",
     };
   }
 

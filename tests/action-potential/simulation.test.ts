@@ -40,19 +40,46 @@ describe("action-potential shared-fiber frames", () => {
   });
 
   it.each([
-    [0.05, "local-current", [3], 1, []],
-    [0.16, "neighbor-sodium-in", [3], 1, [2, 4]],
-    [0.28, "local-current", [2, 3, 4], 2, []],
-    [0.40, "neighbor-sodium-in", [2, 3, 4], 2, [1, 5]],
-    [0.52, "local-current", [1, 2, 3, 4, 5], 3, []],
-    [0.64, "neighbor-sodium-in", [1, 2, 3, 4, 5], 3, [0, 6]],
-    [0.90, "conducted", [0, 1, 2, 3, 4, 5, 6], null, []],
-  ] as const)("maps conduction progress %s to %s", (progress, phase, excited, step, influx) => {
-    const frame = getActionPotentialFrame("conduction", progress);
-    expect(frame.phase).toBe(phase);
-    expect(excitedIds("conduction", progress)).toEqual(excited);
-    expect(frame.localCurrentStep).toBe(step);
-    expect(frame.segments.filter((item) => item.sodiumInflux).map((item) => item.id)).toEqual(influx);
+    [0.05, "local-current", [3], 1, [], []],
+    [0.16, "neighbor-sodium-in", [3], null, [2, 4], [2, 4]],
+    [0.26, "neighbor-excited", [2, 3, 4], null, [], [2, 4]],
+    [0.34, "local-current", [2, 3, 4], 2, [], []],
+    [0.45, "neighbor-sodium-in", [2, 3, 4], null, [1, 5], [1, 5]],
+    [0.56, "neighbor-excited", [1, 2, 3, 4, 5], null, [], [1, 5]],
+    [0.64, "local-current", [1, 2, 3, 4, 5], 3, [], []],
+    [0.75, "neighbor-sodium-in", [1, 2, 3, 4, 5], null, [0, 6], [0, 6]],
+    [0.86, "neighbor-excited", [0, 1, 2, 3, 4, 5, 6], null, [], [0, 6]],
+    [0.95, "conducted", [0, 1, 2, 3, 4, 5, 6], null, [], []],
+  ] as const)(
+    "maps conduction progress %s to %s",
+    (progress, phase, excited, step, influx, open) => {
+      const frame = getActionPotentialFrame("conduction", progress);
+      expect(frame.phase).toBe(phase);
+      expect(excitedIds("conduction", progress)).toEqual(excited);
+      expect(frame.localCurrentStep).toBe(step);
+      expect(
+        frame.segments.filter((item) => item.sodiumInflux).map((item) => item.id),
+      ).toEqual(influx);
+      expect(
+        frame.segments
+          .filter((item) => item.sodiumChannelOpen)
+          .map((item) => item.id),
+      ).toEqual(open);
+    },
+  );
+
+  it("forms each target action potential before starting the next local current", () => {
+    const firstInflux = getActionPotentialFrame("conduction", 0.16);
+    const firstExcited = getActionPotentialFrame("conduction", 0.26);
+    const secondCurrent = getActionPotentialFrame("conduction", 0.34);
+
+    expect(firstInflux.segments.filter((item) => item.polarity === "excited").map((item) => item.id)).toEqual([3]);
+    expect(firstInflux.segments.filter((item) => item.sodiumInflux).map((item) => item.id)).toEqual([2, 4]);
+    expect(firstExcited.segments.filter((item) => item.polarity === "excited").map((item) => item.id)).toEqual([2, 3, 4]);
+    expect(firstExcited.segments.some((item) => item.sodiumInflux)).toBe(false);
+    expect(firstExcited.localCurrentStep).toBeNull();
+    expect(secondCurrent.segments.filter((item) => item.polarity === "excited").map((item) => item.id)).toEqual([2, 3, 4]);
+    expect(secondCurrent.localCurrentStep).toBe(2);
   });
 
   it("only accumulates excited segments during conduction", () => {

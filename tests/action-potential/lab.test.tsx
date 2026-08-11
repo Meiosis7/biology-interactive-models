@@ -219,32 +219,16 @@ describe("ActionPotentialLab", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /动作电位传导/ }));
     const conductionScene = screen.getByLabelText("动作电位传导动态示意");
-    expect(conductionScene).toHaveAttribute(
-      "data-phase",
-      "neighbor-sodium-in",
-    );
+    expect(conductionScene).toHaveAttribute("data-phase", "neighbor-excited");
     expect(
       Array.from(
         conductionScene.querySelectorAll('[data-segment-polarity="excited"]'),
       ).map((segment) => segment.getAttribute("data-segment-id")),
     ).toEqual(["2", "3", "4"]);
     expect(
-      Array.from(
-        conductionScene.querySelectorAll(
-          '[data-channel-species="sodium"][data-open="true"]',
-        ),
-      ).map((channel) =>
-        channel.closest("[data-segment-id]")?.getAttribute("data-segment-id"),
-      ),
-    ).toEqual(["1", "5"]);
-    expect(
       conductionScene.querySelectorAll('[data-ion-particle="sodium"]'),
-    ).toHaveLength(6);
-    expect(
-      Array.from(
-        conductionScene.querySelectorAll('[data-current-target="true"]'),
-      ).map((segment) => segment.getAttribute("data-segment-id")),
-    ).toEqual(["1", "5"]);
+    ).toHaveLength(0);
+    expect(screen.queryByLabelText("局部电流方向")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "播放" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "重新播放" })).toBeDisabled();
     expect(callbacks.size).toBe(0);

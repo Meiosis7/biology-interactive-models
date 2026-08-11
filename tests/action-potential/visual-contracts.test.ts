@@ -141,12 +141,25 @@ describe("action-potential ion visual contracts", () => {
     expect(windows.map(({ phase }) => phase)).toEqual([
       "local-current",
       "neighbor-sodium-in",
+      "neighbor-excited",
       "local-current",
       "neighbor-sodium-in",
+      "neighbor-excited",
       "local-current",
       "neighbor-sodium-in",
+      "neighbor-excited",
       "conducted",
     ]);
+    const currentDurations = windows
+      .filter(({ phase }) => phase === "local-current")
+      .map(({ durationMs }) => durationMs);
+    const newlyExcitedDurations = windows
+      .filter(({ phase }) => phase === "neighbor-excited")
+      .map(({ durationMs }) => durationMs);
+
+    expect(currentDurations).toEqual([520, 520, 520]);
+    expect(newlyExcitedDurations).toEqual([360, 360, 360]);
+    expect(windows.at(-1)).toEqual({ phase: "conducted", durationMs: 600 });
     expect(influxDurations).toHaveLength(3);
     for (const influxDuration of influxDurations) {
       expect(influxDuration).toBeGreaterThanOrEqual(850);

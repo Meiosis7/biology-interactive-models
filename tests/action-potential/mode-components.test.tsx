@@ -301,6 +301,32 @@ describe("action-potential shared-fiber components", () => {
     expect(screen.getByText("全部膜段已兴奋")).toBeInTheDocument();
   });
 
+  it("shows the new action-potential beat without ions or local-current paths", () => {
+    const frame = getActionPotentialFrame("conduction", 0.26);
+    const { container } = render(
+      <ActionPotentialScene mode="conduction" frame={frame} playing />,
+    );
+
+    expect(frame.phase).toBe("neighbor-excited");
+    expect(screen.getByText("两侧相邻膜段形成动作电位")).toBeInTheDocument();
+    expect(container.querySelectorAll('[data-segment-polarity="excited"]')).toHaveLength(3);
+    expect(container.querySelectorAll('[data-ion-particle="sodium"]')).toHaveLength(0);
+    expect(screen.queryByLabelText("局部电流方向")).not.toBeInTheDocument();
+  });
+
+  it("labels the third newly-excited beat as fully excited", () => {
+    render(
+      <ActionPotentialScene
+        mode="conduction"
+        frame={getActionPotentialFrame("conduction", 0.86)}
+        playing
+      />,
+    );
+
+    expect(screen.getByText("全部膜段已兴奋")).toBeInTheDocument();
+    expect(screen.queryAllByText("未兴奋区")).toHaveLength(0);
+  });
+
   it("renders the exact generation knowledge facts without recovery", () => {
     render(
       <ActionPotentialKnowledgeCard content={ACTION_POTENTIAL_MODES[1]} />,

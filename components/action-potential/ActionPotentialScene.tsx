@@ -21,7 +21,8 @@ export function ActionPotentialScene({
   playing,
 }: ActionPotentialSceneProps) {
   const conductionComplete =
-    mode === "conduction" && frame.phase === "conducted";
+    mode === "conduction" &&
+    frame.segments.every((segment) => segment.polarity === "excited");
 
   return (
     <section

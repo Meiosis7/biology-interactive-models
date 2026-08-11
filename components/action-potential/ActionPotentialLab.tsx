@@ -21,7 +21,7 @@ export function ActionPotentialLab() {
 
   const content = ACTION_POTENTIAL_MODES.find((item) => item.id === mode)!;
   const staticProgress =
-    mode === "generation" ? 0.55 : mode === "conduction" ? 0.42 : 0;
+    mode === "generation" ? 0.55 : mode === "conduction" ? 0.26 : 0;
   const displayedProgress = reducedMotion ? staticProgress : progress;
   const frame = useMemo(
     () => getActionPotentialFrame(mode, displayedProgress),

@@ -8,6 +8,7 @@ export type ActionPotentialPhase =
   | "excited"
   | "local-current"
   | "neighbor-sodium-in"
+  | "neighbor-excited"
   | "conducted";
 
 export type SegmentPolarity = "resting" | "excited";
