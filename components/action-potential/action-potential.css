@@ -338,8 +338,8 @@
 
 .ap-ion-channel--potassium {
   top: auto;
-  bottom: -15px;
-  left: 76%;
+  bottom: -18px;
+  left: 100%;
   --channel-color: #a68ade;
   --channel-dark: #7456b3;
 }
@@ -413,7 +413,7 @@
   --ion-fill-mode: none;
   --ion-start-y: -20px;
   --ion-end-y: 34px;
-  left: 76%;
+  left: 100%;
 }
 
 .ap-ion-particle {

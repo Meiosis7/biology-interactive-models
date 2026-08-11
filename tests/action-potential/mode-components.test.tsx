@@ -253,20 +253,23 @@ describe("action-potential shared-fiber components", () => {
     ).toBeTruthy();
   });
 
-  it("positions the potassium channel away from the sodium channel", () => {
+  it("positions potassium outflow at a continuous membrane segment boundary", () => {
     const stylesheet = readFileSync(
       "components/action-potential/action-potential.css",
       "utf8",
     );
 
     expect(stylesheet).toMatch(
-      /\.ap-ion-channel--potassium\s*\{[^}]*left:\s*76%;/s,
+      /\.ap-ion-channel--potassium\s*\{[^}]*left:\s*100%;/s,
     );
     expect(stylesheet).toMatch(
-      /\.ap-ion-channel--potassium\s*\{[^}]*top:\s*auto;[^}]*bottom:\s*-15px;/s,
+      /\.ap-ion-channel--potassium\s*\{[^}]*top:\s*auto;[^}]*bottom:\s*-18px;/s,
     );
     expect(stylesheet).toMatch(
       /\.ap-ion-stream--potassium\s*\{[^}]*top:\s*auto;[^}]*bottom:\s*-18px;[^}]*--ion-start-y:\s*-20px;[^}]*--ion-end-y:\s*34px;/s,
+    );
+    expect(stylesheet).toMatch(
+      /\.ap-ion-stream--potassium\s*\{[^}]*left:\s*100%;/s,
     );
   });
 

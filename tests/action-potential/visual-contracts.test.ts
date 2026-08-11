@@ -113,6 +113,7 @@ describe("action-potential ion visual contracts", () => {
     expect(fiberRule).toMatch(/border-right:\s*0\s*;/);
     expect(fiberRule).toMatch(/border-radius:\s*0\s*;/);
     expect(fiberRule).not.toMatch(/border:\s*3px solid/);
+    expect(firstSegmentRule).toMatch(/border-left:\s*0\s*;/);
     expect(firstSegmentRule).toMatch(/border-radius:\s*0\s*;/);
     expect(lastSegmentRule).toMatch(/border-radius:\s*0\s*;/);
   });

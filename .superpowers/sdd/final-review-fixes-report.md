@@ -121,3 +121,83 @@ Exit `0`.
 - The in-app Browser does not expose a reduced-motion preference emulator. Existing focused/full tests remain the evidence for zero RAF, disabled playback, static representative frames, and `aria-live="polite"` under reduced motion.
 - Because the in-app Browser also omits SVG path measurement APIs, marker bounds were derived from the rendered path's actual `d`, the `700 × 160` viewBox scaling, marker geometry, and computed stroke width. Direct screenshots independently confirmed both visible arrowheads.
 - No design, plan, or previous verification report was modified.
+
+---
+
+## Final re-review follow-up
+
+Follow-up base HEAD: `0648eae598fb63c9a87f9f9690535d3640c7300c`
+
+### Scope and root cause
+
+At 390 px, the lower K⁺ channel and its particle track were still anchored at
+`left: 76%` inside segment 1. That left too little horizontal clearance from
+the segment-centered `inside-bottom` charge. The continuous boundary between
+segments 1 and 2 is the widest available lower-membrane gap: it is equally
+distant from both neighboring four-slot charge columns and from their upper Na⁺
+channels.
+
+The K⁺ channel and stream are now co-located at that boundary with
+`left: 100%`. The particle stream's lower-membrane offset and outward
+`-20px → 34px` motion are unchanged; the channel alone is lowered 3 px into the
+gap between the inside-bottom and outside-bottom charge rows. The first
+segment's existing `border-left: 0` override is now also protected by an
+explicit visual-contract assertion.
+
+### Follow-up TDD evidence
+
+Focused RED:
+
+```text
+npm test -- tests/action-potential/mode-components.test.tsx tests/action-potential/visual-contracts.test.ts
+```
+
+Exit `1`: 1 failed and 41 passed. The expected failure found the K⁺ channel at
+`left: 76%` instead of the continuous segment boundary; the new first-segment
+border assertion already passed against the existing correct CSS.
+
+First focused GREEN: the identical command exited `0`, with 2/2 files and
+42/42 tests passing.
+
+Target-browser geometry then exposed one final 390 px edge case: at the segment
+boundary, the K⁺ left petal still intersected segment 1's `inside-bottom`
+charge by `4.7239 px²`. Its petal y-range was `733.71…755.59`, while that
+charge ended at y `735.93`, leaving only about 2.2 px to clear vertically.
+
+A second focused RED changed the channel-position contract to require
+`bottom: -18px`; it exited `1` with the expected single failure and 41 passing
+tests against the remaining `-15px` implementation. Moving only the K⁺ channel
+down by 3 px then made the identical focused command GREEN again at 42/42. The
+particle stream remained unchanged at the segment boundary.
+
+### Follow-up full automated verification
+
+```text
+npm test && npm run lint && npm run build && git diff --check
+```
+
+Exit `0`.
+
+- Tests: 20/20 files, 200/200 tests, 0 failed.
+- Lint: ESLint exited `0` with no diagnostics.
+- Build: Vinext completed all five stages and listed `/models/action-potential`.
+- Diff check: exited `0` with no whitespace errors.
+
+### Follow-up in-app Browser evidence
+
+The root task inspected this shared final worktree state in the exact in-app
+Browser; no substitute browser surface was used.
+
+- At 390 × 844, computed K⁺ channel bottom was `-18px` and
+  `clientWidth/scrollWidth = 390/390`. Across 6 samples spanning 1.68 s, all
+  seven segments' charge slots versus K⁺ petals were `0 px²`, all charges versus
+  every K⁺ particle were `0 px²`, K⁺ petals versus all Na⁺ petals were `0 px²`,
+  and every K⁺ particle versus all Na⁺ petals was `0 px²`.
+- At 1280 × 720, `clientWidth/scrollWidth = 1280/1280`. Across 5 samples
+  spanning 1.6 s, the same four all-segment charge/Na intersection categories
+  were all `0 px²`.
+- The exact IAB console query returned an empty warnings/errors array.
+
+The boundary anchor, unchanged particle trajectory, and channel-only 3 px
+vertical adjustment therefore preserve a readable lower-membrane K⁺ gate and
+downward outward flow while clearing both neighboring charge columns.
