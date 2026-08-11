@@ -1,4 +1,5 @@
 import type { ActionPotentialFrame, ActionPotentialMode } from "./types";
+import { IonChannel } from "./IonChannel";
 
 const MODE_LABELS: Record<ActionPotentialMode, string> = {
   resting: "静息电位",
@@ -63,11 +64,10 @@ export function ActionPotentialScene({
               <span className="ap-segment-charge ap-segment-charge--outside">
                 {segment.polarity === "excited" ? "−" : "+"}
               </span>
-              <i
-                className="ap-gated-channel ap-gated-channel--na"
-                data-channel-species="sodium"
-                data-open={segment.sodiumChannelOpen}
-                aria-label={`第${segment.id + 1}膜段Na⁺通道${segment.sodiumChannelOpen ? "开放" : "关闭"}`}
+              <IonChannel
+                species="sodium"
+                open={segment.sodiumChannelOpen}
+                label={`第${segment.id + 1}膜段Na⁺通道${segment.sodiumChannelOpen ? "开放" : "关闭"}`}
               />
               <span className="ap-segment-charge ap-segment-charge--inside">
                 {segment.polarity === "excited" ? "+" : "−"}
@@ -82,11 +82,10 @@ export function ActionPotentialScene({
               )}
               {mode === "resting" && segment.id === 1 && (
                 <>
-                  <i
-                    className="ap-gated-channel ap-gated-channel--k"
-                    data-channel-species="potassium"
-                    data-open={frame.potassiumChannelOpen}
-                    aria-label={`K⁺通道${frame.potassiumChannelOpen ? "开放" : "关闭"}`}
+                  <IonChannel
+                    species="potassium"
+                    open={frame.potassiumChannelOpen}
+                    label={`K⁺通道${frame.potassiumChannelOpen ? "开放" : "关闭"}`}
                   />
                   {frame.potassiumOutflow && (
                     <span className="ap-segment-k-flow" aria-label="K⁺外流">

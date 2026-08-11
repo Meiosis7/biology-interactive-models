@@ -244,59 +244,73 @@
   bottom: 8px;
 }
 
-.ap-gated-channel {
+.ap-ion-channel {
+  --channel-color: #2597a6;
+  --channel-dark: #147481;
   position: absolute;
-  z-index: 5;
   top: -15px;
   left: 50%;
-  width: 20px;
-  height: 32px;
-  color: var(--ap-blue);
-  font-style: normal;
+  width: 30px;
+  height: 34px;
   transform: translateX(-50%);
+  z-index: 5;
 }
 
-.ap-gated-channel::before,
-.ap-gated-channel::after {
+.ap-ion-channel__petal {
   position: absolute;
-  left: 0;
-  box-sizing: border-box;
-  width: 20px;
-  height: 14px;
-  border: 2px solid currentColor;
-  border-radius: 6px 6px 3px 3px;
-  background: var(--ap-paper-strong);
-  content: "";
-  transition: transform 150ms ease;
+  top: 5px;
+  width: 12px;
+  height: 24px;
+  border: 2px solid var(--channel-dark);
+  background: linear-gradient(180deg, #f7ffff, var(--channel-color));
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--channel-color) 28%, transparent);
+  transition: transform 300ms cubic-bezier(.2, .8, .2, 1);
+  will-change: transform;
 }
 
-.ap-gated-channel::before {
-  top: 0;
-  transform: translateY(2px);
+.ap-ion-channel__petal--left {
+  left: 3px;
+  border-radius: 9px 4px 4px 9px;
+  transform-origin: right center;
+  transform: translateX(1px) rotate(0deg);
 }
 
-.ap-gated-channel::after {
-  bottom: 0;
-  border-radius: 3px 3px 6px 6px;
-  transform: translateY(-2px);
+.ap-ion-channel__petal--right {
+  right: 3px;
+  border-radius: 4px 9px 9px 4px;
+  transform-origin: left center;
+  transform: translateX(-1px) rotate(0deg);
 }
 
-.ap-gated-channel[data-open="true"]::before {
-  transform: translateY(-5px);
+.ap-ion-channel[data-open="true"] .ap-ion-channel__petal--left {
+  transform: translateX(-6px) rotate(-8deg);
 }
 
-.ap-gated-channel[data-open="true"]::after {
-  transform: translateY(5px);
+.ap-ion-channel[data-open="true"] .ap-ion-channel__petal--right {
+  transform: translateX(6px) rotate(8deg);
 }
 
-.ap-gated-channel[data-open="true"] {
-  filter: drop-shadow(0 0 4px rgba(22, 138, 173, 0.35));
+.ap-ion-channel__pore {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 50%;
+  width: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--channel-color) 26%, transparent);
+  transform: translateX(-50%) scaleX(.3);
+  opacity: 0;
+  transition: transform 300ms ease, opacity 200ms ease;
 }
 
-.ap-gated-channel--k {
-  left: 76%;
-  color: var(--ap-purple);
-  filter: drop-shadow(0 0 4px rgba(118, 87, 185, 0.28));
+.ap-ion-channel[data-open="true"] .ap-ion-channel__pore {
+  transform: translateX(-50%) scaleX(1);
+  opacity: .8;
+}
+
+.ap-ion-channel--potassium {
+  --channel-color: #a68ade;
+  --channel-dark: #7456b3;
 }
 
 .ap-stimulus {
@@ -638,17 +652,6 @@
 
   .ap-current-row span:last-child {
     justify-self: end;
-  }
-
-  .ap-gated-channel {
-    width: 16px;
-    height: 27px;
-  }
-
-  .ap-gated-channel::before,
-  .ap-gated-channel::after {
-    width: 16px;
-    height: 12px;
   }
 
   .ap-segment-na-flow,

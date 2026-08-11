@@ -110,6 +110,49 @@ describe("action-potential shared-fiber components", () => {
     );
   });
 
+  it("builds every ion channel from left and right petals around one pore", () => {
+    const { container } = render(
+      <ActionPotentialScene
+        mode="generation"
+        frame={getActionPotentialFrame("generation", 0.25)}
+        playing
+      />,
+    );
+
+    const channel = container.querySelector(
+      '[data-segment-id="3"] [data-channel-species="sodium"]',
+    );
+    expect(channel).toHaveAttribute("data-open", "true");
+    expect(channel?.querySelectorAll('[data-channel-petal]')).toHaveLength(2);
+    expect(channel?.querySelector('[data-channel-petal="left"]')).toBeTruthy();
+    expect(channel?.querySelector('[data-channel-petal="right"]')).toBeTruthy();
+    expect(channel?.querySelector('[data-channel-pore]')).toBeTruthy();
+    expect(channel?.querySelector('[data-channel-petal="top"]')).toBeNull();
+    expect(channel?.querySelector('[data-channel-petal="bottom"]')).toBeNull();
+  });
+
+  it("uses the same horizontal-petal channel structure for potassium", () => {
+    const { container } = render(
+      <ActionPotentialScene
+        mode="resting"
+        frame={getActionPotentialFrame("resting", 0.2)}
+        playing
+      />,
+    );
+
+    const potassium = container.querySelector(
+      '[data-channel-species="potassium"]',
+    );
+    expect(potassium).toHaveAttribute("data-open", "true");
+    expect(potassium?.querySelectorAll('[data-channel-petal]')).toHaveLength(2);
+    expect(
+      potassium?.querySelector('[data-channel-petal="left"]'),
+    ).toBeTruthy();
+    expect(
+      potassium?.querySelector('[data-channel-petal="right"]'),
+    ).toBeTruthy();
+  });
+
   it("shows a potassium gate and potassium flow only while resting", () => {
     const { container, rerender } = render(
       <ActionPotentialScene
