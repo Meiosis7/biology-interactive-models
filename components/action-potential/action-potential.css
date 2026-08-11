@@ -309,6 +309,7 @@
 }
 
 .ap-ion-channel--potassium {
+  left: 76%;
   --channel-color: #a68ade;
   --channel-dark: #7456b3;
 }

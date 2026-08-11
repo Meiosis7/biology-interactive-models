@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ActionPotentialKnowledgeCard } from "../../components/action-potential/ActionPotentialKnowledgeCard";
@@ -151,6 +152,17 @@ describe("action-potential shared-fiber components", () => {
     expect(
       potassium?.querySelector('[data-channel-petal="right"]'),
     ).toBeTruthy();
+  });
+
+  it("positions the potassium channel away from the sodium channel", () => {
+    const stylesheet = readFileSync(
+      "components/action-potential/action-potential.css",
+      "utf8",
+    );
+
+    expect(stylesheet).toMatch(
+      /\.ap-ion-channel--potassium\s*\{[^}]*left:\s*76%;/s,
+    );
   });
 
   it("shows a potassium gate and potassium flow only while resting", () => {
