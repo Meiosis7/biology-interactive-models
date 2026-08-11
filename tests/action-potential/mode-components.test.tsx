@@ -392,7 +392,7 @@ describe("action-potential shared-fiber components", () => {
     ).toBeTruthy();
   });
 
-  it("positions potassium outflow on the bottom surface at a continuous membrane segment boundary", () => {
+  it("positions potassium outflow at a continuous membrane segment boundary on both surfaces", () => {
     const stylesheet = readFileSync(
       "components/action-potential/action-potential.css",
       "utf8",
@@ -402,7 +402,13 @@ describe("action-potential shared-fiber components", () => {
       /\.ap-ion-channel--potassium\s*\{[^}]*left:\s*100%;/s,
     );
     expect(stylesheet).toMatch(
+      /\.ap-ion-channel--top\s*\{[^}]*top:\s*-15px;[^}]*bottom:\s*auto;/s,
+    );
+    expect(stylesheet).toMatch(
       /\.ap-ion-channel--bottom\s*\{[^}]*top:\s*auto;[^}]*bottom:\s*-15px;/s,
+    );
+    expect(stylesheet).toMatch(
+      /\.ap-ion-stream--top\s*\{[^}]*top:\s*-18px;[^}]*bottom:\s*auto;/s,
     );
     expect(stylesheet).toMatch(
       /\.ap-ion-stream--bottom\s*\{[^}]*top:\s*auto;[^}]*bottom:\s*-18px;/s,
@@ -412,7 +418,7 @@ describe("action-potential shared-fiber components", () => {
     );
   });
 
-  it("shows a potassium gate and potassium flow only while resting", () => {
+  it("shows paired potassium channels and opposite outward screen directions only while resting", () => {
     const { container, rerender } = render(
       <ActionPotentialScene
         mode="resting"
@@ -422,9 +428,22 @@ describe("action-potential shared-fiber components", () => {
     );
 
     expect(
-      container.querySelector('[data-channel-species="potassium"]'),
-    ).toHaveAttribute("data-open", "true");
-    expect(screen.getByLabelText("K⁺外流")).toBeInTheDocument();
+      container.querySelectorAll('[data-channel-species="potassium"]'),
+    ).toHaveLength(2);
+    expect(
+      container.querySelectorAll('[data-ion-species="potassium"]'),
+    ).toHaveLength(2);
+    expect(
+      container.querySelectorAll('[data-ion-particle="potassium"]'),
+    ).toHaveLength(6);
+    expect(screen.getByLabelText("K⁺经上膜向膜外流出")).toHaveAttribute(
+      "data-screen-direction",
+      "up",
+    );
+    expect(screen.getByLabelText("K⁺经下膜向膜外流出")).toHaveAttribute(
+      "data-screen-direction",
+      "down",
+    );
 
     rerender(
       <ActionPotentialScene
@@ -434,9 +453,11 @@ describe("action-potential shared-fiber components", () => {
       />,
     );
     expect(
-      container.querySelector('[data-channel-species="potassium"]'),
-    ).toBeNull();
-    expect(screen.queryByLabelText("K⁺外流")).not.toBeInTheDocument();
+      container.querySelectorAll('[data-channel-species="potassium"]'),
+    ).toHaveLength(0);
+    expect(
+      container.querySelectorAll('[data-ion-particle="potassium"]'),
+    ).toHaveLength(0);
   });
 
   it("renders three staggerable sodium particles through the active pore", () => {
@@ -459,7 +480,7 @@ describe("action-potential shared-fiber components", () => {
     ).toHaveLength(0);
   });
 
-  it("renders three outward potassium particles only in resting mode", () => {
+  it("renders three outward potassium particles through each resting membrane surface", () => {
     render(
       <ActionPotentialScene
         mode="resting"
@@ -468,11 +489,14 @@ describe("action-potential shared-fiber components", () => {
       />,
     );
 
-    const stream = screen.getByLabelText("K⁺外流");
-    expect(stream).toHaveAttribute("data-ion-direction", "outward");
-    expect(
-      stream.querySelectorAll('[data-ion-particle="potassium"]'),
-    ).toHaveLength(3);
+    const streams = screen.getAllByLabelText(/K⁺经[上下]膜向膜外流出/);
+    expect(streams).toHaveLength(2);
+    for (const stream of streams) {
+      expect(stream).toHaveAttribute("data-ion-direction", "outward");
+      expect(
+        stream.querySelectorAll('[data-ion-particle="potassium"]'),
+      ).toHaveLength(3);
+    }
   });
 
   it.each([

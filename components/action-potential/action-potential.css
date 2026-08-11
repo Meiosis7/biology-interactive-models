@@ -267,11 +267,12 @@
 .ap-ion-channel {
   --channel-color: #2597a6;
   --channel-dark: #147481;
+  --channel-scale: 1;
   position: absolute;
   left: 50%;
   width: 30px;
   height: 34px;
-  transform: translateX(-50%);
+  transform: translateX(-50%) scale(var(--channel-scale));
   z-index: 5;
 }
 
@@ -741,14 +742,24 @@
   }
 
   .ap-ion-channel {
-    transform: translateX(-50%) scale(.86);
+    --channel-scale: .86;
     transform-origin: center center;
+  }
+
+  .ap-ion-channel--potassium {
+    --channel-scale: .52;
   }
 
   .ap-ion-particle {
     width: 22px;
     height: 22px;
     font-size: 7px;
+  }
+
+  .ap-ion-stream--potassium .ap-ion-particle {
+    width: 16px;
+    height: 16px;
+    font-size: 6px;
   }
 
   .ap-compartment-label--outside-top {

@@ -164,26 +164,50 @@ describe("ActionPotentialLab", () => {
   it("restarts mounted potassium and current animations without remounting the fiber", () => {
     const { container } = render(<ActionPotentialLab />);
     const fiber = screen.getByTestId("shared-fiber");
-    const firstSegment = container.querySelector('[data-segment-id="0"]');
-    const potassiumParticle = container.querySelector(
-      '[data-ion-particle="potassium"]',
+    const segments = Array.from(
+      container.querySelectorAll("[data-segment-id]"),
     );
+    const potassiumStreams = Array.from(
+      container.querySelectorAll('[data-ion-species="potassium"]'),
+    );
+    const potassiumChannels = Array.from(
+      container.querySelectorAll('[data-channel-species="potassium"]'),
+    );
+
+    expect(potassiumStreams).toHaveLength(2);
 
     fireEvent.click(screen.getByRole("button", { name: "重新播放" }));
     expect(screen.getByTestId("shared-fiber")).toBe(fiber);
-    expect(container.querySelector('[data-segment-id="0"]')).toBe(
-      firstSegment,
+    const replayedSegments = Array.from(
+      container.querySelectorAll("[data-segment-id]"),
     );
-    expect(
-      container.querySelector('[data-ion-particle="potassium"]'),
-    ).not.toBe(potassiumParticle);
+    expect(replayedSegments).toHaveLength(segments.length);
+    replayedSegments.forEach((segment, index) =>
+      expect(segment).toBe(segments[index]),
+    );
+    const replayedPotassiumChannels = Array.from(
+      container.querySelectorAll('[data-channel-species="potassium"]'),
+    );
+    expect(replayedPotassiumChannels).toHaveLength(2);
+    expect(replayedPotassiumChannels[0]).toBe(potassiumChannels[0]);
+    expect(replayedPotassiumChannels[1]).toBe(potassiumChannels[1]);
+    const replayedPotassiumStreams = Array.from(
+      container.querySelectorAll('[data-ion-species="potassium"]'),
+    );
+    expect(replayedPotassiumStreams).toHaveLength(2);
+    expect(replayedPotassiumStreams[0]).not.toBe(potassiumStreams[0]);
+    expect(replayedPotassiumStreams[1]).not.toBe(potassiumStreams[1]);
 
     fireEvent.click(screen.getByRole("button", { name: /动作电位传导/ }));
     const currentArc = container.querySelector("[data-current-arc]");
     fireEvent.click(screen.getByRole("button", { name: "重新播放" }));
     expect(screen.getByTestId("shared-fiber")).toBe(fiber);
-    expect(container.querySelector('[data-segment-id="0"]')).toBe(
-      firstSegment,
+    const conductionSegments = Array.from(
+      container.querySelectorAll("[data-segment-id]"),
+    );
+    expect(conductionSegments).toHaveLength(segments.length);
+    conductionSegments.forEach((segment, index) =>
+      expect(segment).toBe(segments[index]),
     );
     expect(container.querySelector("[data-current-arc]")).not.toBe(currentArc);
   });

@@ -118,23 +118,25 @@ export function ActionPotentialScene({
                 </Fragment>
               ))}
               {mode === "resting" && segment.id === 1 && (
-                <>
-                  <IonChannel
-                    species="potassium"
-                    surface="bottom"
-                    open={frame.potassiumChannelOpen}
-                    label={`K⁺通道${frame.potassiumChannelOpen ? "开放" : "关闭"}`}
-                  />
-                  {frame.potassiumOutflow && (
-                    <IonStream
-                      key={`potassium-stream-${animationEpoch}`}
+                (["top", "bottom"] as const).map((surface) => (
+                  <Fragment key={`potassium-${surface}`}>
+                    <IonChannel
                       species="potassium"
-                      surface="bottom"
-                      direction="outward"
-                      label="K⁺外流"
+                      surface={surface}
+                      open={frame.potassiumChannelOpen}
+                      label={`${surface === "top" ? "上膜" : "下膜"} K⁺通道${frame.potassiumChannelOpen ? "开放" : "关闭"}`}
                     />
-                  )}
-                </>
+                    {frame.potassiumOutflow && (
+                      <IonStream
+                        key={`potassium-stream-${surface}-${animationEpoch}`}
+                        species="potassium"
+                        surface={surface}
+                        direction="outward"
+                        label={`K⁺经${surface === "top" ? "上膜" : "下膜"}向膜外流出`}
+                      />
+                    )}
+                  </Fragment>
+                ))
               )}
               {frame.stimulusVisible && segment.id === 3 && (
                 <i className="ap-stimulus" role="img" aria-label="刺激点">

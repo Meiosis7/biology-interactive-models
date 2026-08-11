@@ -343,6 +343,32 @@ describe("action-potential ion visual contracts", () => {
     );
   });
 
+  it("keeps paired potassium visuals on the shared boundary without overriding surface lanes", () => {
+    const potassiumChannelRule = ruleBody(".ap-ion-channel--potassium");
+    const potassiumStreamRule = ruleBody(".ap-ion-stream--potassium");
+
+    expect(potassiumChannelRule).toMatch(/left:\s*100%\s*;/);
+    expect(potassiumStreamRule).toMatch(/left:\s*100%\s*;/);
+    for (const potassiumRule of [potassiumChannelRule, potassiumStreamRule]) {
+      expect(potassiumRule).not.toMatch(/(?:top|bottom):/);
+      expect(potassiumRule).not.toMatch(/--ion-(?:start|end)-y:/);
+    }
+
+    const mobilePotassiumChannelRule = stylesheet.match(
+      /@media \(max-width:\s*720px\)[\s\S]*?\.ap-ion-channel--potassium\s*\{([^}]*)\}/,
+    )?.[1];
+    const mobilePotassiumParticleRule = stylesheet.match(
+      /@media \(max-width:\s*720px\)[\s\S]*?\.ap-ion-stream--potassium \.ap-ion-particle\s*\{([^}]*)\}/,
+    )?.[1];
+
+    expect(mobilePotassiumChannelRule).toBeDefined();
+    expect(mobilePotassiumChannelRule).toMatch(/--channel-scale:\s*\.52\s*;/);
+    expect(mobilePotassiumParticleRule).toBeDefined();
+    expect(mobilePotassiumParticleRule).toMatch(/width:\s*16px\s*;/);
+    expect(mobilePotassiumParticleRule).toMatch(/height:\s*16px\s*;/);
+    expect(mobilePotassiumParticleRule).toMatch(/font-size:\s*6px\s*;/);
+  });
+
   it("finishes every sodium particle with margin inside each schedule-derived influx phase", () => {
     const sodiumRule = ruleBody(".ap-ion-stream--sodium");
     const potassiumRule = ruleBody(".ap-ion-stream--potassium");
