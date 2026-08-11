@@ -83,6 +83,38 @@ describe("ActionPotentialLab", () => {
     expect(screen.getByRole("button", { name: "暂停" })).toBeInTheDocument();
   });
 
+  it("stops conduction with all seven segments excited", () => {
+    const { container } = render(<ActionPotentialLab />);
+    fireEvent.click(screen.getByRole("button", { name: /动作电位传导/ }));
+    runNextFrame(0);
+    runNextFrame(7000);
+    expect(screen.getByLabelText("动作电位传导动态示意")).toHaveAttribute(
+      "data-phase",
+      "conducted",
+    );
+    expect(
+      container.querySelectorAll('[data-segment-polarity="excited"]'),
+    ).toHaveLength(7);
+    expect(screen.getByRole("button", { name: "播放" })).toBeInTheDocument();
+    expect(callbacks.size).toBe(0);
+  });
+
+  it("restarts completed conduction from the central excited segment", () => {
+    const { container } = render(<ActionPotentialLab />);
+    fireEvent.click(screen.getByRole("button", { name: /动作电位传导/ }));
+    runNextFrame(0);
+    runNextFrame(7000);
+    fireEvent.click(screen.getByRole("button", { name: "播放" }));
+    expect(
+      container.querySelectorAll('[data-segment-polarity="excited"]'),
+    ).toHaveLength(1);
+    expect(container.querySelector('[data-segment-id="3"]')).toHaveAttribute(
+      "data-segment-polarity",
+      "excited",
+    );
+    expect(screen.getByRole("button", { name: "暂停" })).toBeInTheDocument();
+  });
+
   it("resets generation progress when the user returns to that mode", () => {
     render(<ActionPotentialLab />);
     fireEvent.click(screen.getByRole("button", { name: /动作电位产生/ }));
@@ -147,7 +179,13 @@ describe("ActionPotentialLab", () => {
     fireEvent.click(replayButton);
     expect(callbacks.size).toBe(0);
     fireEvent.click(screen.getByRole("button", { name: /动作电位传导/ }));
-    expect(screen.getAllByTestId("excited-zone")).toHaveLength(2);
+    expect(
+      Array.from(
+        screen
+          .getByLabelText("动作电位传导动态示意")
+          .querySelectorAll('[data-segment-polarity="excited"]'),
+      ).map((segment) => segment.getAttribute("data-segment-id")),
+    ).toEqual(["2", "3", "4"]);
     expect(screen.getByRole("button", { name: "播放" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "重新播放" })).toBeDisabled();
   });

@@ -7,22 +7,22 @@ export const ACTION_POTENTIAL_MODES: readonly ModeContent[] = [
     id: "resting",
     label: "静息电位",
     title: "静息电位：外正内负",
-    summary: "神经纤维未兴奋时，K⁺外流使膜两侧形成外正内负的静息状态。",
+    summary: "K⁺外流，膜两侧保持外正内负。",
     facts: [
-      { label: "膜两侧电性", value: "外正内负" },
-      { label: "主要离子运动", value: "K⁺外流" },
-      { label: "结果", value: "形成并维持静息电位" },
+      { label: "原因", value: "静息状态下K⁺通道开放" },
+      { label: "通道与离子变化", value: "K⁺外流" },
+      { label: "结果", value: "膜两侧保持外正内负" },
     ],
   },
   {
     id: "generation",
     label: "动作电位产生",
     title: "局部动作电位产生",
-    summary: "刺激使局部Na⁺通道开放，Na⁺内流后，局部膜变为外负内正。",
+    summary: "刺激使局部Na⁺通道开放，Na⁺内流，局部变为外负内正。",
     facts: [
-      { label: "刺激后的变化", value: "Na⁺通道开放" },
-      { label: "主要离子运动", value: "Na⁺内流" },
-      { label: "结果", value: "局部形成外负内正的动作电位" },
+      { label: "原因", value: "刺激局部神经纤维" },
+      { label: "通道与离子变化", value: "局部Na⁺通道开放，Na⁺内流" },
+      { label: "结果", value: "局部变为外负内正" },
     ],
   },
   {
@@ -30,11 +30,11 @@ export const ACTION_POTENTIAL_MODES: readonly ModeContent[] = [
     label: "动作电位传导",
     title: "相邻部位依次兴奋",
     summary:
-      "兴奋区与相邻未兴奋区之间形成局部电流；离体神经纤维的刺激点两侧都可发生传导。",
+      "兴奋区形成局部电流，使相邻Na⁺通道依次开放，兴奋由刺激点向两侧逐段传导。",
     facts: [
-      { label: "传导基础", value: "相邻部位形成局部电流" },
-      { label: "传导方式", value: "相邻部位依次兴奋" },
-      { label: "结果", value: "动作电位沿神经纤维传导" },
+      { label: "原因", value: "兴奋区形成局部电流" },
+      { label: "通道与离子变化", value: "相邻Na⁺通道依次开放" },
+      { label: "结果", value: "兴奋由刺激点向两侧逐段传导" },
     ],
   },
 ];

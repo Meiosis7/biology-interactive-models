@@ -3,22 +3,32 @@ export type ActionPotentialMode = "resting" | "generation" | "conduction";
 export type ActionPotentialPhase =
   | "resting"
   | "stimulus"
+  | "sodium-channel-opening"
   | "sodium-in"
   | "excited"
-  | "conducting";
+  | "local-current"
+  | "neighbor-sodium-in"
+  | "conducted";
 
-export type IonMotion = "potassium-out" | "sodium-in" | "none";
-export type MembranePolarity = "outside-positive" | "inside-positive";
-export type OpenChannel = "potassium" | "sodium" | "none";
+export type SegmentPolarity = "resting" | "excited";
+export type LocalCurrentStep = 1 | 2 | 3 | null;
+
+export interface MembraneSegmentFrame {
+  id: number;
+  polarity: SegmentPolarity;
+  sodiumChannelOpen: boolean;
+  sodiumInflux: boolean;
+  currentTarget: boolean;
+}
 
 export interface ActionPotentialFrame {
   phase: ActionPotentialPhase;
-  ionMotion: IonMotion;
-  polarity: MembranePolarity;
-  openChannel: OpenChannel;
+  segments: readonly MembraneSegmentFrame[];
+  potassiumChannelOpen: boolean;
+  potassiumOutflow: boolean;
   stimulusVisible: boolean;
-  excitedCenters: readonly number[];
-  localCurrentVisible: boolean;
+  localCurrentStep: LocalCurrentStep;
+  instruction: string;
 }
 
 export interface ModeContent {

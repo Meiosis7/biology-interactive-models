@@ -7,6 +7,17 @@ import { ACTION_POTENTIAL_MODES } from "../../components/action-potential/modeDa
 import { getActionPotentialFrame } from "../../components/action-potential/simulation";
 
 describe("action-potential shared-fiber components", () => {
+  it("uses the approved ion and relay teaching summaries", () => {
+    expect(ACTION_POTENTIAL_MODES[0].summary).toContain("K⁺外流");
+    expect(ACTION_POTENTIAL_MODES[1].summary).toContain("局部Na⁺通道开放");
+    expect(ACTION_POTENTIAL_MODES[2].summary).toContain(
+      "相邻Na⁺通道依次开放",
+    );
+    expect(JSON.stringify(ACTION_POTENTIAL_MODES)).not.toMatch(
+      /曲线|mV|−70|-70|复极化|超极化|恢复/,
+    );
+  });
+
   it("announces the selected mode and reports clicks", () => {
     const onModeChange = vi.fn();
     render(
@@ -21,7 +32,7 @@ describe("action-potential shared-fiber components", () => {
   });
 
   it("preserves one shared fiber node while mode overlays change", () => {
-    const { rerender } = render(
+    const { container, rerender } = render(
       <ActionPotentialScene
         mode="resting"
         frame={getActionPotentialFrame("resting", 0.2)}
@@ -29,6 +40,7 @@ describe("action-potential shared-fiber components", () => {
       />,
     );
     const sharedFiber = screen.getByTestId("shared-fiber");
+    const centralSegment = container.querySelector('[data-segment-id="3"]');
     expect(screen.getAllByTestId("shared-fiber")).toHaveLength(1);
     rerender(
       <ActionPotentialScene
@@ -38,30 +50,68 @@ describe("action-potential shared-fiber components", () => {
       />,
     );
     expect(screen.getByTestId("shared-fiber")).toBe(sharedFiber);
-    expect(screen.getByLabelText("兴奋区外负内正")).toBeInTheDocument();
-    expect(screen.getByText("Na⁺内流")).toBeInTheDocument();
+    expect(container.querySelector('[data-segment-id="3"]')).toBe(
+      centralSegment,
+    );
+    expect(screen.getByLabelText("第4膜段外负内正")).toBeInTheDocument();
     expect(screen.queryByText("K⁺外流")).not.toBeInTheDocument();
     expect(screen.queryByText(/恢复/)).not.toBeInTheDocument();
   });
 
-  it("opens only the central sodium channel during generation", () => {
+  it("renders seven semantic segments inside one shared fiber", () => {
     const { container } = render(
       <ActionPotentialScene
-        mode="generation"
-        frame={getActionPotentialFrame("generation", 0.4)}
+        mode="resting"
+        frame={getActionPotentialFrame("resting", 0)}
         playing
       />,
     );
-
-    const openSodiumChannels = container.querySelectorAll(
-      '[data-channel-species="sodium"][data-open="true"]',
-    );
-    expect(openSodiumChannels).toHaveLength(1);
-    expect(openSodiumChannels[0]).toHaveAttribute("data-channel-position", "50");
+    expect(screen.getAllByTestId("shared-fiber")).toHaveLength(1);
+    expect(container.querySelectorAll("[data-segment-id]")).toHaveLength(7);
+    expect(
+      container.querySelectorAll('[data-segment-polarity="resting"]'),
+    ).toHaveLength(7);
+    expect(
+      container.querySelectorAll('[data-channel-species="sodium"]'),
+    ).toHaveLength(7);
   });
 
-  it("links resting potassium flow to the potassium channel at 34%", () => {
-    const { container } = render(
+  it("opens and excites only the central segment during generation", () => {
+    const { container, rerender } = render(
+      <ActionPotentialScene
+        mode="generation"
+        frame={getActionPotentialFrame("generation", 0.25)}
+        playing
+      />,
+    );
+    expect(
+      container.querySelectorAll(
+        '[data-channel-species="sodium"][data-open="true"]',
+      ),
+    ).toHaveLength(1);
+    expect(
+      container.querySelector(
+        '[data-segment-id="3"] [data-channel-species="sodium"]',
+      ),
+    ).toHaveAttribute("data-open", "true");
+    rerender(
+      <ActionPotentialScene
+        mode="generation"
+        frame={getActionPotentialFrame("generation", 0.9)}
+        playing={false}
+      />,
+    );
+    expect(
+      container.querySelectorAll('[data-segment-polarity="excited"]'),
+    ).toHaveLength(1);
+    expect(container.querySelector('[data-segment-id="3"]')).toHaveAttribute(
+      "data-segment-polarity",
+      "excited",
+    );
+  });
+
+  it("shows a potassium gate and potassium flow only while resting", () => {
+    const { container, rerender } = render(
       <ActionPotentialScene
         mode="resting"
         frame={getActionPotentialFrame("resting", 0.2)}
@@ -69,44 +119,75 @@ describe("action-potential shared-fiber components", () => {
       />,
     );
 
-    const channel = container.querySelector(
-      '[data-channel-species="potassium"][data-channel-position="34"]',
-    );
-    expect(channel).toHaveAttribute("data-channel-id", "potassium-34");
-    expect(screen.getByLabelText("K⁺外流")).toHaveAttribute(
-      "data-channel-target",
-      "potassium-34",
-    );
-  });
+    expect(
+      container.querySelector('[data-channel-species="potassium"]'),
+    ).toHaveAttribute("data-open", "true");
+    expect(screen.getByLabelText("K⁺外流")).toBeInTheDocument();
 
-  it("derives excited-zone signs from frame polarity without changing baseline charges", () => {
-    const frame = {
-      ...getActionPotentialFrame("generation", 1),
-      polarity: "outside-positive" as const,
-    };
-    render(
-      <ActionPotentialScene mode="generation" frame={frame} playing={false} />,
-    );
-
-    const excitedZone = screen.getByTestId("excited-zone");
-    expect(excitedZone).toHaveTextContent("+−");
-    expect(screen.getByLabelText("膜外正")).toBeInTheDocument();
-    expect(screen.getByLabelText("膜内负")).toBeInTheDocument();
-  });
-
-  it("renders two wavefronts and local-current arrows for conduction", () => {
-    render(
+    rerender(
       <ActionPotentialScene
-        mode="conduction"
-        frame={getActionPotentialFrame("conduction", 0.35)}
+        mode="generation"
+        frame={getActionPotentialFrame("generation", 0.55)}
         playing
       />,
     );
-    expect(screen.getByLabelText("刺激点")).toBeInTheDocument();
-    expect(screen.getByLabelText("局部电流方向")).toHaveTextContent("局部电流");
-    expect(screen.getAllByTestId("excited-zone")).toHaveLength(2);
-    expect(screen.getAllByText("未兴奋区")).toHaveLength(2);
-    expect(screen.getByText("双向传导")).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-channel-species="potassium"]'),
+    ).toBeNull();
+    expect(screen.queryByLabelText("K⁺外流")).not.toBeInTheDocument();
+  });
+
+  it("shows opposite extracellular and intracellular current directions", () => {
+    render(
+      <ActionPotentialScene
+        mode="conduction"
+        frame={getActionPotentialFrame("conduction", 0.05)}
+        playing
+      />,
+    );
+    expect(
+      screen.getByLabelText("膜内局部电流向两侧未兴奋区"),
+    ).toHaveTextContent("←膜内局部电流→");
+    expect(screen.getByLabelText("膜外局部电流返回兴奋区")).toHaveTextContent(
+      "→膜外回流←",
+    );
+  });
+
+  it("shows the approved conduction statement and the active phase caption", () => {
+    const firstFrame = getActionPotentialFrame("conduction", 0.05);
+    const { rerender } = render(
+      <ActionPotentialScene mode="conduction" frame={firstFrame} playing />,
+    );
+
+    expect(
+      screen.getByText("兴奋由刺激点向两侧逐段传导"),
+    ).toBeInTheDocument();
+    expect(screen.getByText(firstFrame.instruction)).toBeInTheDocument();
+    expect(screen.queryByText("兴奋区移动")).not.toBeInTheDocument();
+    expect(screen.queryByText("动作电位整体平移")).not.toBeInTheDocument();
+
+    const nextFrame = getActionPotentialFrame("conduction", 0.18);
+    rerender(
+      <ActionPotentialScene mode="conduction" frame={nextFrame} playing />,
+    );
+    expect(screen.getByText(nextFrame.instruction)).toBeInTheDocument();
+    expect(screen.queryByText(firstFrame.instruction)).not.toBeInTheDocument();
+  });
+
+  it("shows the completed conduction state without unexcited regions", () => {
+    const { container } = render(
+      <ActionPotentialScene
+        mode="conduction"
+        frame={getActionPotentialFrame("conduction", 1)}
+        playing={false}
+      />,
+    );
+
+    expect(
+      container.querySelectorAll('[data-segment-polarity="excited"]'),
+    ).toHaveLength(7);
+    expect(screen.queryAllByText("未兴奋区")).toHaveLength(0);
+    expect(screen.getByText("全部膜段已兴奋")).toBeInTheDocument();
   });
 
   it("renders the exact generation knowledge facts without recovery", () => {
