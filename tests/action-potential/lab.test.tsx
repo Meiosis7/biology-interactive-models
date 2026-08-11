@@ -58,29 +58,42 @@ describe("ActionPotentialLab", () => {
     expect(screen.getByLabelText("局部电流方向")).toBeInTheDocument();
   });
 
-  it("stops generation at the excited frame without returning to rest", () => {
+  it("loops generation from the excited hold back to stimulus", () => {
     render(<ActionPotentialLab />);
     fireEvent.click(screen.getByRole("button", { name: /动作电位产生/ }));
-    runNextFrame(0);
-    runNextFrame(7000);
-    const scene = screen.getByLabelText("动作电位产生动态示意");
-    expect(scene).toHaveAttribute("data-phase", "excited");
-    expect(screen.getByRole("button", { name: "播放" })).toBeInTheDocument();
-    expect(screen.getByLabelText("当前模式知识卡")).not.toHaveTextContent(/K⁺|恢复/);
-    expect(screen.queryByLabelText("K⁺外流")).not.toBeInTheDocument();
-  });
 
-  it("restarts a completed generation animation from the stimulus", () => {
-    render(<ActionPotentialLab />);
-    fireEvent.click(screen.getByRole("button", { name: /动作电位产生/ }));
     runNextFrame(0);
-    runNextFrame(7000);
-    fireEvent.click(screen.getByRole("button", { name: "播放" }));
+    runNextFrame(5999);
+    expect(screen.getByLabelText("动作电位产生动态示意")).toHaveAttribute(
+      "data-phase",
+      "excited",
+    );
+
+    runNextFrame(6001);
     expect(screen.getByLabelText("动作电位产生动态示意")).toHaveAttribute(
       "data-phase",
       "stimulus",
     );
     expect(screen.getByRole("button", { name: "暂停" })).toBeInTheDocument();
+    expect(callbacks.size).toBe(1);
+    expect(screen.getByLabelText("当前模式知识卡")).not.toHaveTextContent(
+      /K⁺|恢复/,
+    );
+  });
+
+  it("continues the next generation cycle after wrapping", () => {
+    render(<ActionPotentialLab />);
+    fireEvent.click(screen.getByRole("button", { name: /动作电位产生/ }));
+
+    runNextFrame(0);
+    runNextFrame(6001);
+    runNextFrame(7001);
+
+    expect(screen.getByLabelText("动作电位产生动态示意")).toHaveAttribute(
+      "data-phase",
+      "sodium-channel-opening",
+    );
+    expect(callbacks.size).toBe(1);
   });
 
   it("stops conduction with all seven segments excited", () => {

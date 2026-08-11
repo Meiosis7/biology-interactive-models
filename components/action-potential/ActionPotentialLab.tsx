@@ -17,7 +17,7 @@ export function ActionPotentialLab() {
   const [motionPreferenceReady, setMotionPreferenceReady] = useState(false);
   const previousTime = useRef<number | null>(null);
   const progressRef = useRef(0);
-  const isOneShotMode = mode === "generation" || mode === "conduction";
+  const isOneShotMode = mode === "conduction";
 
   const content = ACTION_POTENTIAL_MODES.find((item) => item.id === mode)!;
   const staticProgress =
@@ -52,7 +52,7 @@ export function ActionPotentialLab() {
         setPlaying(false);
         return;
       }
-      const nextProgress = mode === "resting" ? next % 1 : next;
+      const nextProgress = isOneShotMode ? next : next % 1;
       progressRef.current = nextProgress;
       setProgress(nextProgress);
       frameId = requestAnimationFrame(tick);
