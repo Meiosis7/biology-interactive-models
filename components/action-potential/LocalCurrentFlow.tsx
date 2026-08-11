@@ -15,12 +15,13 @@ const ROUND_PAIRS = {
 
 interface LocalCurrentFlowProps {
   step: 1 | 2 | 3;
+  drawing: boolean;
 }
 
 const centerX = (segment: number) => 50 + segment * 100;
 const OUTSIDE_ARROW_CLEARANCE = 40;
 
-export function LocalCurrentFlow({ step }: LocalCurrentFlowProps) {
+export function LocalCurrentFlow({ step, drawing }: LocalCurrentFlowProps) {
   const pairs = ROUND_PAIRS[step];
 
   return (
@@ -61,7 +62,7 @@ export function LocalCurrentFlow({ step }: LocalCurrentFlowProps) {
           <path className="ap-current-arrow--outside" d="M 0 0 L 10 5 L 0 10 z" />
         </marker>
       </defs>
-      {pairs.flatMap(({ side, source, target }) => {
+      {pairs.flatMap(({ side, source, target }, pairIndex) => {
         const sourceX = centerX(source);
         const targetX = centerX(target);
         const midpoint = (sourceX + targetX) / 2;
@@ -76,8 +77,13 @@ export function LocalCurrentFlow({ step }: LocalCurrentFlowProps) {
             key={`inside-${side}`}
             className="ap-current-arc ap-current-arc--inside"
             d={`M ${sourceX} 93 Q ${midpoint} 111 ${targetX} 93`}
-            markerEnd="url(#ap-current-arrow-inside)"
+            pathLength={1}
+            markerEnd={
+              drawing ? undefined : "url(#ap-current-arrow-inside)"
+            }
+            style={{ "--arc-index": pairIndex * 2 } as CSSProperties}
             data-current-arc={`${step}-inside-${side}`}
+            data-current-drawing={drawing}
             data-current-layer="inside"
             data-current-direction="outward"
             data-current-side={side}
@@ -88,8 +94,13 @@ export function LocalCurrentFlow({ step }: LocalCurrentFlowProps) {
             key={`outside-${side}`}
             className="ap-current-arc ap-current-arc--outside"
             d={`M ${targetX} 22 Q ${outsideMidpoint} 4 ${outsideEndX} 22`}
-            markerEnd="url(#ap-current-arrow-outside)"
+            pathLength={1}
+            markerEnd={
+              drawing ? undefined : "url(#ap-current-arrow-outside)"
+            }
+            style={{ "--arc-index": pairIndex * 2 + 1 } as CSSProperties}
             data-current-arc={`${step}-outside-${side}`}
+            data-current-drawing={drawing}
             data-current-layer="outside"
             data-current-direction="inward"
             data-current-side={side}
@@ -101,3 +112,4 @@ export function LocalCurrentFlow({ step }: LocalCurrentFlowProps) {
     </svg>
   );
 }
+import type { CSSProperties } from "react";

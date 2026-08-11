@@ -23,9 +23,10 @@ export function ActionPotentialScene({
   playing,
   animationEpoch = 0,
 }: ActionPotentialSceneProps) {
-  const conductionComplete =
+  const allSegmentsExcited =
     mode === "conduction" &&
     frame.segments.every((segment) => segment.polarity === "excited");
+  const conductionComplete = mode === "conduction" && frame.phase === "conducted";
 
   return (
     <section
@@ -45,9 +46,11 @@ export function ActionPotentialScene({
         </b>
       </div>
 
-      <p className="ap-phase-caption" aria-live={playing ? "off" : "polite"}>
-        {frame.instruction}
-      </p>
+      {!conductionComplete && (
+        <p className="ap-phase-caption" aria-live={playing ? "off" : "polite"}>
+          {frame.instruction}
+        </p>
+      )}
 
       <div className="ap-fiber-stage">
         {([
@@ -154,6 +157,7 @@ export function ActionPotentialScene({
               <LocalCurrentFlow
                 key={`local-current-${animationEpoch}`}
                 step={frame.localCurrentStep}
+                drawing={playing}
               />
             </div>
           )}
@@ -161,7 +165,7 @@ export function ActionPotentialScene({
 
         {mode === "conduction" && (
           <div className="ap-region-labels">
-            {conductionComplete ? (
+            {allSegmentsExcited ? (
               <b>全部膜段已兴奋</b>
             ) : (
               <>
@@ -173,7 +177,11 @@ export function ActionPotentialScene({
           </div>
         )}
         {mode === "conduction" && (
-          <p className="ap-bidirectional">兴奋由刺激点向两侧逐段传导</p>
+          <p className="ap-bidirectional">
+            {conductionComplete
+              ? "神经冲动以电信号（局部电流）的形式在神经纤维上双向传导。"
+              : "兴奋由刺激点向两侧逐段传导"}
+          </p>
         )}
       </div>
     </section>

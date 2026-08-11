@@ -253,7 +253,18 @@ describe("action-potential ion visual contracts", () => {
       /inset:\s*-38px 0 -22px\s*;/,
     );
     expect(ruleBody(".ap-current-arc")).toMatch(
-      /stroke-dasharray:\s*6 6\s*;/,
+      /stroke-dasharray:\s*1\s*;/,
+    );
+    expect(ruleBody(".ap-current-arc")).toMatch(/stroke-dashoffset:\s*1\s*;/);
+    expect(ruleBody(".ap-current-arc")).toMatch(
+      /animation:\s*ap-current-draw 520ms[^;]+1 forwards\s*;/,
+    );
+    expect(ruleBody(".ap-current-arc")).toMatch(
+      /animation-delay:\s*calc\(var\(--arc-index\) \* 60ms\)\s*;/,
+    );
+    expect(ruleBody(".ap-current-arc")).not.toMatch(/infinite/);
+    expect(ruleBody('.ap-current-arc[data-current-drawing="false"]')).toMatch(
+      /stroke-dashoffset:\s*0\s*;/,
     );
     expect(stylesheet).not.toMatch(
       /\.ap-local-current-system\[data-current-step=/,

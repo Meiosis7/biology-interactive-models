@@ -29,8 +29,7 @@ export const ACTION_POTENTIAL_MODES: readonly ModeContent[] = [
     id: "conduction",
     label: "动作电位传导",
     title: "相邻部位依次兴奋",
-    summary:
-      "兴奋区形成局部电流，使相邻Na⁺通道依次开放，兴奋由刺激点向两侧逐段传导。",
+    summary: "神经冲动以电信号（局部电流）的形式在神经纤维上双向传导。",
     facts: [
       { label: "原因", value: "兴奋区形成局部电流" },
       { label: "通道与离子变化", value: "相邻Na⁺通道依次开放" },

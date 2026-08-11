@@ -15,7 +15,7 @@ describe("action-potential shared-fiber components", () => {
     expect(ACTION_POTENTIAL_MODES[0].summary).toContain("K⁺外流");
     expect(ACTION_POTENTIAL_MODES[1].summary).toContain("局部Na⁺通道开放");
     expect(ACTION_POTENTIAL_MODES[2].summary).toContain(
-      "相邻Na⁺通道依次开放",
+      "神经冲动以电信号（局部电流）的形式在神经纤维上双向传导。",
     );
     expect(JSON.stringify(ACTION_POTENTIAL_MODES)).not.toMatch(
       /曲线|mV|−70|-70|复极化|超极化|恢复/,
@@ -588,6 +588,11 @@ describe("action-potential shared-fiber components", () => {
         expect(endX).toBeLessThan(Math.max(originCenter, destinationCenter));
       }
       expect(container.querySelectorAll("[data-current-arc]")).toHaveLength(4);
+      for (const path of container.querySelectorAll("[data-current-arc]")) {
+        expect(path).toHaveAttribute("pathLength", "1");
+        expect(path).toHaveAttribute("data-current-drawing", "true");
+        expect(path).not.toHaveAttribute("marker-end");
+      }
     },
   );
 
@@ -629,6 +634,23 @@ describe("action-potential shared-fiber components", () => {
     expect(current).toHaveAccessibleDescription(
       "膜内局部电流向两侧未兴奋区；膜外局部电流返回兴奋区",
     );
+  });
+
+  it("holds completed current arcs with arrowheads until the next click", () => {
+    const { container } = render(
+      <ActionPotentialScene
+        mode="conduction"
+        frame={getConductionStepFrame(1, 1)}
+        playing={false}
+      />,
+    );
+
+    for (const path of container.querySelectorAll("[data-current-arc]")) {
+      expect(path).toHaveAttribute("data-current-drawing", "false");
+      expect(path.getAttribute("marker-end")).toMatch(
+        /^url\(#ap-current-arrow-(inside|outside)\)$/,
+      );
+    }
   });
 
   it("turns automatic phase announcements off and restores polite announcements when paused", () => {
@@ -728,6 +750,12 @@ describe("action-potential shared-fiber components", () => {
     ).toHaveLength(7);
     expect(screen.queryAllByText("未兴奋区")).toHaveLength(0);
     expect(screen.getByText("全部膜段已兴奋")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "神经冲动以电信号（局部电流）的形式在神经纤维上双向传导。",
+      ),
+    ).toBeInTheDocument();
+    expect(container.querySelectorAll("[data-current-arc]")).toHaveLength(0);
   });
 
   it("shows the new action-potential beat without ions or local-current paths", () => {
