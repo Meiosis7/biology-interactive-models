@@ -55,7 +55,11 @@ describe("ActionPotentialLab", () => {
     expect(screen.getByLabelText("动作电位产生动态示意")).toBeInTheDocument();
     expect(screen.getByLabelText("当前模式知识卡")).toHaveTextContent("Na⁺内流");
     fireEvent.click(screen.getByRole("button", { name: /动作电位传导/ }));
-    expect(screen.getByLabelText("局部电流方向")).toBeInTheDocument();
+    expect(screen.getByLabelText("动作电位传导动态示意")).toHaveAttribute(
+      "data-phase",
+      "excited",
+    );
+    expect(screen.getByRole("button", { name: "下一步" })).toBeInTheDocument();
   });
 
   it("loops generation from the excited hold back to stimulus", () => {
@@ -96,36 +100,60 @@ describe("ActionPotentialLab", () => {
     expect(callbacks.size).toBe(1);
   });
 
-  it("stops conduction with all seven segments excited", () => {
+  it("waits for next-step clicks between conduction macro steps", () => {
     const { container } = render(<ActionPotentialLab />);
     fireEvent.click(screen.getByRole("button", { name: /动作电位传导/ }));
-    runNextFrame(0);
-    runNextFrame(7000);
+
     expect(screen.getByLabelText("动作电位传导动态示意")).toHaveAttribute(
       "data-phase",
-      "conducted",
+      "excited",
     );
-    expect(
-      container.querySelectorAll('[data-segment-polarity="excited"]'),
-    ).toHaveLength(7);
-    expect(screen.getByRole("button", { name: "播放" })).toBeInTheDocument();
-    expect(callbacks.size).toBe(0);
-  });
-
-  it("restarts completed conduction from the central excited segment", () => {
-    const { container } = render(<ActionPotentialLab />);
-    fireEvent.click(screen.getByRole("button", { name: /动作电位传导/ }));
-    runNextFrame(0);
-    runNextFrame(7000);
-    fireEvent.click(screen.getByRole("button", { name: "播放" }));
     expect(
       container.querySelectorAll('[data-segment-polarity="excited"]'),
     ).toHaveLength(1);
-    expect(container.querySelector('[data-segment-id="3"]')).toHaveAttribute(
-      "data-segment-polarity",
-      "excited",
+    expect(callbacks.size).toBe(0);
+
+    fireEvent.click(screen.getByRole("button", { name: "下一步" }));
+    expect(screen.getByLabelText("动作电位传导动态示意")).toHaveAttribute(
+      "data-phase",
+      "local-current",
     );
-    expect(screen.getByRole("button", { name: "暂停" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "下一步" })).toBeDisabled();
+    runNextFrame(0);
+    runNextFrame(700);
+    expect(screen.getByRole("button", { name: "下一步" })).toBeEnabled();
+    expect(container.querySelectorAll("[data-current-arc]")).toHaveLength(4);
+    expect(callbacks.size).toBe(0);
+  });
+
+  it("plays one adjacent action potential and stops", () => {
+    const { container } = render(<ActionPotentialLab />);
+    fireEvent.click(screen.getByRole("button", { name: /动作电位传导/ }));
+    fireEvent.click(screen.getByRole("button", { name: "下一步" }));
+    runNextFrame(0);
+    runNextFrame(700);
+    fireEvent.click(screen.getByRole("button", { name: "下一步" }));
+
+    runNextFrame(0);
+    runNextFrame(300);
+    expect(screen.getByLabelText("动作电位传导动态示意")).toHaveAttribute(
+      "data-phase",
+      "neighbor-sodium-in",
+    );
+    expect(
+      container.querySelectorAll('[data-ion-particle="sodium"]'),
+    ).toHaveLength(12);
+    expect(
+      container.querySelectorAll('[data-segment-polarity="excited"]'),
+    ).toHaveLength(1);
+
+    runNextFrame(1150);
+    expect(
+      container.querySelectorAll('[data-segment-polarity="excited"]'),
+    ).toHaveLength(3);
+    runNextFrame(1400);
+    expect(screen.getByRole("button", { name: "下一步" })).toBeEnabled();
+    expect(callbacks.size).toBe(0);
   });
 
   it("resets generation progress when the user returns to that mode", () => {
@@ -199,8 +227,9 @@ describe("ActionPotentialLab", () => {
     expect(replayedPotassiumStreams[1]).not.toBe(potassiumStreams[1]);
 
     fireEvent.click(screen.getByRole("button", { name: /动作电位传导/ }));
+    fireEvent.click(screen.getByRole("button", { name: "下一步" }));
     const currentArc = container.querySelector("[data-current-arc]");
-    fireEvent.click(screen.getByRole("button", { name: "重新播放" }));
+    fireEvent.click(screen.getByRole("button", { name: "重新演示" }));
     expect(screen.getByTestId("shared-fiber")).toBe(fiber);
     const conductionSegments = Array.from(
       container.querySelectorAll("[data-segment-id]"),
@@ -209,7 +238,8 @@ describe("ActionPotentialLab", () => {
     conductionSegments.forEach((segment, index) =>
       expect(segment).toBe(segments[index]),
     );
-    expect(container.querySelector("[data-current-arc]")).not.toBe(currentArc);
+    expect(currentArc).toBeTruthy();
+    expect(container.querySelector("[data-current-arc]")).toBeNull();
   });
 
   it("removes all voltage and advanced experiment UI", () => {
@@ -222,7 +252,6 @@ describe("ActionPotentialLab", () => {
       "教学时间",
       "记录电极位置",
       "上一步",
-      "下一步",
     ]) {
       expect(screen.queryByText(name)).not.toBeInTheDocument();
     }
@@ -281,6 +310,18 @@ describe("ActionPotentialLab", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /动作电位传导/ }));
     const conductionScene = screen.getByLabelText("动作电位传导动态示意");
+    expect(conductionScene).toHaveAttribute("data-phase", "excited");
+    expect(
+      Array.from(
+        conductionScene.querySelectorAll('[data-segment-polarity="excited"]'),
+      ).map((segment) => segment.getAttribute("data-segment-id")),
+    ).toEqual(["3"]);
+    const nextButton = screen.getByRole("button", { name: "下一步" });
+    expect(nextButton).toBeEnabled();
+    fireEvent.click(nextButton);
+    expect(screen.getByLabelText("局部电流方向")).toBeInTheDocument();
+    expect(nextButton).toBeEnabled();
+    fireEvent.click(nextButton);
     expect(conductionScene).toHaveAttribute("data-phase", "neighbor-excited");
     expect(
       Array.from(
@@ -291,8 +332,8 @@ describe("ActionPotentialLab", () => {
       conductionScene.querySelectorAll('[data-ion-particle="sodium"]'),
     ).toHaveLength(0);
     expect(screen.queryByLabelText("局部电流方向")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "播放" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "重新播放" })).toBeDisabled();
+    expect(nextButton).toBeEnabled();
+    expect(screen.getByRole("button", { name: "重新演示" })).toBeEnabled();
     expect(callbacks.size).toBe(0);
     expect(requestAnimationFrame).not.toHaveBeenCalled();
   });

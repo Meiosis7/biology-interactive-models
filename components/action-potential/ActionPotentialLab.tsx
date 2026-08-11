@@ -4,29 +4,41 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ActionPotentialKnowledgeCard } from "./ActionPotentialKnowledgeCard";
 import { ActionPotentialModeNav } from "./ActionPotentialModeNav";
 import { ActionPotentialScene } from "./ActionPotentialScene";
+import { ConductionControls } from "./ConductionControls";
 import { LabControls } from "./LabControls";
 import { ACTION_POTENTIAL_MODES, MODE_DURATION_MS } from "./modeData";
-import { getActionPotentialFrame } from "./simulation";
-import type { ActionPotentialMode } from "./types";
+import {
+  CONDUCTION_ACTION_POTENTIAL_MS,
+  CONDUCTION_LOCAL_CURRENT_MS,
+  getActionPotentialFrame,
+  getConductionStepFrame,
+} from "./simulation";
+import type { ActionPotentialMode, ConductionStep } from "./types";
 
 export function ActionPotentialLab() {
   const [mode, setMode] = useState<ActionPotentialMode>("resting");
   const [playing, setPlaying] = useState(true);
   const [progress, setProgress] = useState(0);
   const [animationEpoch, setAnimationEpoch] = useState(0);
+  const [conductionStep, setConductionStep] = useState<ConductionStep>(0);
+  const [conductionProgress, setConductionProgress] = useState(1);
+  const [conductionBusy, setConductionBusy] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [motionPreferenceReady, setMotionPreferenceReady] = useState(false);
   const previousTime = useRef<number | null>(null);
   const progressRef = useRef(0);
-  const isOneShotMode = mode === "conduction";
+  const conductionProgressRef = useRef(1);
 
   const content = ACTION_POTENTIAL_MODES.find((item) => item.id === mode)!;
-  const staticProgress =
-    mode === "generation" ? 0.55 : mode === "conduction" ? 0.26 : 0;
+  const staticProgress = mode === "generation" ? 0.55 : 0;
   const displayedProgress = reducedMotion ? staticProgress : progress;
+  const displayedConductionProgress = reducedMotion ? 1 : conductionProgress;
   const frame = useMemo(
-    () => getActionPotentialFrame(mode, displayedProgress),
-    [mode, displayedProgress],
+    () =>
+      mode === "conduction"
+        ? getConductionStepFrame(conductionStep, displayedConductionProgress)
+        : getActionPotentialFrame(mode, displayedProgress),
+    [conductionStep, displayedConductionProgress, displayedProgress, mode],
   );
 
   useEffect(() => {
@@ -41,19 +53,19 @@ export function ActionPotentialLab() {
   }, []);
 
   useEffect(() => {
-    if (!motionPreferenceReady || !playing || reducedMotion) return;
+    if (
+      !motionPreferenceReady ||
+      !playing ||
+      reducedMotion ||
+      mode === "conduction"
+    )
+      return;
     let frameId = 0;
     const tick = (now: number) => {
       const before = previousTime.current ?? now;
       previousTime.current = now;
       const next = progressRef.current + (now - before) / MODE_DURATION_MS;
-      if (isOneShotMode && next >= 1) {
-        progressRef.current = 1;
-        setProgress(1);
-        setPlaying(false);
-        return;
-      }
-      const nextProgress = isOneShotMode ? next : next % 1;
+      const nextProgress = next % 1;
       progressRef.current = nextProgress;
       setProgress(nextProgress);
       frameId = requestAnimationFrame(tick);
@@ -63,7 +75,41 @@ export function ActionPotentialLab() {
       cancelAnimationFrame(frameId);
       previousTime.current = null;
     };
-  }, [isOneShotMode, mode, motionPreferenceReady, playing, reducedMotion]);
+  }, [mode, motionPreferenceReady, playing, reducedMotion]);
+
+  useEffect(() => {
+    if (
+      !motionPreferenceReady ||
+      mode !== "conduction" ||
+      !conductionBusy ||
+      reducedMotion
+    )
+      return;
+
+    let frameId = 0;
+    let previousConductionTime: number | null = null;
+    const duration =
+      conductionStep % 2 === 1
+        ? CONDUCTION_LOCAL_CURRENT_MS
+        : CONDUCTION_ACTION_POTENTIAL_MS;
+    const tick = (now: number) => {
+      const before = previousConductionTime ?? now;
+      previousConductionTime = now;
+      const next =
+        conductionProgressRef.current + (now - before) / duration;
+      if (next >= 1) {
+        conductionProgressRef.current = 1;
+        setConductionProgress(1);
+        setConductionBusy(false);
+        return;
+      }
+      conductionProgressRef.current = next;
+      setConductionProgress(next);
+      frameId = requestAnimationFrame(tick);
+    };
+    frameId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameId);
+  }, [conductionBusy, conductionStep, mode, motionPreferenceReady, reducedMotion]);
 
   const restart = () => {
     previousTime.current = null;
@@ -73,20 +119,50 @@ export function ActionPotentialLab() {
     setPlaying(true);
   };
 
+  const restartConduction = () => {
+    conductionProgressRef.current = 1;
+    setConductionProgress(1);
+    setConductionStep(0);
+    setConductionBusy(false);
+    setAnimationEpoch((current) => current + 1);
+  };
+
   const changeMode = (nextMode: ActionPotentialMode) => {
     setMode(nextMode);
-    restart();
+    if (nextMode === "conduction") {
+      restartConduction();
+    } else {
+      restart();
+      restartConduction();
+    }
   };
 
   const togglePlaying = () => {
-    if (isOneShotMode && progress >= 1) {
-      restart();
-      return;
-    }
     setPlaying((current) => !current);
   };
 
-  const effectivePlaying = playing && !reducedMotion;
+  const nextConductionStep = () => {
+    if (conductionBusy || conductionStep >= 6) return;
+    const nextStep = (conductionStep + 1) as ConductionStep;
+    setConductionStep(nextStep);
+    setAnimationEpoch((current) => current + 1);
+    if (reducedMotion) {
+      conductionProgressRef.current = 1;
+      setConductionProgress(1);
+      setConductionBusy(false);
+      return;
+    }
+    conductionProgressRef.current = 0;
+    setConductionProgress(0);
+    setConductionBusy(true);
+  };
+
+  const effectivePlaying =
+    mode === "conduction"
+      ? conductionBusy && !reducedMotion
+      : playing && !reducedMotion;
+  const conductionComplete =
+    conductionStep === 6 && displayedConductionProgress >= 1;
 
   return (
     <main className="lab-shell" aria-labelledby="lab-title">
@@ -105,12 +181,22 @@ export function ActionPotentialLab() {
         />
         <ActionPotentialKnowledgeCard content={content} />
       </section>
-      <LabControls
-        playing={effectivePlaying}
-        playbackDisabled={reducedMotion}
-        onTogglePlaying={togglePlaying}
-        onReplay={restart}
-      />
+      {mode === "conduction" ? (
+        <ConductionControls
+          step={conductionStep}
+          busy={conductionBusy}
+          complete={conductionComplete}
+          onNext={nextConductionStep}
+          onReplay={restartConduction}
+        />
+      ) : (
+        <LabControls
+          playing={effectivePlaying}
+          playbackDisabled={reducedMotion}
+          onTogglePlaying={togglePlaying}
+          onReplay={restart}
+        />
+      )}
     </main>
   );
 }
