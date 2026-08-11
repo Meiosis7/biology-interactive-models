@@ -250,7 +250,7 @@
 
 .ap-segment-charge {
   position: absolute;
-  left: 25%;
+  left: 50%;
   z-index: 3;
   color: #a73333;
   font-size: 18px;
@@ -269,7 +269,7 @@
   --channel-dark: #147481;
   --channel-scale: 1;
   position: absolute;
-  left: 75%;
+  left: 50%;
   width: 30px;
   height: 34px;
   transform: translateX(-50%) scale(var(--channel-scale));
@@ -373,7 +373,7 @@
 .ap-ion-stream {
   --ion-color: #168fa0;
   position: absolute;
-  left: 75%;
+  left: 50%;
   width: 1px;
   height: 58px;
   z-index: 7;

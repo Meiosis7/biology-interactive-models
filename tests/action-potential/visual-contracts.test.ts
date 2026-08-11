@@ -341,10 +341,16 @@ describe("action-potential ion visual contracts", () => {
     expect(stylesheet).not.toMatch(/--ion-static-x/);
   });
 
-  it("keeps charges and sodium transport in separate fixed lanes", () => {
-    expect(ruleBody(".ap-segment-charge")).toMatch(/left:\s*25%\s*;/);
-    expect(ruleBody(".ap-ion-channel")).toMatch(/left:\s*75%\s*;/);
-    expect(ruleBody(".ap-ion-stream")).toMatch(/left:\s*75%\s*;/);
+  it("aligns charges, sodium channels, and sodium transport on one centerline", () => {
+    expect(ruleBody(".ap-segment-charge")).toMatch(/left:\s*50%\s*;/);
+    expect(ruleBody(".ap-ion-channel")).toMatch(/left:\s*50%\s*;/);
+    expect(ruleBody(".ap-ion-stream")).toMatch(/left:\s*50%\s*;/);
+    expect(ruleBody(".ap-ion-channel--potassium")).toMatch(
+      /left:\s*100%\s*;/,
+    );
+    expect(ruleBody(".ap-ion-stream--potassium")).toMatch(
+      /left:\s*100%\s*;/,
+    );
     expect(stylesheet).not.toMatch(/--ion-bypass-x/);
     expect(stylesheet).not.toMatch(/ap-sodium-bypass-(?:up|down)/);
   });
