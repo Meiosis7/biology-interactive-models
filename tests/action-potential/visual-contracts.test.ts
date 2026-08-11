@@ -343,6 +343,59 @@ describe("action-potential ion visual contracts", () => {
     );
   });
 
+  it("routes sodium around charge columns while rejoining each membrane pore", () => {
+    const segmentRule = ruleBody(".ap-membrane-segment");
+    const mirroredSegmentRule = ruleBody(
+      ".ap-membrane-segment:nth-child(n + 5)",
+    );
+    const downwardSodiumRule = ruleBody(
+      ".ap-ion-stream--sodium.ap-ion-stream--top .ap-ion-particle",
+    );
+    const upwardSodiumRule = ruleBody(
+      ".ap-ion-stream--sodium.ap-ion-stream--bottom .ap-ion-particle",
+    );
+    const downwardBypass = stylesheet.match(
+      /@keyframes ap-sodium-bypass-down\s*\{([\s\S]*?)\n\}/,
+    )?.[1];
+    const upwardBypass = stylesheet.match(
+      /@keyframes ap-sodium-bypass-up\s*\{([\s\S]*?)\n\}/,
+    )?.[1];
+
+    expect(segmentRule).toMatch(/--ion-bypass-x:\s*24px\s*;/);
+    expect(mirroredSegmentRule).toMatch(/--ion-bypass-x:\s*-24px\s*;/);
+    expect(downwardSodiumRule).toMatch(
+      /animation-name:\s*ap-ion-cross,\s*ap-sodium-bypass-down\s*;/,
+    );
+    expect(upwardSodiumRule).toMatch(
+      /animation-name:\s*ap-ion-cross,\s*ap-sodium-bypass-up\s*;/,
+    );
+
+    expect(downwardBypass).toBeDefined();
+    expect(downwardBypass).toMatch(
+      /0%,\s*26%\s*\{[^}]*translate:\s*var\(--ion-bypass-x\) 0\s*;/,
+    );
+    expect(downwardBypass).toMatch(
+      /30%,\s*34%\s*\{[^}]*translate:\s*0 0\s*;/,
+    );
+    expect(downwardBypass).toMatch(
+      /39%,\s*100%\s*\{[^}]*translate:\s*var\(--ion-bypass-x\) 0\s*;/,
+    );
+    expect(upwardBypass).toBeDefined();
+    expect(upwardBypass).toMatch(
+      /0%,\s*2%\s*\{[^}]*translate:\s*var\(--ion-bypass-x\) 0\s*;/,
+    );
+    expect(upwardBypass).toMatch(
+      /9%,\s*14%\s*\{[^}]*translate:\s*0 0\s*;/,
+    );
+    expect(upwardBypass).toMatch(
+      /22%,\s*100%\s*\{[^}]*translate:\s*var\(--ion-bypass-x\) 0\s*;/,
+    );
+
+    expect(stylesheet).toMatch(
+      /@media \(max-width:\s*720px\)[\s\S]*?\.ap-membrane-segment\s*\{[^}]*--ion-bypass-x:\s*21px\s*;[\s\S]*?\.ap-membrane-segment:nth-child\(n \+ 5\)\s*\{[^}]*--ion-bypass-x:\s*-21px\s*;/,
+    );
+  });
+
   it("keeps paired potassium visuals on the shared boundary without overriding surface lanes", () => {
     const potassiumChannelRule = ruleBody(".ap-ion-channel--potassium");
     const potassiumStreamRule = ruleBody(".ap-ion-stream--potassium");
