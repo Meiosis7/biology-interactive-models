@@ -212,3 +212,91 @@ The final page reported `innerWidth=clientWidth=scrollWidth=390`, so the timing/
 Reduced-motion media emulation remained unavailable in the in-app Browser. No system preference was changed; the strict zero-RAF, open-channel, and static-particle automated/CSS evidence remains the accepted reduced-motion proof.
 
 This focused post-fix pass found no timing, contrast, pause, replay, overflow, or alignment regression.
+
+## Looped generation, causal conduction, and open-fiber follow-up
+
+Final verification was performed against HEAD `e32e21d` at `http://localhost:3002/models/action-potential`. Port 3002 was served by this exact worktree.
+
+### Fresh automated evidence
+
+The required chain was run once in order and exited 0 throughout:
+
+| Command | Result |
+| --- | --- |
+| `npm test` | 20/20 test files and 194/194 tests passed; 0 failed; 5.19 s |
+| `npm run lint` | ESLint exited 0 with no diagnostics |
+| `npm run build` | All five Vinext stages completed; the action-potential route was listed |
+| `git diff --check` | Exit 0; no output |
+
+The focused reduced-motion command also passed: 1/1 selected test passed, with 9 non-selected tests skipped. It establishes zero requested animation frames and zero queued RAF callbacks, disabled Play and Replay, usable mode switching, generation `sodium-in` with one open central Na⁺ channel and three static Na⁺ particles, and conduction `neighbor-excited` with excited `[2,3,4]`, no particles, and no local-current paths.
+
+### Looped generation at exactly 1280×720
+
+A continuous 12,460 ms trace after Replay recorded:
+
+```text
+0 stimulus
+781 sodium-channel-opening
+2264 sodium-in (3 Na⁺)
+3347 excited ([3])
+5778 stimulus
+6771 sodium-channel-opening
+8255 sodium-in (3 fresh Na⁺)
+9327 excited ([3])
+11761 stimulus
+```
+
+Playback remained running throughout. The first `excited` frame wrapped directly to `stimulus`; no recovery state/text appeared. Pause during the second cycle froze all three Na⁺ particle rectangles/transforms for 820 ms and the open channel petals/pore for 720 ms. Play resumed in place and particle transforms advanced after 180 ms. Replay immediately restored `stimulus`, zero particles, and running playback.
+
+### Three rounds of causal conduction
+
+The complete observed trace was:
+
+```text
+0    local-current step 1 / excited [3] / targets [2,4] / 4 arcs
+278  neighbor-sodium-in / excited [3] / influx [2,4] / 6 Na⁺ / 0 arcs
+1191 neighbor-excited / excited [2,3,4] / 0 particles / 0 arcs
+1553 local-current step 2 / excited [2,3,4] / targets [1,5] / 4 arcs
+2085 neighbor-sodium-in / excited [2,3,4] / influx [1,5] / 6 Na⁺ / 0 arcs
+2995 neighbor-excited / excited [1,2,3,4,5] / 0 particles / 0 arcs
+3352 local-current step 3 / excited [1,2,3,4,5] / targets [0,6] / 4 arcs
+3880 neighbor-sodium-in / excited [1,2,3,4,5] / influx [0,6] / 6 Na⁺ / 0 arcs
+4793 neighbor-excited / excited [0,1,2,3,4,5,6] / 0 particles / 0 arcs
+5172 conducted / excited [0,1,2,3,4,5,6] / 0 particles / 0 arcs
+5766 conducted / excited [0,1,2,3,4,5,6] / stopped
+```
+
+The three captions changed in order between local current, Na⁺ influx, and adjacent excitation. Each next local current appeared only after the prior targets were excited. Every local-current beat had exactly four short arcs: two inside/outward and two outside/inward. Adjacent pairs progressed `2↔3 + 3↔4`, then `1↔2 + 4↔5`, then `0↔1 + 5↔6`. All arcs disappeared in influx and newly-excited phases. Terminal replay immediately returned to step 1 with excited `[3]`, targets `[2,4]`, four arcs, and running playback.
+
+### Open ends, charge rows, and responsive layout
+
+| Observation | 1280×720 | 390×844 |
+| --- | --- | --- |
+| `innerWidth / clientWidth / scrollWidth` | `1280 / 1280 / 1280` | `390 / 390 / 390` |
+| Fiber top / bottom border | `3px / 3px` | `3px / 3px` |
+| Fiber left / right border | `0px / 0px` | `0px / 0px` |
+| Fiber top-left / top-right radius | `0px / 0px` | `0px / 0px` |
+| First segment computed left border | `0px` | `0px` |
+| First segment left radii | `0px / 0px` | `0px / 0px` |
+| Last segment right radii | `0px / 0px` | `0px / 0px` |
+| Visible segments | 7 | 7 |
+| Open-end overlap count | 0 | 0 |
+
+The Task 4 reviewer Minor is directly closed: the first membrane segment's computed `border-left-width` is `0px` at both viewports.
+
+At desktop, an excited segment's charge centers had strictly increasing y values `319.023, 358.023, 410.023, 449.023`, identical x=`460.125`, and signs `−,＋,＋,−`. At mobile, a resting segment measured y=`652.730, 691.730, 728.129, 767.129`, identical x=`77.203`, and signs `＋,−,−,＋`; an excited mobile segment independently showed `−,＋,＋,−` with `0px` horizontal spread.
+
+Desktop local-current/influx bounds scans covered 61/63 visible elements; mobile resting/local-current/influx scans covered 58/61/63. Every scan had 0 horizontal-bound failures and 0 label/object intersections. Dedicated open-end scans across charges, channels, ions, arcs, and labels also found 0 overlaps. Browser console warnings/errors: 0.
+
+Direct-viewport screenshots are genuine PNG files at the exact requested sizes:
+
+- `.superpowers/sdd/action-potential-open-fiber-desktop-1280x720.png` (1280×720)
+- `.superpowers/sdd/action-potential-open-fiber-mobile-390x844.png` (390×844)
+
+Both visibly show the uncapped left/right ends and all four charge rows.
+
+### Forbidden scope and limitations
+
+Rendered text in each of resting, generation, and conduction was scanned for `mV`, `-70`, `−70`, `曲线`, `复极化`, `超极化`, and `恢复`; each mode returned 0 matches.
+
+The in-app Browser cannot emulate `prefers-reduced-motion`, so no media-preference browser evidence is claimed and no system setting was changed. The dedicated zero-RAF test above is the accepted evidence. The screenshots and detailed Task 5 report are ignored verification artifacts under `.superpowers/sdd/.gitignore`; they remain at the stated paths. No product defect or acceptance blocker was found.
