@@ -173,3 +173,57 @@ After every evidence file was staged, `git diff --cached --check` exited `0` wit
 ### Follow-up evidence limit
 
 No browser re-verification was performed or claimed. Browser validation of the new phase allocation and particle timing remains assigned to the next review stage.
+
+## Follow-up Na⁺ one-shot animation fix
+
+### Root cause
+
+Focused in-app browser verification at `c8ebf02` observed Na⁺ particles with computed `animation-duration: 0.65s` and `animation-iteration-count: infinite`. The shared `.ap-ion-particle` animation shorthand hard-coded `infinite`; the species rules parameterized duration and stagger only. Consequently, each Na⁺ particle restarted after 650ms and reappeared during the remaining 70–270ms of a 920ms influx phase.
+
+The fix keeps the shared animation and species inheritance pattern, but also parameterizes iteration count and fill mode:
+
+- Na⁺: `--ion-iteration-count: 1` and `--ion-fill-mode: both`.
+- K⁺: `--ion-iteration-count: infinite` and `--ion-fill-mode: none`.
+- The existing keyframes have invisible 0%/100% states at the start/end transforms. `both` therefore holds delayed Na⁺ particles at the invisible start state before their delay and holds completed particles at the invisible end state until the stream unmounts.
+- The shared `animation-play-state: paused` declaration and the sole running override under `.ap-scene[data-playing="true"]` are unchanged.
+- The reduced-motion rule remains `animation: none !important` with its representative static transform/opacity.
+
+### TDD RED
+
+A focused stylesheet contract was added first, asserting Na⁺ `1/both`, K⁺ `infinite`, shared custom-property consumption, and invisible start/end keyframes.
+
+```text
+npm test -- tests/action-potential/visual-contracts.test.ts
+```
+
+Exit code: `1`. One of three tests failed for the expected reason: `.ap-ion-stream--sodium` had no `--ion-iteration-count: 1`; the two existing visual contracts remained green.
+
+### TDD GREEN and focused verification
+
+After the minimal CSS change, the identical command exited `0`: 1/1 file and 3/3 tests passed.
+
+The complete action-potential test directory then passed:
+
+```text
+npm test -- tests/action-potential
+```
+
+Exit code: `0`; 4/4 files and 44/44 tests passed.
+
+### Full verification
+
+```text
+npm test && npm run lint && npm run build
+```
+
+Exit code: `0`.
+
+- Tests: 20/20 files and 172/172 tests passed.
+- Lint: ESLint exited with no diagnostics.
+- Build: Vinext completed all five stages and listed `/models/action-potential`.
+
+After this report was staged, `git diff --cached --check` exited `0` with no output.
+
+### Evidence limit
+
+No browser evidence was added or updated. The in-app browser controller will reverify computed animation iteration/fill behavior after this commit.

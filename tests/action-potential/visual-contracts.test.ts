@@ -149,4 +149,22 @@ describe("action-potential ion visual contracts", () => {
       /animation-play-state:\s*running\s*;/,
     );
   });
+
+  it("plays sodium once with both fill while potassium outflow remains infinite", () => {
+    const sodiumRule = ruleBody(".ap-ion-stream--sodium");
+    const potassiumRule = ruleBody(".ap-ion-stream--potassium");
+    const particleRule = ruleBody(".ap-ion-particle");
+
+    expect(sodiumRule).toMatch(/--ion-iteration-count:\s*1\s*;/);
+    expect(sodiumRule).toMatch(/--ion-fill-mode:\s*both\s*;/);
+    expect(potassiumRule).toMatch(
+      /--ion-iteration-count:\s*infinite\s*;/,
+    );
+    expect(particleRule).toMatch(
+      /animation:[^;]*var\(--ion-iteration-count\)[^;]*var\(--ion-fill-mode\)[^;]*;/,
+    );
+    expect(stylesheet).toMatch(
+      /@keyframes ap-ion-cross\s*\{[\s\S]*?0%\s*\{[^}]*var\(--ion-start-y\)[^}]*opacity:\s*0\s*;[^}]*\}[\s\S]*?100%\s*\{[^}]*var\(--ion-end-y\)[^}]*opacity:\s*0\s*;[^}]*\}/,
+    );
+  });
 });
