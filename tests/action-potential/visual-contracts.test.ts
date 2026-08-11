@@ -53,6 +53,12 @@ function milliseconds(rule: string, property: string) {
   return Number(match![1]);
 }
 
+function zIndex(selector: string) {
+  const match = ruleBody(selector).match(/z-index:\s*(\d+)\s*;/);
+  expect(match, `missing numeric z-index for ${selector}`).not.toBeNull();
+  return Number(match![1]);
+}
+
 function conductionPhaseWindows() {
   const windows: Array<{ phase: string; durationMs: number }> = [];
 
@@ -121,6 +127,15 @@ describe("action-potential ion visual contracts", () => {
     expect(stylesheet).not.toMatch(
       /\.ap-local-current-system\[data-current-step=/,
     );
+  });
+
+  it("keeps current arcs above membrane fills but behind charges, channels, and ions", () => {
+    const currentLayer = zIndex(".ap-local-current-system");
+
+    expect(currentLayer).toBeGreaterThan(0);
+    expect(currentLayer).toBeLessThan(zIndex(".ap-segment-charge"));
+    expect(currentLayer).toBeLessThan(zIndex(".ap-ion-channel"));
+    expect(currentLayer).toBeLessThan(zIndex(".ap-ion-stream"));
   });
 
   it("uses explicit sodium and potassium fill tokens with 4.5:1 label contrast at desktop and mobile", () => {
