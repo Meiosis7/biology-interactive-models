@@ -77,6 +77,60 @@ describe("action-potential shared-fiber components", () => {
     ).toHaveLength(7);
   });
 
+  it("renders four vertically ordered charges for every resting segment", () => {
+    const { container } = render(
+      <ActionPotentialScene
+        mode="resting"
+        frame={getActionPotentialFrame("resting", 0)}
+        playing
+      />,
+    );
+
+    const segment = container.querySelector('[data-segment-id="3"]')!;
+    const charges = Array.from(
+      segment.querySelectorAll<HTMLElement>("[data-charge-position]"),
+    );
+    expect(charges.map((charge) => charge.dataset.chargePosition)).toEqual([
+      "outside-top",
+      "inside-top",
+      "inside-bottom",
+      "outside-bottom",
+    ]);
+    expect(charges.map((charge) => charge.textContent)).toEqual([
+      "＋",
+      "−",
+      "−",
+      "＋",
+    ]);
+  });
+
+  it("reverses all four charge signs without moving their slots when excited", () => {
+    const { container } = render(
+      <ActionPotentialScene
+        mode="generation"
+        frame={getActionPotentialFrame("generation", 0.9)}
+        playing={false}
+      />,
+    );
+
+    const segment = container.querySelector('[data-segment-id="3"]')!;
+    const charges = Array.from(
+      segment.querySelectorAll<HTMLElement>("[data-charge-position]"),
+    );
+    expect(charges.map((charge) => charge.dataset.chargePosition)).toEqual([
+      "outside-top",
+      "inside-top",
+      "inside-bottom",
+      "outside-bottom",
+    ]);
+    expect(charges.map((charge) => charge.textContent)).toEqual([
+      "−",
+      "＋",
+      "＋",
+      "−",
+    ]);
+  });
+
   it("opens and excites only the central segment during generation", () => {
     const { container, rerender } = render(
       <ActionPotentialScene
@@ -228,24 +282,70 @@ describe("action-potential shared-fiber components", () => {
     ).toHaveLength(3);
   });
 
-  it("renders opposite animated paths for intracellular and extracellular current", () => {
-    render(
-      <ActionPotentialScene
-        mode="conduction"
-        frame={getActionPotentialFrame("conduction", 0.05)}
-        playing
-      />,
-    );
+  it.each([
+    [0.05, "1", [["3", "2"], ["3", "4"]]],
+    [0.34, "2", [["2", "1"], ["4", "5"]]],
+    [0.64, "3", [["1", "0"], ["5", "6"]]],
+  ] as const)(
+    "renders four adjacent short arcs for conduction round %s",
+    (progress, step, pairs) => {
+      const { container } = render(
+        <ActionPotentialScene
+          mode="conduction"
+          frame={getActionPotentialFrame("conduction", progress)}
+          playing
+        />,
+      );
 
-    const inside = screen.getByLabelText("膜内局部电流向两侧未兴奋区");
-    const outside = screen.getByLabelText("膜外局部电流返回兴奋区");
-    expect(inside).toHaveAttribute("data-current-direction", "outward");
-    expect(outside).toHaveAttribute("data-current-direction", "inward");
-    expect(inside.querySelectorAll("[data-current-branch]")).toHaveLength(2);
-    expect(outside.querySelectorAll("[data-current-branch]")).toHaveLength(2);
-    expect(inside).toHaveTextContent("膜内局部电流");
-    expect(outside).toHaveTextContent("膜外回流");
-  });
+      const system = screen.getByLabelText("局部电流方向");
+      expect(system).toHaveAttribute("data-current-step", step);
+      const inside = Array.from(
+        system.querySelectorAll('[data-current-layer="inside"]'),
+      );
+      const outside = Array.from(
+        system.querySelectorAll('[data-current-layer="outside"]'),
+      );
+      expect(inside).toHaveLength(2);
+      expect(outside).toHaveLength(2);
+      expect(
+        inside.every(
+          (path) => path.getAttribute("data-current-direction") === "outward",
+        ),
+      ).toBe(true);
+      expect(
+        outside.every(
+          (path) => path.getAttribute("data-current-direction") === "inward",
+        ),
+      ).toBe(true);
+      expect(
+        inside.map((path) => [
+          path.getAttribute("data-source-segment"),
+          path.getAttribute("data-target-segment"),
+        ]),
+      ).toEqual(pairs);
+      expect(
+        outside.map((path) => [
+          path.getAttribute("data-target-segment"),
+          path.getAttribute("data-source-segment"),
+        ]),
+      ).toEqual(pairs);
+      expect(container.querySelectorAll("[data-current-arc]")).toHaveLength(4);
+    },
+  );
+
+  it.each([0.16, 0.26, 0.45, 0.56, 0.75, 0.86, 0.95])(
+    "hides current arcs outside local-current at progress %s",
+    (progress) => {
+      const { container } = render(
+        <ActionPotentialScene
+          mode="conduction"
+          frame={getActionPotentialFrame("conduction", progress)}
+          playing
+        />,
+      );
+      expect(container.querySelectorAll("[data-current-arc]")).toHaveLength(0);
+    },
+  );
 
   it("reserves separate vertical lanes for current and region labels", () => {
     const stylesheet = readFileSync(

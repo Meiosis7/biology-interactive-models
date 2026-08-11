@@ -96,6 +96,33 @@ function generationPhaseWindows() {
 }
 
 describe("action-potential ion visual contracts", () => {
+  it("keeps four charge rows fixed around the two membrane lines", () => {
+    expect(ruleBody(".ap-segment-charge--outside-top")).toMatch(
+      /top:\s*-29px\s*;/,
+    );
+    expect(ruleBody(".ap-segment-charge--inside-top")).toMatch(
+      /top:\s*10px\s*;/,
+    );
+    expect(ruleBody(".ap-segment-charge--inside-bottom")).toMatch(
+      /bottom:\s*10px\s*;/,
+    );
+    expect(ruleBody(".ap-segment-charge--outside-bottom")).toMatch(
+      /bottom:\s*-29px\s*;/,
+    );
+  });
+
+  it("draws short current arcs without step-dependent full-width lanes", () => {
+    expect(ruleBody(".ap-local-current-system")).toMatch(
+      /inset:\s*-38px 0 -22px\s*;/,
+    );
+    expect(ruleBody(".ap-current-arc")).toMatch(
+      /stroke-dasharray:\s*6 6\s*;/,
+    );
+    expect(stylesheet).not.toMatch(
+      /\.ap-local-current-system\[data-current-step=/,
+    );
+  });
+
   it("uses explicit sodium and potassium fill tokens with 4.5:1 label contrast at desktop and mobile", () => {
     const label = hexToken("--ap-ion-particle-label");
     const sodiumFill = hexToken("--ap-sodium-particle-fill");

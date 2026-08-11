@@ -1,44 +1,90 @@
+const ROUND_PAIRS = {
+  1: [
+    { side: "left", source: 3, target: 2 },
+    { side: "right", source: 3, target: 4 },
+  ],
+  2: [
+    { side: "left", source: 2, target: 1 },
+    { side: "right", source: 4, target: 5 },
+  ],
+  3: [
+    { side: "left", source: 1, target: 0 },
+    { side: "right", source: 5, target: 6 },
+  ],
+} as const;
+
 interface LocalCurrentFlowProps {
-  layer: "inside" | "outside";
+  step: 1 | 2 | 3;
 }
 
-export function LocalCurrentFlow({ layer }: LocalCurrentFlowProps) {
-  const outward = layer === "inside";
-  const label = outward
-    ? "膜内局部电流向两侧未兴奋区"
-    : "膜外局部电流返回兴奋区";
+const centerX = (segment: number) => 50 + segment * 100;
+
+export function LocalCurrentFlow({ step }: LocalCurrentFlowProps) {
+  const pairs = ROUND_PAIRS[step];
 
   return (
-    <div
-      className={`ap-current-flow ap-current-flow--${layer}`}
-      data-current-direction={outward ? "outward" : "inward"}
-      aria-label={label}
+    <svg
+      className="ap-current-arcs"
+      viewBox="0 0 700 160"
+      preserveAspectRatio="none"
+      aria-label="局部电流方向"
+      data-current-step={step}
     >
-      <svg viewBox="0 0 400 42" preserveAspectRatio="none" aria-hidden="true">
-        <path
-          className="ap-current-track ap-current-track--left"
-          d="M200 22 C150 22 100 22 28 22"
-        />
-        <path
-          className="ap-current-track ap-current-track--right"
-          d="M200 22 C250 22 300 22 372 22"
-        />
-        <circle
-          className="ap-current-dot ap-current-dot--left"
-          cx="200"
-          cy="22"
-          r="4"
-          data-current-branch="left"
-        />
-        <circle
-          className="ap-current-dot ap-current-dot--right"
-          cx="200"
-          cy="22"
-          r="4"
-          data-current-branch="right"
-        />
-      </svg>
-      <b>{outward ? "膜内局部电流" : "膜外回流"}</b>
-    </div>
+      <defs>
+        <marker
+          id="ap-current-arrow-inside"
+          viewBox="0 0 10 10"
+          refX="9"
+          refY="5"
+          markerWidth="5"
+          markerHeight="5"
+          orient="auto"
+        >
+          <path className="ap-current-arrow--inside" d="M 0 0 L 10 5 L 0 10 z" />
+        </marker>
+        <marker
+          id="ap-current-arrow-outside"
+          viewBox="0 0 10 10"
+          refX="9"
+          refY="5"
+          markerWidth="5"
+          markerHeight="5"
+          orient="auto"
+        >
+          <path className="ap-current-arrow--outside" d="M 0 0 L 10 5 L 0 10 z" />
+        </marker>
+      </defs>
+      {pairs.flatMap(({ side, source, target }) => {
+        const sourceX = centerX(source);
+        const targetX = centerX(target);
+        const midpoint = (sourceX + targetX) / 2;
+        return [
+          <path
+            key={`inside-${side}`}
+            className="ap-current-arc ap-current-arc--inside"
+            d={`M ${sourceX} 93 Q ${midpoint} 111 ${targetX} 93`}
+            markerEnd="url(#ap-current-arrow-inside)"
+            data-current-arc={`${step}-inside-${side}`}
+            data-current-layer="inside"
+            data-current-direction="outward"
+            data-current-side={side}
+            data-source-segment={source}
+            data-target-segment={target}
+          />,
+          <path
+            key={`outside-${side}`}
+            className="ap-current-arc ap-current-arc--outside"
+            d={`M ${targetX} 22 Q ${midpoint} 4 ${sourceX} 22`}
+            markerEnd="url(#ap-current-arrow-outside)"
+            data-current-arc={`${step}-outside-${side}`}
+            data-current-layer="outside"
+            data-current-direction="inward"
+            data-current-side={side}
+            data-source-segment={target}
+            data-target-segment={source}
+          />,
+        ];
+      })}
+    </svg>
   );
 }

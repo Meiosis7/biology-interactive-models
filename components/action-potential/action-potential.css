@@ -247,13 +247,10 @@
   transform: translateX(-50%);
 }
 
-.ap-segment-charge--outside {
-  top: 8px;
-}
-
-.ap-segment-charge--inside {
-  bottom: 8px;
-}
+.ap-segment-charge--outside-top { top: -29px; }
+.ap-segment-charge--inside-top { top: 10px; }
+.ap-segment-charge--inside-bottom { bottom: 10px; }
+.ap-segment-charge--outside-bottom { bottom: -29px; }
 
 .ap-ion-channel {
   --channel-color: #2597a6;
@@ -425,120 +422,33 @@
 
 .ap-local-current-system {
   position: absolute;
+  inset: -38px 0 -22px;
   z-index: 6;
-  top: 0;
-  bottom: 0;
   pointer-events: none;
 }
 
-.ap-local-current-system[data-current-step="1"] {
-  left: 35.714%;
-  right: 35.714%;
-}
-
-.ap-local-current-system[data-current-step="2"] {
-  left: 21.429%;
-  right: 21.429%;
-}
-
-.ap-local-current-system[data-current-step="3"] {
-  left: 7.143%;
-  right: 7.143%;
-}
-
-.ap-current-flow {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 42px;
-  color: var(--ap-blue);
-}
-
-.ap-current-flow--outside {
-  top: -57px;
-  color: var(--ap-purple);
-}
-
-.ap-current-flow--inside {
-  top: calc(100% + 9px);
-}
-
-.ap-current-flow svg {
+.ap-current-arcs {
   display: block;
   width: 100%;
-  height: 42px;
+  height: 100%;
   overflow: visible;
 }
 
-.ap-current-flow b {
-  position: absolute;
-  left: 50%;
-  padding: 2px 6px;
-  border-radius: 999px;
-  background: rgba(255, 250, 242, 0.94);
-  font-size: clamp(9px, 1.1vw, 11px);
-  line-height: 1.25;
-  white-space: nowrap;
-  transform: translateX(-50%);
-}
-
-.ap-current-flow--outside b {
-  top: -8px;
-}
-
-.ap-current-flow--inside b {
-  top: 36px;
-}
-
-.ap-current-track {
+.ap-current-arc {
   fill: none;
-  stroke: currentColor;
-  stroke-width: 2.2;
+  stroke-width: 2.4;
   stroke-linecap: round;
-  stroke-dasharray: 7 8;
+  stroke-dasharray: 6 6;
   vector-effect: non-scaling-stroke;
-  animation: ap-current-dash 900ms linear infinite;
+  animation: ap-current-dash 720ms linear infinite;
   animation-play-state: paused;
 }
 
-.ap-current-flow--outside .ap-current-track {
-  animation-direction: reverse;
-  opacity: 0.78;
-}
-
-.ap-current-dot {
-  fill: currentColor;
-  filter: drop-shadow(0 0 3px currentColor);
-  transform-box: view-box;
-  transform-origin: center;
-  animation-duration: 1400ms;
-  animation-timing-function: cubic-bezier(.35, 0, .3, 1);
-  animation-iteration-count: infinite;
-  animation-play-state: paused;
-}
-
-.ap-current-dot--right {
-  animation-delay: 160ms;
-}
-
-.ap-current-flow--inside .ap-current-dot--left {
-  animation-name: ap-current-out-left;
-}
-
-.ap-current-flow--inside .ap-current-dot--right {
-  animation-name: ap-current-out-right;
-}
-
-.ap-current-flow--outside .ap-current-dot--left {
-  animation-name: ap-current-in-left;
-}
-
-.ap-current-flow--outside .ap-current-dot--right {
-  animation-name: ap-current-in-right;
-}
-
-.ap-scene[data-playing="true"] .ap-current-dot,
-.ap-scene[data-playing="true"] .ap-current-track {
+.ap-current-arc--inside { stroke: var(--ap-blue); }
+.ap-current-arc--outside { stroke: var(--ap-purple); }
+.ap-current-arrow--inside { fill: var(--ap-blue); }
+.ap-current-arrow--outside { fill: var(--ap-purple); }
+.ap-scene[data-playing="true"] .ap-current-arc {
   animation-play-state: running;
 }
 
@@ -687,74 +597,6 @@
   }
 }
 
-@keyframes ap-current-out-left {
-  from {
-    transform: translateX(0);
-    opacity: 0.35;
-  }
-
-  22%,
-  78% {
-    opacity: 1;
-  }
-
-  to {
-    transform: translateX(-172px);
-    opacity: 0.35;
-  }
-}
-
-@keyframes ap-current-out-right {
-  from {
-    transform: translateX(0);
-    opacity: 0.35;
-  }
-
-  22%,
-  78% {
-    opacity: 1;
-  }
-
-  to {
-    transform: translateX(172px);
-    opacity: 0.35;
-  }
-}
-
-@keyframes ap-current-in-left {
-  from {
-    transform: translateX(-172px);
-    opacity: 0.35;
-  }
-
-  22%,
-  78% {
-    opacity: 1;
-  }
-
-  to {
-    transform: translateX(0);
-    opacity: 0.35;
-  }
-}
-
-@keyframes ap-current-in-right {
-  from {
-    transform: translateX(172px);
-    opacity: 0.35;
-  }
-
-  22%,
-  78% {
-    opacity: 1;
-  }
-
-  to {
-    transform: translateX(0);
-    opacity: 0.35;
-  }
-}
-
 @keyframes ap-target-glow {
   from {
     box-shadow:
@@ -834,34 +676,6 @@
     font-size: clamp(13px, 4vw, 16px);
   }
 
-  .ap-segment-charge--outside {
-    top: 6px;
-  }
-
-  .ap-segment-charge--inside {
-    bottom: 6px;
-  }
-
-  .ap-current-flow--outside {
-    top: -55px;
-  }
-
-  .ap-current-flow--inside {
-    top: calc(100% + 8px);
-  }
-
-  .ap-current-flow b {
-    font-size: clamp(8px, 2.4vw, 10px);
-  }
-
-  .ap-current-flow--outside b {
-    top: -6px;
-  }
-
-  .ap-current-flow--inside b {
-    top: 34px;
-  }
-
   .ap-controls p {
     width: 100%;
     margin-left: 0;
@@ -872,8 +686,7 @@
   .ap-ion-channel__petal,
   .ap-ion-channel__pore,
   .ap-ion-particle,
-  .ap-current-dot,
-  .ap-current-track,
+  .ap-current-arc,
   .ap-membrane-segment {
     transition: none !important;
     animation: none !important;
@@ -893,19 +706,4 @@
     --ion-static-x: 16px;
   }
 
-  .ap-current-flow--inside .ap-current-dot--left {
-    transform: translateX(-120px);
-  }
-
-  .ap-current-flow--inside .ap-current-dot--right {
-    transform: translateX(120px);
-  }
-
-  .ap-current-flow--outside .ap-current-dot--left {
-    transform: translateX(-72px);
-  }
-
-  .ap-current-flow--outside .ap-current-dot--right {
-    transform: translateX(72px);
-  }
 }

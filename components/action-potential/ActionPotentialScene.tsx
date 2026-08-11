@@ -64,17 +64,33 @@ export function ActionPotentialScene({
               data-current-target={segment.currentTarget}
               aria-label={`第${segment.id + 1}膜段${segment.polarity === "excited" ? "外负内正" : "外正内负"}`}
             >
-              <span className="ap-segment-charge ap-segment-charge--outside">
-                {segment.polarity === "excited" ? "−" : "+"}
-              </span>
+              {(
+                [
+                  "outside-top",
+                  "inside-top",
+                  "inside-bottom",
+                  "outside-bottom",
+                ] as const
+              ).map((position) => {
+                const outside = position.startsWith("outside");
+                const positive =
+                  segment.polarity === "resting" ? outside : !outside;
+                return (
+                  <span
+                    key={position}
+                    className={`ap-segment-charge ap-segment-charge--${position}`}
+                    data-charge-position={position}
+                    aria-hidden="true"
+                  >
+                    {positive ? "＋" : "−"}
+                  </span>
+                );
+              })}
               <IonChannel
                 species="sodium"
                 open={segment.sodiumChannelOpen}
                 label={`第${segment.id + 1}膜段Na⁺通道${segment.sodiumChannelOpen ? "开放" : "关闭"}`}
               />
-              <span className="ap-segment-charge ap-segment-charge--inside">
-                {segment.polarity === "excited" ? "+" : "−"}
-              </span>
               {segment.sodiumInflux && (
                 <IonStream
                   species="sodium"
@@ -110,10 +126,8 @@ export function ActionPotentialScene({
             <div
               className="ap-local-current-system"
               data-current-step={frame.localCurrentStep}
-              aria-label="局部电流方向"
             >
-              <LocalCurrentFlow layer="outside" />
-              <LocalCurrentFlow layer="inside" />
+              <LocalCurrentFlow step={frame.localCurrentStep} />
             </div>
           )}
         </div>
