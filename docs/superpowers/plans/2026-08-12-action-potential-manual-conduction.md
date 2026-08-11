@@ -151,8 +151,12 @@ Update reduced-motion particle transform to use only vertical travel:
 ```css
 @media (prefers-reduced-motion: reduce) {
   .ap-ion-particle {
-    transform: translate(-50%, var(--ion-static-y)) scale(.9);
+    --ion-static-offset-y: 0px;
+    transform: translate(-50%, calc(var(--ion-static-y) + var(--ion-static-offset-y))) scale(.9);
   }
+
+  .ap-ion-particle:nth-of-type(1) { --ion-static-offset-y: -14px; }
+  .ap-ion-particle:nth-of-type(3) { --ion-static-offset-y: 14px; }
 }
 ```
 

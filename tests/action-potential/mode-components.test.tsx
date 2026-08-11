@@ -176,6 +176,29 @@ describe("action-potential shared-fiber components", () => {
     ).toHaveAttribute("data-screen-direction", "up");
   });
 
+  it("keeps each sodium stream on the same surface and segment as its channel", () => {
+    const { container } = render(
+      <ActionPotentialScene
+        mode="generation"
+        frame={getActionPotentialFrame("generation", 0.55)}
+        playing
+      />,
+    );
+    const center = container.querySelector('[data-segment-id="3"]')!;
+    for (const surface of ["top", "bottom"]) {
+      expect(
+        center.querySelector(
+          `[data-channel-species="sodium"][data-membrane-surface="${surface}"]`,
+        ),
+      ).toBeTruthy();
+      expect(
+        center.querySelector(
+          `[data-ion-species="sodium"][data-membrane-surface="${surface}"]`,
+        ),
+      ).toBeTruthy();
+    }
+  });
+
   it("mirrors sodium influx on every conduction target", () => {
     const { container } = render(
       <ActionPotentialScene

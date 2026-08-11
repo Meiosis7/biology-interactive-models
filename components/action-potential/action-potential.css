@@ -203,16 +203,11 @@
 }
 
 .ap-membrane-segment {
-  --ion-bypass-x: 24px;
   position: relative;
   min-width: 0;
   border-left: 1px solid rgba(70, 74, 78, 0.23);
   background-color: #dff4f4;
   box-shadow: inset 0 8px 14px rgba(255, 255, 255, 0.48);
-}
-
-.ap-membrane-segment:nth-child(n + 5) {
-  --ion-bypass-x: -24px;
 }
 
 .ap-membrane-segment:first-child {
@@ -255,7 +250,7 @@
 
 .ap-segment-charge {
   position: absolute;
-  left: 50%;
+  left: 25%;
   z-index: 3;
   color: #a73333;
   font-size: 18px;
@@ -274,7 +269,7 @@
   --channel-dark: #147481;
   --channel-scale: 1;
   position: absolute;
-  left: 50%;
+  left: 75%;
   width: 30px;
   height: 34px;
   transform: translateX(-50%) scale(var(--channel-scale));
@@ -378,7 +373,7 @@
 .ap-ion-stream {
   --ion-color: #168fa0;
   position: absolute;
-  left: 50%;
+  left: 75%;
   width: 1px;
   height: 58px;
   z-index: 7;
@@ -457,15 +452,7 @@
   animation: ap-ion-cross var(--ion-duration) cubic-bezier(.3, .1, .25, 1) var(--ion-iteration-count) var(--ion-fill-mode);
   animation-delay: calc(var(--ion-index) * var(--ion-stagger));
   animation-play-state: paused;
-  will-change: transform, translate, opacity;
-}
-
-.ap-ion-stream--sodium.ap-ion-stream--top .ap-ion-particle {
-  animation-name: ap-ion-cross, ap-sodium-bypass-down;
-}
-
-.ap-ion-stream--sodium.ap-ion-stream--bottom .ap-ion-particle {
-  animation-name: ap-ion-cross, ap-sodium-bypass-up;
+  will-change: transform, opacity;
 }
 
 .ap-scene[data-playing="true"] .ap-ion-particle {
@@ -690,34 +677,6 @@
   }
 }
 
-@keyframes ap-sodium-bypass-down {
-  0%, 26% {
-    translate: var(--ion-bypass-x) 0;
-  }
-
-  30%, 34% {
-    translate: 0 0;
-  }
-
-  39%, 100% {
-    translate: var(--ion-bypass-x) 0;
-  }
-}
-
-@keyframes ap-sodium-bypass-up {
-  0%, 2% {
-    translate: var(--ion-bypass-x) 0;
-  }
-
-  9%, 14% {
-    translate: 0 0;
-  }
-
-  22%, 100% {
-    translate: var(--ion-bypass-x) 0;
-  }
-}
-
 @keyframes ap-current-dash {
   to {
     stroke-dashoffset: -30;
@@ -782,14 +741,6 @@
     height: 96px;
   }
 
-  .ap-membrane-segment {
-    --ion-bypass-x: 21px;
-  }
-
-  .ap-membrane-segment:nth-child(n + 5) {
-    --ion-bypass-x: -21px;
-  }
-
   .ap-ion-channel {
     --channel-scale: .86;
     transform-origin: center center;
@@ -844,17 +795,17 @@
   }
 
   .ap-ion-particle {
-    --ion-static-x: 0px;
+    --ion-static-offset-y: 0px;
     opacity: 1;
-    transform: translate(calc(-50% + var(--ion-static-x)), var(--ion-static-y)) scale(.9);
+    transform: translate(-50%, calc(var(--ion-static-y) + var(--ion-static-offset-y))) scale(.9);
   }
 
   .ap-ion-particle:nth-of-type(1) {
-    --ion-static-x: -16px;
+    --ion-static-offset-y: -14px;
   }
 
   .ap-ion-particle:nth-of-type(3) {
-    --ion-static-x: 16px;
+    --ion-static-offset-y: 14px;
   }
 
 }

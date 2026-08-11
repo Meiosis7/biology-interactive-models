@@ -339,61 +339,26 @@ describe("action-potential ion visual contracts", () => {
     )?.[1];
     expect(reducedMotionParticleRule).toBeDefined();
     expect(reducedMotionParticleRule).toMatch(
-      /transform:\s*translate\(calc\(-50% \+ var\(--ion-static-x\)\), var\(--ion-static-y\)\) scale\(\.9\)\s*;/,
+      /transform:\s*translate\(-50%, calc\(var\(--ion-static-y\) \+ var\(--ion-static-offset-y\)\)\) scale\(\.9\)\s*;/,
     );
+    expect(stylesheet).not.toMatch(/--ion-static-x/);
   });
 
-  it("routes sodium around charge columns while rejoining each membrane pore", () => {
-    const segmentRule = ruleBody(".ap-membrane-segment");
-    const mirroredSegmentRule = ruleBody(
-      ".ap-membrane-segment:nth-child(n + 5)",
-    );
-    const downwardSodiumRule = ruleBody(
-      ".ap-ion-stream--sodium.ap-ion-stream--top .ap-ion-particle",
-    );
-    const upwardSodiumRule = ruleBody(
-      ".ap-ion-stream--sodium.ap-ion-stream--bottom .ap-ion-particle",
-    );
-    const downwardBypass = stylesheet.match(
-      /@keyframes ap-sodium-bypass-down\s*\{([\s\S]*?)\n\}/,
-    )?.[1];
-    const upwardBypass = stylesheet.match(
-      /@keyframes ap-sodium-bypass-up\s*\{([\s\S]*?)\n\}/,
-    )?.[1];
+  it("keeps charges and sodium transport in separate fixed lanes", () => {
+    expect(ruleBody(".ap-segment-charge")).toMatch(/left:\s*25%\s*;/);
+    expect(ruleBody(".ap-ion-channel")).toMatch(/left:\s*75%\s*;/);
+    expect(ruleBody(".ap-ion-stream")).toMatch(/left:\s*75%\s*;/);
+    expect(stylesheet).not.toMatch(/--ion-bypass-x/);
+    expect(stylesheet).not.toMatch(/ap-sodium-bypass-(?:up|down)/);
+  });
 
-    expect(segmentRule).toMatch(/--ion-bypass-x:\s*24px\s*;/);
-    expect(mirroredSegmentRule).toMatch(/--ion-bypass-x:\s*-24px\s*;/);
-    expect(downwardSodiumRule).toMatch(
-      /animation-name:\s*ap-ion-cross,\s*ap-sodium-bypass-down\s*;/,
+  it("moves sodium on the same vertical axis as its pore", () => {
+    const particleRule = ruleBody(".ap-ion-particle");
+    expect(particleRule).toMatch(
+      /transform:\s*translate\(-50%,\s*var\(--ion-start-y\)\) scale\(\.82\)/,
     );
-    expect(upwardSodiumRule).toMatch(
-      /animation-name:\s*ap-ion-cross,\s*ap-sodium-bypass-up\s*;/,
-    );
-
-    expect(downwardBypass).toBeDefined();
-    expect(downwardBypass).toMatch(
-      /0%,\s*26%\s*\{[^}]*translate:\s*var\(--ion-bypass-x\) 0\s*;/,
-    );
-    expect(downwardBypass).toMatch(
-      /30%,\s*34%\s*\{[^}]*translate:\s*0 0\s*;/,
-    );
-    expect(downwardBypass).toMatch(
-      /39%,\s*100%\s*\{[^}]*translate:\s*var\(--ion-bypass-x\) 0\s*;/,
-    );
-    expect(upwardBypass).toBeDefined();
-    expect(upwardBypass).toMatch(
-      /0%,\s*2%\s*\{[^}]*translate:\s*var\(--ion-bypass-x\) 0\s*;/,
-    );
-    expect(upwardBypass).toMatch(
-      /9%,\s*14%\s*\{[^}]*translate:\s*0 0\s*;/,
-    );
-    expect(upwardBypass).toMatch(
-      /22%,\s*100%\s*\{[^}]*translate:\s*var\(--ion-bypass-x\) 0\s*;/,
-    );
-
-    expect(stylesheet).toMatch(
-      /@media \(max-width:\s*720px\)[\s\S]*?\.ap-membrane-segment\s*\{[^}]*--ion-bypass-x:\s*21px\s*;[\s\S]*?\.ap-membrane-segment:nth-child\(n \+ 5\)\s*\{[^}]*--ion-bypass-x:\s*-21px\s*;/,
-    );
+    expect(particleRule).not.toMatch(/translate:\s*var\(--ion-bypass-x\)/);
+    expect(ruleBody(".ap-ion-stream--sodium")).not.toMatch(/animation-name:/);
   });
 
   it("keeps paired potassium visuals on the shared boundary without overriding surface lanes", () => {
