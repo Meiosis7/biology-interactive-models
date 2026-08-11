@@ -1,4 +1,8 @@
-import type { ActionPotentialFrame, ActionPotentialMode } from "./types";
+import type {
+  ActionPotentialFrame,
+  ActionPotentialMode,
+  ConductionStep,
+} from "./types";
 import { MODE_DURATION_MS } from "./modeData";
 
 export const SEGMENT_COUNT = 7;
@@ -19,25 +23,34 @@ function makeSegments(
   }));
 }
 
-const CONDUCTION_STAGES = [
-  { durationMs: 520, phase: "local-current", excited: [3], step: 1, targets: [2, 4], open: [], influx: [] },
-  { durationMs: 920, phase: "neighbor-sodium-in", excited: [3], step: null, targets: [2, 4], open: [2, 4], influx: [2, 4] },
-  { durationMs: 360, phase: "neighbor-excited", excited: [2, 3, 4], step: null, targets: [], open: [2, 4], influx: [] },
-  { durationMs: 520, phase: "local-current", excited: [2, 3, 4], step: 2, targets: [1, 5], open: [], influx: [] },
-  { durationMs: 920, phase: "neighbor-sodium-in", excited: [2, 3, 4], step: null, targets: [1, 5], open: [1, 5], influx: [1, 5] },
-  { durationMs: 360, phase: "neighbor-excited", excited: [1, 2, 3, 4, 5], step: null, targets: [], open: [1, 5], influx: [] },
-  { durationMs: 520, phase: "local-current", excited: [1, 2, 3, 4, 5], step: 3, targets: [0, 6], open: [], influx: [] },
-  { durationMs: 920, phase: "neighbor-sodium-in", excited: [1, 2, 3, 4, 5], step: null, targets: [0, 6], open: [0, 6], influx: [0, 6] },
-  { durationMs: 360, phase: "neighbor-excited", excited: [0, 1, 2, 3, 4, 5, 6], step: null, targets: [], open: [0, 6], influx: [] },
-] as const;
+export const CONDUCTION_LOCAL_CURRENT_MS = 700;
+export const CONDUCTION_ACTION_POTENTIAL_MS = 1400;
+const CHANNEL_OPEN_END_MS = 300;
+const SODIUM_IN_END_MS = 1150;
 
-const CONDUCTION_STAGE_ENDS_MS = CONDUCTION_STAGES.map(
-  (_, index) =>
-    CONDUCTION_STAGES.slice(0, index + 1).reduce(
-      (total, stage) => total + stage.durationMs,
-      0,
-    ),
-);
+const CONDUCTION_ROUNDS = [
+  {
+    actionStep: 2,
+    currentStep: 1,
+    before: [3],
+    after: [2, 3, 4],
+    targets: [2, 4],
+  },
+  {
+    actionStep: 4,
+    currentStep: 2,
+    before: [2, 3, 4],
+    after: [1, 2, 3, 4, 5],
+    targets: [1, 5],
+  },
+  {
+    actionStep: 6,
+    currentStep: 3,
+    before: [1, 2, 3, 4, 5],
+    after: [0, 1, 2, 3, 4, 5, 6],
+    targets: [0, 6],
+  },
+] as const;
 
 const GENERATION_PHASE_ENDS_MS = {
   stimulus: 1000,
@@ -48,6 +61,79 @@ const GENERATION_PHASE_ENDS_MS = {
 export function normalizeProgress(progress: number) {
   if (!Number.isFinite(progress)) return 0;
   return Math.max(0, Math.min(1, progress));
+}
+
+export function getConductionStepFrame(
+  step: ConductionStep,
+  progress: number,
+): ActionPotentialFrame {
+  if (step === 0) {
+    return {
+      phase: "excited",
+      segments: makeSegments([CENTER_SEGMENT]),
+      potassiumChannelOpen: false,
+      potassiumOutflow: false,
+      stimulusVisible: true,
+      localCurrentStep: null,
+      instruction: "中央膜段已经形成动作电位",
+    };
+  }
+
+  if (step % 2 === 1) {
+    const round = CONDUCTION_ROUNDS[(step - 1) / 2]!;
+    return {
+      phase: "local-current",
+      segments: makeSegments(round.before, [], [], round.targets),
+      potassiumChannelOpen: false,
+      potassiumOutflow: false,
+      stimulusVisible: true,
+      localCurrentStep: round.currentStep,
+      instruction: `第${round.currentStep}轮局部电流形成`,
+    };
+  }
+
+  const round = CONDUCTION_ROUNDS[step / 2 - 1]!;
+  const normalized = normalizeProgress(progress);
+  const elapsed = normalized * CONDUCTION_ACTION_POTENTIAL_MS;
+  const complete = normalized >= 1;
+  const finalRound = step === 6;
+
+  if (elapsed < CHANNEL_OPEN_END_MS) {
+    return {
+      phase: "sodium-channel-opening",
+      segments: makeSegments(round.before, round.targets),
+      potassiumChannelOpen: false,
+      potassiumOutflow: false,
+      stimulusVisible: true,
+      localCurrentStep: null,
+      instruction: "局部电流使相邻膜段 Na⁺通道开放",
+    };
+  }
+
+  if (elapsed < SODIUM_IN_END_MS) {
+    return {
+      phase: "neighbor-sodium-in",
+      segments: makeSegments(round.before, round.targets, round.targets),
+      potassiumChannelOpen: false,
+      potassiumOutflow: false,
+      stimulusVisible: true,
+      localCurrentStep: null,
+      instruction: "Na⁺从上下通道进入相邻膜段",
+    };
+  }
+
+  return {
+    phase: finalRound && complete ? "conducted" : "neighbor-excited",
+    segments: makeSegments(round.after, round.targets),
+    potassiumChannelOpen: false,
+    potassiumOutflow: false,
+    stimulusVisible: true,
+    localCurrentStep: null,
+    instruction:
+      finalRound && complete
+        ? "神经冲动以电信号（局部电流）的形式在神经纤维上双向传导。"
+        : "相邻膜段形成动作电位",
+  };
 }
 
 export function getActionPotentialFrame(
@@ -69,37 +155,7 @@ export function getActionPotentialFrame(
   }
 
   if (mode === "conduction") {
-    const elapsedMs = normalized * MODE_DURATION_MS;
-    const stageIndex = CONDUCTION_STAGE_ENDS_MS.findIndex(
-      (stageEndMs) => elapsedMs < stageEndMs,
-    );
-    const stage = CONDUCTION_STAGES[stageIndex];
-    if (stage) {
-      return {
-        phase: stage.phase,
-        segments: makeSegments(stage.excited, stage.open, stage.influx, stage.targets),
-        potassiumChannelOpen: false,
-        potassiumOutflow: false,
-        stimulusVisible: true,
-        localCurrentStep: stage.step,
-        instruction:
-          stage.phase === "local-current"
-            ? "形成局部电流，兴奋向两侧传递"
-            : stage.phase === "neighbor-sodium-in"
-              ? "局部电流使两侧 Na⁺通道开放，Na⁺内流"
-              : "两侧相邻膜段形成动作电位",
-      };
-    }
-
-    return {
-      phase: "conducted",
-      segments: makeSegments([0, 1, 2, 3, 4, 5, 6]),
-      potassiumChannelOpen: false,
-      potassiumOutflow: false,
-      stimulusVisible: true,
-      localCurrentStep: null,
-      instruction: "全部膜段已形成动作电位",
-    };
+    return getConductionStepFrame(0, 1);
   }
 
   const generationElapsedMs = normalized * MODE_DURATION_MS;

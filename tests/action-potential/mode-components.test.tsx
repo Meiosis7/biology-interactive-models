@@ -5,7 +5,10 @@ import { ActionPotentialKnowledgeCard } from "../../components/action-potential/
 import { ActionPotentialModeNav } from "../../components/action-potential/ActionPotentialModeNav";
 import { ActionPotentialScene } from "../../components/action-potential/ActionPotentialScene";
 import { ACTION_POTENTIAL_MODES } from "../../components/action-potential/modeData";
-import { getActionPotentialFrame } from "../../components/action-potential/simulation";
+import {
+  getActionPotentialFrame,
+  getConductionStepFrame,
+} from "../../components/action-potential/simulation";
 
 describe("action-potential shared-fiber components", () => {
   it("uses the approved ion and relay teaching summaries", () => {
@@ -203,7 +206,7 @@ describe("action-potential shared-fiber components", () => {
     const { container } = render(
       <ActionPotentialScene
         mode="conduction"
-        frame={getActionPotentialFrame("conduction", 0.16)}
+        frame={getConductionStepFrame(2, 0.5)}
         playing
       />,
     );
@@ -288,7 +291,7 @@ describe("action-potential shared-fiber components", () => {
     const { container, rerender } = render(
       <ActionPotentialScene
         mode="conduction"
-        frame={getActionPotentialFrame("conduction", 0.16)}
+        frame={getConductionStepFrame(2, 0.5)}
         playing={false}
       />,
     );
@@ -303,7 +306,7 @@ describe("action-potential shared-fiber components", () => {
     rerender(
       <ActionPotentialScene
         mode="conduction"
-        frame={getActionPotentialFrame("conduction", 0.26)}
+        frame={getConductionStepFrame(2, 1)}
         playing={false}
       />,
     );
@@ -523,16 +526,16 @@ describe("action-potential shared-fiber components", () => {
   });
 
   it.each([
-    [0.05, "1", [["3", "2"], ["3", "4"]]],
-    [0.34, "2", [["2", "1"], ["4", "5"]]],
-    [0.64, "3", [["1", "0"], ["5", "6"]]],
+    [1, "1", [["3", "2"], ["3", "4"]]],
+    [3, "2", [["2", "1"], ["4", "5"]]],
+    [5, "3", [["1", "0"], ["5", "6"]]],
   ] as const)(
     "renders four adjacent short arcs for conduction round %s",
-    (progress, step, pairs) => {
+    (macroStep, step, pairs) => {
       const { container } = render(
         <ActionPotentialScene
           mode="conduction"
-          frame={getActionPotentialFrame("conduction", progress)}
+          frame={getConductionStepFrame(macroStep, 0)}
           playing
         />,
       );
@@ -618,7 +621,7 @@ describe("action-potential shared-fiber components", () => {
     rerender(
       <ActionPotentialScene
         mode="conduction"
-        frame={getActionPotentialFrame("conduction", 0.05)}
+        frame={getConductionStepFrame(1, 0)}
         playing={false}
       />,
     );
@@ -651,13 +654,21 @@ describe("action-potential shared-fiber components", () => {
     );
   });
 
-  it.each([0.16, 0.26, 0.45, 0.56, 0.75, 0.86, 0.95])(
-    "hides current arcs outside local-current at progress %s",
-    (progress) => {
+  it.each([
+    [2, 0.5],
+    [2, 1],
+    [4, 0.5],
+    [4, 1],
+    [6, 0.5],
+    [6, 1150 / 1400],
+    [6, 1],
+  ] as const)(
+    "hides current arcs outside local-current at step %s progress %s",
+    (step, progress) => {
       const { container } = render(
         <ActionPotentialScene
           mode="conduction"
-          frame={getActionPotentialFrame("conduction", progress)}
+          frame={getConductionStepFrame(step, progress)}
           playing
         />,
       );
@@ -683,7 +694,7 @@ describe("action-potential shared-fiber components", () => {
   });
 
   it("shows the approved conduction statement and the active phase caption", () => {
-    const firstFrame = getActionPotentialFrame("conduction", 0.05);
+    const firstFrame = getConductionStepFrame(1, 0);
     const { rerender } = render(
       <ActionPotentialScene mode="conduction" frame={firstFrame} playing />,
     );
@@ -695,7 +706,7 @@ describe("action-potential shared-fiber components", () => {
     expect(screen.queryByText("兴奋区移动")).not.toBeInTheDocument();
     expect(screen.queryByText("动作电位整体平移")).not.toBeInTheDocument();
 
-    const nextFrame = getActionPotentialFrame("conduction", 0.18);
+    const nextFrame = getConductionStepFrame(2, 0.5);
     rerender(
       <ActionPotentialScene mode="conduction" frame={nextFrame} playing />,
     );
@@ -707,7 +718,7 @@ describe("action-potential shared-fiber components", () => {
     const { container } = render(
       <ActionPotentialScene
         mode="conduction"
-        frame={getActionPotentialFrame("conduction", 1)}
+        frame={getConductionStepFrame(6, 1)}
         playing={false}
       />,
     );
@@ -720,13 +731,13 @@ describe("action-potential shared-fiber components", () => {
   });
 
   it("shows the new action-potential beat without ions or local-current paths", () => {
-    const frame = getActionPotentialFrame("conduction", 0.26);
+    const frame = getConductionStepFrame(2, 1);
     const { container } = render(
       <ActionPotentialScene mode="conduction" frame={frame} playing />,
     );
 
     expect(frame.phase).toBe("neighbor-excited");
-    expect(screen.getByText("两侧相邻膜段形成动作电位")).toBeInTheDocument();
+    expect(screen.getByText("相邻膜段形成动作电位")).toBeInTheDocument();
     expect(container.querySelectorAll('[data-segment-polarity="excited"]')).toHaveLength(3);
     expect(container.querySelectorAll('[data-ion-particle="sodium"]')).toHaveLength(0);
     expect(screen.queryByLabelText("局部电流方向")).not.toBeInTheDocument();
@@ -736,7 +747,7 @@ describe("action-potential shared-fiber components", () => {
     render(
       <ActionPotentialScene
         mode="conduction"
-        frame={getActionPotentialFrame("conduction", 0.86)}
+        frame={getConductionStepFrame(6, 1150 / 1400)}
         playing
       />,
     );

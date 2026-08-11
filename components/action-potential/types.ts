@@ -13,6 +13,7 @@ export type ActionPotentialPhase =
 
 export type SegmentPolarity = "resting" | "excited";
 export type LocalCurrentStep = 1 | 2 | 3 | null;
+export type ConductionStep = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
 export interface MembraneSegmentFrame {
   id: number;
