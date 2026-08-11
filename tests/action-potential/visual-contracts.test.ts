@@ -102,6 +102,21 @@ function generationPhaseWindows() {
 }
 
 describe("action-potential ion visual contracts", () => {
+  it("draws the shared fiber with open flat ends", () => {
+    const fiberRule = ruleBody(".ap-fiber");
+    const firstSegmentRule = ruleBody(".ap-membrane-segment:first-child");
+    const lastSegmentRule = ruleBody(".ap-membrane-segment:last-child");
+
+    expect(fiberRule).toMatch(/border-top:\s*3px solid #6e7478\s*;/);
+    expect(fiberRule).toMatch(/border-bottom:\s*3px solid #6e7478\s*;/);
+    expect(fiberRule).toMatch(/border-left:\s*0\s*;/);
+    expect(fiberRule).toMatch(/border-right:\s*0\s*;/);
+    expect(fiberRule).toMatch(/border-radius:\s*0\s*;/);
+    expect(fiberRule).not.toMatch(/border:\s*3px solid/);
+    expect(firstSegmentRule).toMatch(/border-radius:\s*0\s*;/);
+    expect(lastSegmentRule).toMatch(/border-radius:\s*0\s*;/);
+  });
+
   it("keeps four charge rows fixed around the two membrane lines", () => {
     expect(ruleBody(".ap-segment-charge--outside-top")).toMatch(
       /top:\s*-29px\s*;/,

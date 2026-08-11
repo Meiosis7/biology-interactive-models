@@ -30,7 +30,9 @@ describe("site metadata and presentation assets", () => {
     );
 
     expect(css).toMatch(/--ap-paper:\s*#fffdf8/);
-    expect(css).toMatch(/\.ap-fiber\s*\{[^}]*border-radius:\s*999px/s);
+    expect(css).toMatch(/\.ap-fiber\s*\{[^}]*border-top:\s*3px solid #6e7478/s);
+    expect(css).toMatch(/\.ap-fiber\s*\{[^}]*border-bottom:\s*3px solid #6e7478/s);
+    expect(css).toMatch(/\.ap-fiber\s*\{[^}]*border-radius:\s*0/s);
     expect(css).toMatch(
       /\.ap-fiber\s*\{[^}]*grid-template-columns:\s*repeat\(7,\s*minmax\(0,\s*1fr\)\)/s,
     );
