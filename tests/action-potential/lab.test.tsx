@@ -136,8 +136,16 @@ describe("ActionPotentialLab", () => {
     render(<ActionPotentialLab />);
     fireEvent.click(screen.getByRole("button", { name: "暂停" }));
     expect(callbacks.size).toBe(0);
+    expect(screen.getByLabelText("静息电位动态示意")).toHaveAttribute(
+      "data-playing",
+      "false",
+    );
     fireEvent.click(screen.getByRole("button", { name: "重新播放" }));
     expect(screen.getByRole("button", { name: "暂停" })).toBeInTheDocument();
+    expect(screen.getByLabelText("静息电位动态示意")).toHaveAttribute(
+      "data-playing",
+      "true",
+    );
   });
 
   it("removes all voltage and advanced experiment UI", () => {

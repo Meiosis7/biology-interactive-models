@@ -192,6 +192,42 @@ describe("action-potential shared-fiber components", () => {
     expect(screen.queryByLabelText("K⁺外流")).not.toBeInTheDocument();
   });
 
+  it("renders three staggerable sodium particles through the active pore", () => {
+    const { container } = render(
+      <ActionPotentialScene
+        mode="generation"
+        frame={getActionPotentialFrame("generation", 0.55)}
+        playing
+      />,
+    );
+
+    const stream = screen.getByLabelText("Na⁺进入第4膜段");
+    expect(stream).toHaveAttribute("data-ion-direction", "inward");
+    expect(stream).toHaveAttribute("data-ion-species", "sodium");
+    expect(
+      stream.querySelectorAll('[data-ion-particle="sodium"]'),
+    ).toHaveLength(3);
+    expect(
+      container.querySelectorAll('[data-ion-particle="potassium"]'),
+    ).toHaveLength(0);
+  });
+
+  it("renders three outward potassium particles only in resting mode", () => {
+    render(
+      <ActionPotentialScene
+        mode="resting"
+        frame={getActionPotentialFrame("resting", 0.2)}
+        playing
+      />,
+    );
+
+    const stream = screen.getByLabelText("K⁺外流");
+    expect(stream).toHaveAttribute("data-ion-direction", "outward");
+    expect(
+      stream.querySelectorAll('[data-ion-particle="potassium"]'),
+    ).toHaveLength(3);
+  });
+
   it("shows opposite extracellular and intracellular current directions", () => {
     render(
       <ActionPotentialScene

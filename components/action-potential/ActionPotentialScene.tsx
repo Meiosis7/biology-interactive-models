@@ -1,5 +1,6 @@
 import type { ActionPotentialFrame, ActionPotentialMode } from "./types";
 import { IonChannel } from "./IonChannel";
+import { IonStream } from "./IonStream";
 
 const MODE_LABELS: Record<ActionPotentialMode, string> = {
   resting: "静息电位",
@@ -73,12 +74,11 @@ export function ActionPotentialScene({
                 {segment.polarity === "excited" ? "+" : "−"}
               </span>
               {segment.sodiumInflux && (
-                <span
-                  className="ap-segment-na-flow"
-                  aria-label={`Na⁺进入第${segment.id + 1}膜段`}
-                >
-                  Na⁺↓
-                </span>
+                <IonStream
+                  species="sodium"
+                  direction="inward"
+                  label={`Na⁺进入第${segment.id + 1}膜段`}
+                />
               )}
               {mode === "resting" && segment.id === 1 && (
                 <>
@@ -88,9 +88,11 @@ export function ActionPotentialScene({
                     label={`K⁺通道${frame.potassiumChannelOpen ? "开放" : "关闭"}`}
                   />
                   {frame.potassiumOutflow && (
-                    <span className="ap-segment-k-flow" aria-label="K⁺外流">
-                      K⁺↑
-                    </span>
+                    <IonStream
+                      species="potassium"
+                      direction="outward"
+                      label="K⁺外流"
+                    />
                   )}
                 </>
               )}

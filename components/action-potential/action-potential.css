@@ -335,40 +335,68 @@
   transform: translateX(-50%);
 }
 
-.ap-segment-na-flow,
-.ap-segment-k-flow {
+.ap-ion-stream {
+  --ion-color: #168fa0;
+  --ion-start-y: -20px;
+  --ion-end-y: 34px;
   position: absolute;
-  z-index: 7;
+  top: -18px;
   left: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 36px;
-  min-height: 28px;
-  border-radius: 999px;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 850;
+  width: 1px;
+  height: 58px;
+  z-index: 7;
+  pointer-events: none;
+}
+
+.ap-ion-stream::before {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  width: 2px;
+  height: 48px;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--ion-color) 4%, transparent),
+    color-mix(in srgb, var(--ion-color) 44%, transparent),
+    color-mix(in srgb, var(--ion-color) 4%, transparent)
+  );
+  content: "";
   transform: translateX(-50%);
 }
 
-.ap-segment-na-flow {
-  top: -53px;
-  background: var(--ap-blue);
-}
-
-.ap-segment-k-flow {
-  top: 42px;
+.ap-ion-stream--potassium {
+  --ion-color: #7958b8;
+  --ion-start-y: 34px;
+  --ion-end-y: -20px;
   left: 76%;
-  background: var(--ap-purple);
 }
 
-.ap-scene[data-playing="true"] .ap-segment-na-flow {
-  animation: ap-na-in 1.1s ease-in-out infinite;
+.ap-ion-particle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  width: 25px;
+  height: 25px;
+  border: 1px solid color-mix(in srgb, var(--ion-color) 75%, white);
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, white 0 12%, color-mix(in srgb, var(--ion-color) 45%, white) 26%, var(--ion-color) 100%);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--ion-color) 30%, transparent);
+  place-items: center;
+  color: white;
+  font-size: 8px;
+  font-style: normal;
+  font-weight: 800;
+  transform: translate(-50%, var(--ion-start-y)) scale(.82);
+  opacity: 0;
+  animation: ap-ion-cross 780ms cubic-bezier(.3, .1, .25, 1) infinite;
+  animation-delay: calc(var(--ion-index) * 190ms);
+  animation-play-state: paused;
+  will-change: transform, opacity;
 }
 
-.ap-scene[data-playing="true"] .ap-segment-k-flow {
-  animation: ap-k-out 1.3s ease-in-out infinite;
+.ap-scene[data-playing="true"] .ap-ion-particle {
+  animation-play-state: running;
 }
 
 .ap-local-current-system {
@@ -552,23 +580,23 @@
   opacity: 0.55;
 }
 
-@keyframes ap-na-in {
-  from {
-    transform: translate(-50%, -34px);
+@keyframes ap-ion-cross {
+  0% {
+    transform: translate(-50%, var(--ion-start-y)) scale(.78);
+    opacity: 0;
   }
 
-  to {
-    transform: translate(-50%, 70px);
-  }
-}
-
-@keyframes ap-k-out {
-  from {
-    transform: translate(-50%, 65px);
+  18% {
+    opacity: 1;
   }
 
-  to {
-    transform: translate(-50%, -38px);
+  74% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(-50%, var(--ion-end-y)) scale(1);
+    opacity: 0;
   }
 }
 
@@ -653,13 +681,6 @@
 
   .ap-current-row span:last-child {
     justify-self: end;
-  }
-
-  .ap-segment-na-flow,
-  .ap-segment-k-flow {
-    min-width: 30px;
-    min-height: 24px;
-    font-size: clamp(8px, 2.5vw, 10px);
   }
 
   .ap-controls p {

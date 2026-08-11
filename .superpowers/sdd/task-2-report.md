@@ -1,35 +1,94 @@
-# Task 2 report — Synapse transmission interactive model
+# Task 2 Report: Staggered Pore-Crossing Ion Streams
 
-## RED / GREEN evidence
+## Status
 
-- **RED:** `npm test -- tests/models/synapse-transmission/lab.test.tsx` failed because `SynapseLab` could not be resolved. The failure was the expected missing-component failure.
-- **GREEN:** after implementation, the same focused test command passed: 1 test file, 3 tests passed.
-- Added regression coverage that keeps Ca²⁺, vesicles, and neurotransmitters visible without motion classes when the timeline is paused.
+Completed and committed with subject `feat: animate ions through channel pores`.
+
+## RED evidence
+
+Added the required sodium and potassium particle-stream tests to
+`tests/action-potential/mode-components.test.tsx`, and extended the pause/replay
+test in `tests/action-potential/lab.test.tsx` to retain the scene's
+`data-playing` contract.
+
+```bash
+npm test -- tests/action-potential/mode-components.test.tsx tests/action-potential/lab.test.tsx
+```
+
+Result: 2 expected failures and 23 passing tests. Both new assertions failed
+because the existing accessible flow pills had no `data-ion-direction` attribute;
+the UI had not yet rendered a stream or particles. The unchanged pause contract
+test passed.
+
+## GREEN evidence
+
+Created the typed reusable `IonStream` component and replaced both frame-driven
+text-pill conditions with it. The stream exposes the preserved accessible labels,
+species and direction data attributes, and exactly three aria-hidden particles.
+The potassium stream keeps the existing 76% horizontal placement so it crosses
+its separately positioned potassium-channel pore.
+
+Replaced the old pill rules and keyframes with the required staggered
+`ap-ion-cross` animation. Animation is always assigned to each particle and is
+paused by default; the only playback-state override sets
+`animation-play-state: running` under `.ap-scene[data-playing="true"]`, so a
+pause does not reset positions. A centered pseudo-element supplies the subtle
+vertical trail.
+
+```bash
+npm test -- tests/action-potential/mode-components.test.tsx tests/action-potential/lab.test.tsx
+```
+
+Result: 2 test files passed, 25 tests passed.
+
+```bash
+npm run lint
+```
+
+Result: completed successfully with no lint findings.
 
 ## Files changed
 
-- `models/02-synapse-transmission/SynapseLab.tsx`
-- `models/02-synapse-transmission/SynapseView.tsx`
-- `models/02-synapse-transmission/SynapseChart.tsx`
-- `models/02-synapse-transmission/synapse.css`
-- `app/models/synapse-transmission/page.tsx`
-- `tests/models/synapse-transmission/lab.test.tsx`
+- `components/action-potential/IonStream.tsx` — typed three-particle ion stream
+  with semantic species, direction, and retained accessible label.
+- `components/action-potential/ActionPotentialScene.tsx` — uses the reusable
+  stream for existing sodium-influx and potassium-outflow conditions without
+  changing simulation or playback logic.
+- `components/action-potential/action-potential.css` — replaces text-pill
+  styles with staggered, pore-centered stream particles, trail, and
+  pause-preserving animation state.
+- `tests/action-potential/mode-components.test.tsx` — validates sodium and
+  potassium particle count, species, direction, and mode gating.
+- `tests/action-potential/lab.test.tsx` — validates that pause and replay retain
+  the scene's `data-playing="false"` and `data-playing="true"` states.
 
-## Verification
+## Full verification
 
-- `npm test -- tests/models/synapse-transmission` — passed: 2 files, 9 tests.
-- `npm run lint` — passed with no output or warnings.
-- `npm run build` — passed; route `/models/synapse-transmission` was generated. Vinext emitted its existing informational warning that routes using `headers()` cannot be statically classified.
-- `npm test` — passed: 5 files, 44 tests.
-- `git diff --check` — passed with no whitespace errors.
+```bash
+npm test
+```
+
+Result: 19 test files passed, 168 tests passed.
+
+```bash
+git diff --check
+```
+
+Result: completed successfully with no whitespace errors.
 
 ## Self-review
 
-- The lab keeps timeline, play state, speed, and settings in one component; changing either an intervention or synapse type stops playback and resets time.
-- The diagram always renders labelled Ca²⁺, vesicles, neurotransmitters, receptors, and membrane regions. Motion classes are added only while playing and at the active stage.
-- The canvas chart has the required −70 mV baseline, condition-specific excitatory/inhibitory trace, and current-time cursor.
-- Controls meet the 44 px minimum height, focus-visible styling, reduced-motion support, and 760 px single-column layout requirement.
+- Confirmed sodium and potassium use one typed reusable component, with no text
+  pill selectors or old ion keyframes remaining.
+- Confirmed streams are rendered only by their existing frame conditions and the
+  seven-segment shared fiber remains unchanged.
+- Confirmed all previous accessible labels are passed through verbatim; particle
+  labels are hidden from assistive technology.
+- Confirmed potassium's stream remains aligned with its separately positioned
+  76% channel rather than overlapping sodium's central pore.
+- Confirmed the animation declaration persists while paused and only
+  `animation-play-state` changes with `data-playing`.
 
 ## Concerns
 
-- No blocking concerns. The build's `headers()` route-classification notice is pre-existing root-layout behavior and does not affect this route.
+No functional concerns.
