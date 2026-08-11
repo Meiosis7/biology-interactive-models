@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make action-potential generation loop automatically, make conduction visibly advance through local current → sodium influx → newly formed action potentials, and redraw the seven-segment fiber with open ends.
+**Goal:** Make action-potential generation loop automatically, make conduction visibly advance through short local-current arcs → sodium influx → newly formed action potentials, render four vertically fixed charges per segment, and redraw the seven-segment fiber with open ends.
 
-**Architecture:** Preserve the existing React lab, one shared seven-segment frame model, and CSS-driven animation components. Change playback policy so only conduction is one-shot; expand the conduction schedule with a third `neighbor-excited` phase per round; express the open fiber entirely through border geometry so segment/component identity remains stable.
+**Architecture:** Preserve the existing React lab, one shared seven-segment frame model, and CSS-driven animation components. Change playback policy so only conduction is one-shot; expand the conduction schedule with a third `neighbor-excited` phase per round; render charge polarity through four stable semantic slots; derive four one-segment SVG arcs from `localCurrentStep`; express the open fiber entirely through border geometry so segment/component identity remains stable.
 
 **Tech Stack:** React 19, TypeScript 5.9, CSS, Vitest 4, Testing Library, Vinext/Next.js.
 
@@ -18,6 +18,10 @@
 - During `neighbor-excited`, the target pair becomes excited, Na⁺ particles disappear, and no local-current paths are shown.
 - The next local-current phase appears only after the prior pair has become excited.
 - The final conduction state has all seven segments excited and stops without recovery or looping.
+- Every segment has exactly four vertically fixed charge slots: outside-top, inside-top, inside-bottom, outside-bottom.
+- Resting charge order is `＋, −, −, ＋`; excited charge order is `−, ＋, ＋, −` from top to bottom.
+- Every `local-current` frame contains exactly two intracellular outward short arcs and two extracellular inward short arcs, spanning only the active adjacent segment pairs.
+- Local-current arcs are absent from `neighbor-sodium-in`, `neighbor-excited`, and `conducted` frames.
 - The fiber has top and bottom membrane lines but no left/right border, round cap, or capsule outline at desktop or mobile widths.
 - Do not add voltage curves, `mV`, `-70`, repolarization, hyperpolarization, recovery, electrodes, advanced controls, or step buttons.
 - Retain horizontal channel opening, one-shot Na⁺ particle motion, continuous slower K⁺ outflow, pause retention, contrast, and reduced-motion behavior.
@@ -388,7 +392,305 @@ git commit -m "feat: stage action potential conduction causally"
 
 ---
 
-### Task 3: Redraw the fiber with open ends
+### Task 3: Render four vertical charges and four adjacent short-current arcs
+
+**Files:**
+
+- Modify: `components/action-potential/ActionPotentialScene.tsx`
+- Modify: `components/action-potential/LocalCurrentFlow.tsx`
+- Modify: `components/action-potential/action-potential.css`
+- Test: `tests/action-potential/mode-components.test.tsx`
+- Test: `tests/action-potential/visual-contracts.test.ts`
+
+**Interfaces:**
+
+- Consumes: each segment's `polarity: "resting" | "excited"` and `frame.localCurrentStep: 1 | 2 | 3 | null`.
+- Produces: four stable charge slots named `outside-top`, `inside-top`, `inside-bottom`, `outside-bottom`; `LocalCurrentFlow({ step })` with four SVG paths annotated by layer, direction, side, source segment, and target segment.
+
+- [ ] **Step 1: Write failing tests for the four vertical charge slots**
+
+Add to `tests/action-potential/mode-components.test.tsx`:
+
+```tsx
+it("renders four vertically ordered charges for every resting segment", () => {
+  const { container } = render(
+    <ActionPotentialScene
+      mode="resting"
+      frame={getActionPotentialFrame("resting", 0)}
+      playing
+    />,
+  );
+
+  const segment = container.querySelector('[data-segment-id="3"]')!;
+  const charges = Array.from(
+    segment.querySelectorAll<HTMLElement>("[data-charge-position]"),
+  );
+  expect(charges.map((charge) => charge.dataset.chargePosition)).toEqual([
+    "outside-top",
+    "inside-top",
+    "inside-bottom",
+    "outside-bottom",
+  ]);
+  expect(charges.map((charge) => charge.textContent)).toEqual(["＋", "−", "−", "＋"]);
+});
+
+it("reverses all four charge signs without moving their slots when excited", () => {
+  const { container } = render(
+    <ActionPotentialScene
+      mode="generation"
+      frame={getActionPotentialFrame("generation", 0.9)}
+      playing={false}
+    />,
+  );
+
+  const segment = container.querySelector('[data-segment-id="3"]')!;
+  const charges = Array.from(
+    segment.querySelectorAll<HTMLElement>("[data-charge-position]"),
+  );
+  expect(charges.map((charge) => charge.dataset.chargePosition)).toEqual([
+    "outside-top",
+    "inside-top",
+    "inside-bottom",
+    "outside-bottom",
+  ]);
+  expect(charges.map((charge) => charge.textContent)).toEqual(["−", "＋", "＋", "−"]);
+});
+```
+
+- [ ] **Step 2: Write failing tests for exact short-arc count, direction, and round pairs**
+
+Replace the existing opposite-current-path test with:
+
+```tsx
+it.each([
+  [0.05, "1", [["3", "2"], ["3", "4"]]],
+  [0.34, "2", [["2", "1"], ["4", "5"]]],
+  [0.64, "3", [["1", "0"], ["5", "6"]]],
+] as const)("renders four adjacent short arcs for conduction round %s", (progress, step, pairs) => {
+  const { container } = render(
+    <ActionPotentialScene
+      mode="conduction"
+      frame={getActionPotentialFrame("conduction", progress)}
+      playing
+    />,
+  );
+
+  const system = screen.getByLabelText("局部电流方向");
+  expect(system).toHaveAttribute("data-current-step", step);
+  const inside = Array.from(system.querySelectorAll('[data-current-layer="inside"]'));
+  const outside = Array.from(system.querySelectorAll('[data-current-layer="outside"]'));
+  expect(inside).toHaveLength(2);
+  expect(outside).toHaveLength(2);
+  expect(inside.every((path) => path.getAttribute("data-current-direction") === "outward")).toBe(true);
+  expect(outside.every((path) => path.getAttribute("data-current-direction") === "inward")).toBe(true);
+  expect(inside.map((path) => [path.getAttribute("data-source-segment"), path.getAttribute("data-target-segment")])).toEqual(pairs);
+  expect(outside.map((path) => [path.getAttribute("data-target-segment"), path.getAttribute("data-source-segment")])).toEqual(pairs);
+  expect(container.querySelectorAll("[data-current-arc]")).toHaveLength(4);
+});
+
+it.each([0.16, 0.26, 0.45, 0.56, 0.75, 0.86, 0.95])(
+  "hides current arcs outside local-current at progress %s",
+  (progress) => {
+    const { container } = render(
+      <ActionPotentialScene
+        mode="conduction"
+        frame={getActionPotentialFrame("conduction", progress)}
+        playing
+      />,
+    );
+    expect(container.querySelectorAll("[data-current-arc]")).toHaveLength(0);
+  },
+);
+```
+
+- [ ] **Step 3: Run the focused component tests and confirm RED**
+
+Run:
+
+```bash
+npm test -- tests/action-potential/mode-components.test.tsx
+```
+
+Expected: charge tests fail because each segment has only two charge nodes; arc tests fail because the old current component draws full-width tracks and receives no round step.
+
+- [ ] **Step 4: Render the four stable charge slots**
+
+In `ActionPotentialScene.tsx`, replace the two charge spans with:
+
+```tsx
+{(["outside-top", "inside-top", "inside-bottom", "outside-bottom"] as const).map(
+  (position) => {
+    const outside = position.startsWith("outside");
+    const positive =
+      segment.polarity === "resting" ? outside : !outside;
+    return (
+      <span
+        key={position}
+        className={`ap-segment-charge ap-segment-charge--${position}`}
+        data-charge-position={position}
+        aria-hidden="true"
+      >
+        {positive ? "＋" : "−"}
+      </span>
+    );
+  },
+)}
+```
+
+Keep the segment's accessible label (`外正内负` / `外负内正`) unchanged.
+
+- [ ] **Step 5: Replace the full-width current component with exact one-segment arcs**
+
+Replace `LocalCurrentFlow.tsx` with a component whose complete mapping is:
+
+```tsx
+const ROUND_PAIRS = {
+  1: [{ side: "left", source: 3, target: 2 }, { side: "right", source: 3, target: 4 }],
+  2: [{ side: "left", source: 2, target: 1 }, { side: "right", source: 4, target: 5 }],
+  3: [{ side: "left", source: 1, target: 0 }, { side: "right", source: 5, target: 6 }],
+} as const;
+
+interface LocalCurrentFlowProps {
+  step: 1 | 2 | 3;
+}
+
+const centerX = (segment: number) => 50 + segment * 100;
+
+export function LocalCurrentFlow({ step }: LocalCurrentFlowProps) {
+  const pairs = ROUND_PAIRS[step];
+  return (
+    <svg
+      className="ap-current-arcs"
+      viewBox="0 0 700 160"
+      preserveAspectRatio="none"
+      aria-label="局部电流方向"
+    >
+      {pairs.flatMap(({ side, source, target }) => {
+        const sourceX = centerX(source);
+        const targetX = centerX(target);
+        const midpoint = (sourceX + targetX) / 2;
+        return [
+          <path
+            key={`inside-${side}`}
+            className="ap-current-arc ap-current-arc--inside"
+            d={`M ${sourceX} 93 Q ${midpoint} 111 ${targetX} 93`}
+            markerEnd="url(#ap-current-arrow-inside)"
+            data-current-arc={`${step}-inside-${side}`}
+            data-current-layer="inside"
+            data-current-direction="outward"
+            data-current-side={side}
+            data-source-segment={source}
+            data-target-segment={target}
+          />,
+          <path
+            key={`outside-${side}`}
+            className="ap-current-arc ap-current-arc--outside"
+            d={`M ${targetX} 22 Q ${midpoint} 4 ${sourceX} 22`}
+            markerEnd="url(#ap-current-arrow-outside)"
+            data-current-arc={`${step}-outside-${side}`}
+            data-current-layer="outside"
+            data-current-direction="inward"
+            data-current-side={side}
+            data-source-segment={target}
+            data-target-segment={source}
+          />,
+        ];
+      })}
+    </svg>
+  );
+}
+```
+
+Add one `<defs>` block inside the SVG with `ap-current-arrow-inside` and `ap-current-arrow-outside` markers using `orient="auto"`. In `ActionPotentialScene.tsx`, replace both old layer calls with:
+
+```tsx
+<LocalCurrentFlow step={frame.localCurrentStep} />
+```
+
+- [ ] **Step 6: Position charge rows and short arcs with CSS**
+
+Replace the old outside/inside charge rules with:
+
+```css
+.ap-segment-charge--outside-top { top: -29px; }
+.ap-segment-charge--inside-top { top: 10px; }
+.ap-segment-charge--inside-bottom { bottom: 10px; }
+.ap-segment-charge--outside-bottom { bottom: -29px; }
+```
+
+Replace `.ap-current-flow`, `.ap-current-track`, and `.ap-current-dot` layout with:
+
+```css
+.ap-local-current-system {
+  position: absolute;
+  inset: -38px 0 -22px;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.ap-current-arcs {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.ap-current-arc {
+  fill: none;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-dasharray: 6 6;
+  vector-effect: non-scaling-stroke;
+  animation: ap-current-dash 720ms linear infinite;
+  animation-play-state: paused;
+}
+
+.ap-current-arc--inside { stroke: var(--ap-blue); }
+.ap-current-arc--outside { stroke: var(--ap-purple); }
+.ap-scene[data-playing="true"] .ap-current-arc { animation-play-state: running; }
+```
+
+Remove the step-dependent left/right width rules; `step` now selects paths, not a growing full-width container. Preserve `prefers-reduced-motion` by adding `.ap-current-arc` to the existing animation-disabled selector.
+
+- [ ] **Step 7: Add CSS contracts and run GREEN verification**
+
+Add to `tests/action-potential/visual-contracts.test.ts`:
+
+```tsx
+it("keeps four charge rows fixed around the two membrane lines", () => {
+  expect(ruleBody(".ap-segment-charge--outside-top")).toMatch(/top:\s*-29px\s*;/);
+  expect(ruleBody(".ap-segment-charge--inside-top")).toMatch(/top:\s*10px\s*;/);
+  expect(ruleBody(".ap-segment-charge--inside-bottom")).toMatch(/bottom:\s*10px\s*;/);
+  expect(ruleBody(".ap-segment-charge--outside-bottom")).toMatch(/bottom:\s*-29px\s*;/);
+});
+
+it("draws short current arcs without step-dependent full-width lanes", () => {
+  expect(ruleBody(".ap-local-current-system")).toMatch(/inset:\s*-38px 0 -22px\s*;/);
+  expect(ruleBody(".ap-current-arc")).toMatch(/stroke-dasharray:\s*6 6\s*;/);
+  expect(stylesheet).not.toMatch(/\.ap-local-current-system\[data-current-step=/);
+});
+```
+
+Run:
+
+```bash
+npm test -- tests/action-potential/mode-components.test.tsx tests/action-potential/visual-contracts.test.ts
+npm test
+npm run lint
+```
+
+Expected: focused tests, full suite, and lint pass; every segment has four slots and every local-current frame has exactly four one-segment arcs.
+
+- [ ] **Step 8: Commit Task 3**
+
+```bash
+git add components/action-potential/ActionPotentialScene.tsx components/action-potential/LocalCurrentFlow.tsx components/action-potential/action-potential.css tests/action-potential/mode-components.test.tsx tests/action-potential/visual-contracts.test.ts
+git commit -m "feat: clarify charges and local current arcs"
+```
+
+---
+
+### Task 4: Redraw the fiber with open ends
 
 **Files:**
 
@@ -483,7 +785,7 @@ npm run lint
 
 Expected: all tests and lint pass; segment count/node identity and control sizes remain unchanged.
 
-- [ ] **Step 5: Commit Task 3**
+- [ ] **Step 5: Commit Task 4**
 
 ```bash
 git add components/action-potential/action-potential.css tests/action-potential/visual-contracts.test.ts
@@ -492,7 +794,7 @@ git commit -m "feat: open the action potential fiber ends"
 
 ---
 
-### Task 4: Perform final automated and browser acceptance
+### Task 5: Perform final automated and browser acceptance
 
 **Files:**
 
@@ -550,6 +852,8 @@ conducted / excited [0,1,2,3,4,5,6] / stopped
 
 Confirm the caption text changes between the three beats, the next local-current paths appear only after the prior target pair is coral/excited, and no ion/current motion remains at the terminal state.
 
+For every `local-current` phase, record exactly four arcs: two inside/outward and two outside/inward. Confirm their adjacent pairs progress as `2↔3 + 3↔4`, then `1↔2 + 4↔5`, then `0↔1 + 5↔6`; confirm all four arcs disappear during influx and newly-excited phases.
+
 - [ ] **Step 4: Verify open fiber ends at desktop and mobile sizes**
 
 At 1280×720 and 390×844, record computed geometry for `.ap-fiber`:
@@ -563,7 +867,7 @@ borderTopLeftRadius = 0px
 borderTopRightRadius = 0px
 ```
 
-Also verify first/last membrane-segment corner radii are 0 px, all seven segments remain visible, `scrollWidth === clientWidth`, and no charge/channel/ion/current/region label overlaps the open ends. Capture direct-viewport screenshots that visibly show both open ends at:
+Also verify first/last membrane-segment corner radii are 0 px, all seven segments remain visible, `scrollWidth === clientWidth`, and no charge/channel/ion/current/region label overlaps the open ends. On one resting and one excited segment, measure the four charge centers and confirm a strictly increasing vertical order with fixed horizontal center; visible signs must be `＋,−,−,＋` and `−,＋,＋,−` respectively. Capture direct-viewport screenshots that visibly show both open ends and the four charge rows at:
 
 ```text
 .superpowers/sdd/action-potential-open-fiber-desktop-1280x720.png
@@ -603,6 +907,9 @@ git commit -m "docs: verify looped action potential flow"
 - [ ] Newly targeted segments become excited before the next current appears.
 - [ ] Third newly-excited beat and terminal frame both show all seven segments excited.
 - [ ] Conduction stops and restarts correctly.
+- [ ] Every membrane segment has four vertically fixed charge positions; resting reads `＋,−,−,＋` and excited reads `−,＋,＋,−` from top to bottom.
+- [ ] Every local-current phase has exactly two inside/outward and two outside/inward short arcs, spanning only its two active adjacent pairs.
+- [ ] Short current arcs disappear before sodium influx and remain absent while the new action potentials are shown.
 - [ ] Fiber top/bottom lines remain, while both ends have no border/cap/radius.
 - [ ] Open-end geometry passes at 1280×720 and 390×844 with all seven segments visible.
 - [ ] Reduced-motion representative frames and strict zero-RAF behavior pass.
