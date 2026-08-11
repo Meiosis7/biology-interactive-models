@@ -204,9 +204,6 @@
   border-left: 1px solid rgba(70, 74, 78, 0.23);
   background-color: #dff4f4;
   box-shadow: inset 0 8px 14px rgba(255, 255, 255, 0.48);
-  transition:
-    background-color 300ms ease,
-    box-shadow 300ms ease;
 }
 
 .ap-membrane-segment:first-child {
@@ -221,21 +218,29 @@
 .ap-membrane-segment[data-segment-polarity="excited"] {
   background-color: #ffdcd3;
   box-shadow:
-    inset 0 0 0 2px rgba(202, 80, 66, 0.38),
+    inset 0 2px 0 rgba(202, 80, 66, 0.38),
+    inset 0 -2px 0 rgba(202, 80, 66, 0.38),
     inset 0 8px 14px rgba(255, 255, 255, 0.4);
+  animation: ap-segment-excite 300ms ease both;
+  animation-play-state: paused;
 }
 
 .ap-membrane-segment[data-current-target="true"] {
   animation: ap-target-glow 700ms ease-in-out infinite alternate;
   animation-play-state: paused;
   box-shadow:
-    inset 0 0 0 2px rgba(67, 151, 188, 0.54),
-    0 0 0 5px rgba(128, 203, 225, 0.16),
-    0 0 15px rgba(76, 163, 198, 0.22);
+    inset 0 2px 0 rgba(67, 151, 188, 0.54),
+    inset 0 -2px 0 rgba(67, 151, 188, 0.54),
+    0 -5px 10px rgba(76, 163, 198, 0.18),
+    0 5px 10px rgba(76, 163, 198, 0.18);
 }
 
 .ap-scene[data-playing="true"]
   .ap-membrane-segment[data-current-target="true"] {
+  animation-play-state: running;
+}
+
+.ap-scene[data-playing="true"] .ap-membrane-segment[data-segment-polarity="excited"] {
   animation-play-state: running;
 }
 
@@ -275,7 +280,6 @@
   border: 2px solid var(--channel-dark);
   background: linear-gradient(180deg, #f7ffff, var(--channel-color));
   box-shadow: 0 2px 6px color-mix(in srgb, var(--channel-color) 28%, transparent);
-  transition: transform 300ms cubic-bezier(.2, .8, .2, 1);
   will-change: transform;
 }
 
@@ -295,10 +299,14 @@
 
 .ap-ion-channel[data-open="true"] .ap-ion-channel__petal--left {
   transform: translateX(-6px) rotate(-8deg);
+  animation: ap-channel-open-left 300ms cubic-bezier(.2, .8, .2, 1) both;
+  animation-play-state: paused;
 }
 
 .ap-ion-channel[data-open="true"] .ap-ion-channel__petal--right {
   transform: translateX(6px) rotate(8deg);
+  animation: ap-channel-open-right 300ms cubic-bezier(.2, .8, .2, 1) both;
+  animation-play-state: paused;
 }
 
 .ap-ion-channel__pore {
@@ -311,15 +319,26 @@
   background: color-mix(in srgb, var(--channel-color) 26%, transparent);
   transform: translateX(-50%) scaleX(.3);
   opacity: 0;
-  transition: transform 300ms ease, opacity 200ms ease;
 }
 
 .ap-ion-channel[data-open="true"] .ap-ion-channel__pore {
   transform: translateX(-50%) scaleX(1);
   opacity: .8;
+  animation: ap-channel-pore-open 300ms ease both;
+  animation-play-state: paused;
+}
+
+.ap-scene[data-playing="true"] .ap-ion-channel[data-open="true"] .ap-ion-channel__petal {
+  animation-play-state: running;
+}
+
+.ap-scene[data-playing="true"] .ap-ion-channel[data-open="true"] .ap-ion-channel__pore {
+  animation-play-state: running;
 }
 
 .ap-ion-channel--potassium {
+  top: auto;
+  bottom: -15px;
   left: 76%;
   --channel-color: #a68ade;
   --channel-dark: #7456b3;
@@ -384,14 +403,16 @@
 }
 
 .ap-ion-stream--potassium {
+  top: auto;
+  bottom: -18px;
   --ion-color: #7958b8;
   --ion-particle-fill: var(--ap-potassium-particle-fill);
   --ion-duration: 720ms;
   --ion-stagger: 125ms;
   --ion-iteration-count: infinite;
   --ion-fill-mode: none;
-  --ion-start-y: 34px;
-  --ion-end-y: -20px;
+  --ion-start-y: -20px;
+  --ion-end-y: 34px;
   left: 76%;
 }
 
@@ -574,6 +595,53 @@
   opacity: 0.55;
 }
 
+@keyframes ap-channel-open-left {
+  from {
+    transform: translateX(1px) rotate(0deg);
+  }
+
+  to {
+    transform: translateX(-6px) rotate(-8deg);
+  }
+}
+
+@keyframes ap-channel-open-right {
+  from {
+    transform: translateX(-1px) rotate(0deg);
+  }
+
+  to {
+    transform: translateX(6px) rotate(8deg);
+  }
+}
+
+@keyframes ap-channel-pore-open {
+  from {
+    transform: translateX(-50%) scaleX(.3);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(-50%) scaleX(1);
+    opacity: .8;
+  }
+}
+
+@keyframes ap-segment-excite {
+  from {
+    background-color: #dff4f4;
+    box-shadow: inset 0 8px 14px rgba(255, 255, 255, 0.48);
+  }
+
+  to {
+    background-color: #ffdcd3;
+    box-shadow:
+      inset 0 2px 0 rgba(202, 80, 66, 0.38),
+      inset 0 -2px 0 rgba(202, 80, 66, 0.38),
+      inset 0 8px 14px rgba(255, 255, 255, 0.4);
+  }
+}
+
 @keyframes ap-ion-cross {
   0% {
     transform: translate(-50%, var(--ion-start-y)) scale(.78);
@@ -603,16 +671,18 @@
 @keyframes ap-target-glow {
   from {
     box-shadow:
-      inset 0 0 0 2px rgba(67, 151, 188, 0.46),
-      0 0 0 3px rgba(128, 203, 225, 0.12),
-      0 0 10px rgba(76, 163, 198, 0.16);
+      inset 0 2px 0 rgba(67, 151, 188, 0.46),
+      inset 0 -2px 0 rgba(67, 151, 188, 0.46),
+      0 -3px 8px rgba(76, 163, 198, 0.14),
+      0 3px 8px rgba(76, 163, 198, 0.14);
   }
 
   to {
     box-shadow:
-      inset 0 0 0 2px rgba(67, 151, 188, 0.68),
-      0 0 0 7px rgba(128, 203, 225, 0.21),
-      0 0 19px rgba(76, 163, 198, 0.3);
+      inset 0 2px 0 rgba(67, 151, 188, 0.68),
+      inset 0 -2px 0 rgba(67, 151, 188, 0.68),
+      0 -7px 12px rgba(76, 163, 198, 0.24),
+      0 7px 12px rgba(76, 163, 198, 0.24);
   }
 }
 

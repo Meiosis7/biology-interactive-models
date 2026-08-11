@@ -13,12 +13,14 @@ interface ActionPotentialSceneProps {
   mode: ActionPotentialMode;
   frame: ActionPotentialFrame;
   playing: boolean;
+  animationEpoch?: number;
 }
 
 export function ActionPotentialScene({
   mode,
   frame,
   playing,
+  animationEpoch = 0,
 }: ActionPotentialSceneProps) {
   const conductionComplete =
     mode === "conduction" &&
@@ -42,7 +44,7 @@ export function ActionPotentialScene({
         </b>
       </div>
 
-      <p className="ap-phase-caption" aria-live="polite">
+      <p className="ap-phase-caption" aria-live={playing ? "off" : "polite"}>
         {frame.instruction}
       </p>
 
@@ -59,6 +61,7 @@ export function ActionPotentialScene({
             <div
               key={segment.id}
               className={`ap-membrane-segment ap-membrane-segment--${segment.polarity}`}
+              role="group"
               data-segment-id={segment.id}
               data-segment-polarity={segment.polarity}
               data-current-target={segment.currentTarget}
@@ -107,6 +110,7 @@ export function ActionPotentialScene({
                   />
                   {frame.potassiumOutflow && (
                     <IonStream
+                      key={`potassium-stream-${animationEpoch}`}
                       species="potassium"
                       direction="outward"
                       label="K⁺外流"
@@ -115,7 +119,7 @@ export function ActionPotentialScene({
                 </>
               )}
               {frame.stimulusVisible && segment.id === 3 && (
-                <i className="ap-stimulus" aria-label="刺激点">
+                <i className="ap-stimulus" role="img" aria-label="刺激点">
                   <span>刺激</span>
                 </i>
               )}
@@ -127,7 +131,10 @@ export function ActionPotentialScene({
               className="ap-local-current-system"
               data-current-step={frame.localCurrentStep}
             >
-              <LocalCurrentFlow step={frame.localCurrentStep} />
+              <LocalCurrentFlow
+                key={`local-current-${animationEpoch}`}
+                step={frame.localCurrentStep}
+              />
             </div>
           )}
         </div>

@@ -18,6 +18,7 @@ interface LocalCurrentFlowProps {
 }
 
 const centerX = (segment: number) => 50 + segment * 100;
+const OUTSIDE_ARROW_CLEARANCE = 40;
 
 export function LocalCurrentFlow({ step }: LocalCurrentFlowProps) {
   const pairs = ROUND_PAIRS[step];
@@ -27,9 +28,15 @@ export function LocalCurrentFlow({ step }: LocalCurrentFlowProps) {
       className="ap-current-arcs"
       viewBox="0 0 700 160"
       preserveAspectRatio="none"
-      aria-label="局部电流方向"
+      role="img"
+      aria-labelledby={`ap-current-title-${step}`}
+      aria-describedby={`ap-current-description-${step}`}
       data-current-step={step}
     >
+      <title id={`ap-current-title-${step}`}>局部电流方向</title>
+      <desc id={`ap-current-description-${step}`}>
+        膜内局部电流向两侧未兴奋区；膜外局部电流返回兴奋区
+      </desc>
       <defs>
         <marker
           id="ap-current-arrow-inside"
@@ -58,6 +65,12 @@ export function LocalCurrentFlow({ step }: LocalCurrentFlowProps) {
         const sourceX = centerX(source);
         const targetX = centerX(target);
         const midpoint = (sourceX + targetX) / 2;
+        const outsideEndX =
+          sourceX +
+          (side === "left"
+            ? -OUTSIDE_ARROW_CLEARANCE
+            : OUTSIDE_ARROW_CLEARANCE);
+        const outsideMidpoint = (targetX + outsideEndX) / 2;
         return [
           <path
             key={`inside-${side}`}
@@ -74,7 +87,7 @@ export function LocalCurrentFlow({ step }: LocalCurrentFlowProps) {
           <path
             key={`outside-${side}`}
             className="ap-current-arc ap-current-arc--outside"
-            d={`M ${targetX} 22 Q ${midpoint} 4 ${sourceX} 22`}
+            d={`M ${targetX} 22 Q ${outsideMidpoint} 4 ${outsideEndX} 22`}
             markerEnd="url(#ap-current-arrow-outside)"
             data-current-arc={`${step}-outside-${side}`}
             data-current-layer="outside"

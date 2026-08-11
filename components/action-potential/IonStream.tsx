@@ -17,6 +17,7 @@ export function IonStream({ species, direction, label }: IonStreamProps) {
       className={`ap-ion-stream ap-ion-stream--${species} ap-ion-stream--${direction}`}
       data-ion-species={species}
       data-ion-direction={direction}
+      role="img"
       aria-label={label}
     >
       {[0, 1, 2].map((index) => (

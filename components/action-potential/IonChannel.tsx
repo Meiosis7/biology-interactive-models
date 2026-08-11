@@ -10,6 +10,7 @@ export function IonChannel({ species, open, label }: IonChannelProps) {
       className={`ap-ion-channel ap-ion-channel--${species}`}
       data-channel-species={species}
       data-open={open}
+      role="img"
       aria-label={label}
     >
       <span

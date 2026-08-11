@@ -161,6 +161,33 @@ describe("ActionPotentialLab", () => {
     );
   });
 
+  it("restarts mounted potassium and current animations without remounting the fiber", () => {
+    const { container } = render(<ActionPotentialLab />);
+    const fiber = screen.getByTestId("shared-fiber");
+    const firstSegment = container.querySelector('[data-segment-id="0"]');
+    const potassiumParticle = container.querySelector(
+      '[data-ion-particle="potassium"]',
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "重新播放" }));
+    expect(screen.getByTestId("shared-fiber")).toBe(fiber);
+    expect(container.querySelector('[data-segment-id="0"]')).toBe(
+      firstSegment,
+    );
+    expect(
+      container.querySelector('[data-ion-particle="potassium"]'),
+    ).not.toBe(potassiumParticle);
+
+    fireEvent.click(screen.getByRole("button", { name: /动作电位传导/ }));
+    const currentArc = container.querySelector("[data-current-arc]");
+    fireEvent.click(screen.getByRole("button", { name: "重新播放" }));
+    expect(screen.getByTestId("shared-fiber")).toBe(fiber);
+    expect(container.querySelector('[data-segment-id="0"]')).toBe(
+      firstSegment,
+    );
+    expect(container.querySelector("[data-current-arc]")).not.toBe(currentArc);
+  });
+
   it("removes all voltage and advanced experiment UI", () => {
     render(<ActionPotentialLab />);
     expect(document.body).not.toHaveTextContent(/mV|−70|-70/);
@@ -193,6 +220,9 @@ describe("ActionPotentialLab", () => {
       "data-playing",
       "false",
     );
+    expect(
+      screen.getByText("K⁺外流，膜两侧保持外正内负"),
+    ).toHaveAttribute("aria-live", "polite");
     const playButton = screen.getByRole("button", { name: "播放" });
     const replayButton = screen.getByRole("button", { name: "重新播放" });
     expect(playButton).toBeDisabled();

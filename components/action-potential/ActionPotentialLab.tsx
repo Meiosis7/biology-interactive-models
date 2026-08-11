@@ -13,6 +13,7 @@ export function ActionPotentialLab() {
   const [mode, setMode] = useState<ActionPotentialMode>("resting");
   const [playing, setPlaying] = useState(true);
   const [progress, setProgress] = useState(0);
+  const [animationEpoch, setAnimationEpoch] = useState(0);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [motionPreferenceReady, setMotionPreferenceReady] = useState(false);
   const previousTime = useRef<number | null>(null);
@@ -68,6 +69,7 @@ export function ActionPotentialLab() {
     previousTime.current = null;
     progressRef.current = 0;
     setProgress(0);
+    setAnimationEpoch((current) => current + 1);
     setPlaying(true);
   };
 
@@ -99,6 +101,7 @@ export function ActionPotentialLab() {
           mode={mode}
           frame={frame}
           playing={effectivePlaying}
+          animationEpoch={animationEpoch}
         />
         <ActionPotentialKnowledgeCard content={content} />
       </section>

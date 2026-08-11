@@ -59,6 +59,51 @@ describe("action-potential shared-fiber components", () => {
     expect(screen.queryByText(/恢复/)).not.toBeInTheDocument();
   });
 
+  it("keeps pauseable channel and membrane nodes mounted across play-state changes", () => {
+    const openingFrame = getActionPotentialFrame("generation", 0.2);
+    const { container, rerender } = render(
+      <ActionPotentialScene
+        mode="generation"
+        frame={openingFrame}
+        playing
+      />,
+    );
+    const scene = screen.getByLabelText("动作电位产生动态示意");
+    const centralSegment = container.querySelector('[data-segment-id="3"]');
+    const leftPetal = centralSegment?.querySelector(
+      '[data-channel-petal="left"]',
+    );
+    const pore = centralSegment?.querySelector("[data-channel-pore]");
+
+    rerender(
+      <ActionPotentialScene
+        mode="generation"
+        frame={openingFrame}
+        playing={false}
+      />,
+    );
+    expect(scene).toHaveAttribute("data-playing", "false");
+    expect(container.querySelector('[data-segment-id="3"]')).toBe(
+      centralSegment,
+    );
+    expect(
+      centralSegment?.querySelector('[data-channel-petal="left"]'),
+    ).toBe(leftPetal);
+    expect(centralSegment?.querySelector("[data-channel-pore]")).toBe(pore);
+
+    rerender(
+      <ActionPotentialScene
+        mode="generation"
+        frame={getActionPotentialFrame("generation", 0.9)}
+        playing
+      />,
+    );
+    expect(scene).toHaveAttribute("data-playing", "true");
+    expect(container.querySelector('[data-segment-id="3"]')).toBe(
+      centralSegment,
+    );
+  });
+
   it("renders seven semantic segments inside one shared fiber", () => {
     const { container } = render(
       <ActionPotentialScene
@@ -217,6 +262,12 @@ describe("action-potential shared-fiber components", () => {
     expect(stylesheet).toMatch(
       /\.ap-ion-channel--potassium\s*\{[^}]*left:\s*76%;/s,
     );
+    expect(stylesheet).toMatch(
+      /\.ap-ion-channel--potassium\s*\{[^}]*top:\s*auto;[^}]*bottom:\s*-15px;/s,
+    );
+    expect(stylesheet).toMatch(
+      /\.ap-ion-stream--potassium\s*\{[^}]*top:\s*auto;[^}]*bottom:\s*-18px;[^}]*--ion-start-y:\s*-20px;[^}]*--ion-end-y:\s*34px;/s,
+    );
   });
 
   it("shows a potassium gate and potassium flow only while resting", () => {
@@ -329,9 +380,81 @@ describe("action-potential shared-fiber components", () => {
           path.getAttribute("data-source-segment"),
         ]),
       ).toEqual(pairs);
+      for (const path of outside) {
+        const pathData = path.getAttribute("d")!;
+        const end = pathData.match(/([\d.]+)\s+22$/);
+        expect(end, `missing outside path endpoint in ${pathData}`).not.toBeNull();
+        const endX = Number(end![1]);
+        const originCenter =
+          50 + Number(path.getAttribute("data-source-segment")) * 100;
+        const destinationCenter =
+          50 + Number(path.getAttribute("data-target-segment")) * 100;
+
+        expect(Math.abs(endX - destinationCenter)).toBeGreaterThanOrEqual(36);
+        expect(Math.abs(endX - destinationCenter)).toBeLessThan(50);
+        expect(endX).toBeGreaterThan(Math.min(originCenter, destinationCenter));
+        expect(endX).toBeLessThan(Math.max(originCenter, destinationCenter));
+      }
       expect(container.querySelectorAll("[data-current-arc]")).toHaveLength(4);
     },
   );
+
+  it("uses valid graphic and group roles with exact local-current descriptions", () => {
+    const generationFrame = getActionPotentialFrame("generation", 0.55);
+    const { rerender } = render(
+      <ActionPotentialScene
+        mode="generation"
+        frame={generationFrame}
+        playing={false}
+      />,
+    );
+
+    expect(
+      screen.getByRole("group", { name: "第4膜段外正内负" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: "第4膜段Na⁺通道开放" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: "Na⁺进入第4膜段" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "刺激点" })).toBeInTheDocument();
+
+    rerender(
+      <ActionPotentialScene
+        mode="conduction"
+        frame={getActionPotentialFrame("conduction", 0.05)}
+        playing={false}
+      />,
+    );
+    const current = screen.getByRole("img", { name: "局部电流方向" });
+    expect(current).toHaveAccessibleDescription(
+      "膜内局部电流向两侧未兴奋区；膜外局部电流返回兴奋区",
+    );
+  });
+
+  it("turns automatic phase announcements off and restores polite announcements when paused", () => {
+    const frame = getActionPotentialFrame("generation", 0.55);
+    const { rerender } = render(
+      <ActionPotentialScene mode="generation" frame={frame} playing />,
+    );
+
+    expect(screen.getByText(frame.instruction)).toHaveAttribute(
+      "aria-live",
+      "off",
+    );
+    rerender(
+      <ActionPotentialScene
+        mode="generation"
+        frame={frame}
+        playing={false}
+      />,
+    );
+    expect(screen.getByText(frame.instruction)).toHaveAttribute(
+      "aria-live",
+      "polite",
+    );
+  });
 
   it.each([0.16, 0.26, 0.45, 0.56, 0.75, 0.86, 0.95])(
     "hides current arcs outside local-current at progress %s",

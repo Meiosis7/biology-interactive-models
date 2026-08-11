@@ -117,6 +117,81 @@ describe("action-potential ion visual contracts", () => {
     expect(lastSegmentRule).toMatch(/border-radius:\s*0\s*;/);
   });
 
+  it("uses only top-and-bottom emphasis for excited and target states", () => {
+    const excitedRule = ruleBody(
+      '.ap-membrane-segment[data-segment-polarity="excited"]',
+    );
+    const targetRule = ruleBody(
+      '.ap-membrane-segment[data-current-target="true"]',
+    );
+    const targetKeyframes = stylesheet.match(
+      /@keyframes ap-target-glow\s*\{([\s\S]*?)\n\}/,
+    )?.[1];
+
+    expect(targetKeyframes).toBeDefined();
+    for (const emphasis of [excitedRule, targetRule, targetKeyframes!]) {
+      expect(emphasis).toMatch(/inset\s+0\s+2px\s+0/);
+      expect(emphasis).toMatch(/inset\s+0\s+-2px\s+0/);
+      expect(emphasis).not.toMatch(/inset\s+0\s+0\s+0/);
+      expect(emphasis).not.toMatch(/(?:^|,)\s*0\s+0\s+0\s+\d+px/m);
+    }
+  });
+
+  it("uses 300ms keyframes whose play state follows the scene", () => {
+    const segmentRule = ruleBody(".ap-membrane-segment");
+    const excitedRule = ruleBody(
+      '.ap-membrane-segment[data-segment-polarity="excited"]',
+    );
+    const leftOpenRule = ruleBody(
+      '.ap-ion-channel[data-open="true"] .ap-ion-channel__petal--left',
+    );
+    const rightOpenRule = ruleBody(
+      '.ap-ion-channel[data-open="true"] .ap-ion-channel__petal--right',
+    );
+    const poreOpenRule = ruleBody(
+      '.ap-ion-channel[data-open="true"] .ap-ion-channel__pore',
+    );
+
+    expect(segmentRule).not.toMatch(/transition:/);
+    expect(ruleBody(".ap-ion-channel__petal")).not.toMatch(/transition:/);
+    expect(ruleBody(".ap-ion-channel__pore")).not.toMatch(/transition:/);
+    expect(excitedRule).toMatch(
+      /animation:\s*ap-segment-excite 300ms ease both/,
+    );
+    expect(leftOpenRule).toMatch(
+      /animation:\s*ap-channel-open-left 300ms cubic-bezier\([^)]*\) both/,
+    );
+    expect(rightOpenRule).toMatch(
+      /animation:\s*ap-channel-open-right 300ms cubic-bezier\([^)]*\) both/,
+    );
+    expect(poreOpenRule).toMatch(
+      /animation:\s*ap-channel-pore-open 300ms ease both/,
+    );
+    for (const animatedRule of [
+      excitedRule,
+      leftOpenRule,
+      rightOpenRule,
+      poreOpenRule,
+    ]) {
+      expect(animatedRule).toMatch(/animation-play-state:\s*paused/);
+    }
+    expect(
+      ruleBody(
+        '.ap-scene[data-playing="true"] .ap-membrane-segment[data-segment-polarity="excited"]',
+      ),
+    ).toMatch(/animation-play-state:\s*running/);
+    expect(
+      ruleBody(
+        '.ap-scene[data-playing="true"] .ap-ion-channel[data-open="true"] .ap-ion-channel__petal',
+      ),
+    ).toMatch(/animation-play-state:\s*running/);
+    expect(
+      ruleBody(
+        '.ap-scene[data-playing="true"] .ap-ion-channel[data-open="true"] .ap-ion-channel__pore',
+      ),
+    ).toMatch(/animation-play-state:\s*running/);
+  });
+
   it("keeps four charge rows fixed around the two membrane lines", () => {
     expect(ruleBody(".ap-segment-charge--outside-top")).toMatch(
       /top:\s*-29px\s*;/,
