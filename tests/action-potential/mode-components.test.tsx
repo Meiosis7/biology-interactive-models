@@ -17,6 +17,10 @@ describe("action-potential shared-fiber components", () => {
     expect(ACTION_POTENTIAL_MODES[2].summary).toContain(
       "神经冲动以电信号（局部电流）的形式在神经纤维上双向传导。",
     );
+    expect(ACTION_POTENTIAL_MODES[2].facts[2]).toEqual({
+      label: "结果",
+      value: "神经冲动以电信号（局部电流）的形式在神经纤维上双向传导。",
+    });
     expect(JSON.stringify(ACTION_POTENTIAL_MODES)).not.toMatch(
       /曲线|mV|−70|-70|复极化|超极化|恢复/,
     );
@@ -750,7 +754,7 @@ describe("action-potential shared-fiber components", () => {
       container.querySelectorAll('[data-segment-polarity="excited"]'),
     ).toHaveLength(7);
     expect(screen.queryAllByText("未兴奋区")).toHaveLength(0);
-    expect(screen.getByText("全部膜段已兴奋")).toBeInTheDocument();
+    expect(screen.queryByText("全部膜段已兴奋")).not.toBeInTheDocument();
     expect(
       screen.getByText(
         "神经冲动以电信号（局部电流）的形式在神经纤维上双向传导。",
@@ -781,7 +785,7 @@ describe("action-potential shared-fiber components", () => {
       />,
     );
 
-    expect(screen.getByText("全部膜段已兴奋")).toBeInTheDocument();
+    expect(screen.queryByText("全部膜段已兴奋")).not.toBeInTheDocument();
     expect(screen.queryAllByText("未兴奋区")).toHaveLength(0);
   });
 

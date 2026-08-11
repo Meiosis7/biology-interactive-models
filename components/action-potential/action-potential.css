@@ -516,21 +516,18 @@
 
 .ap-bidirectional {
   position: absolute;
-  left: 0;
-  right: 0;
+  left: 50%;
+  right: auto;
+  width: 92%;
+  max-width: 720px;
   bottom: 5px;
   margin: 0;
   color: var(--ap-red);
+  font-size: clamp(12px, 1.2vw, 15px);
   font-weight: 850;
+  line-height: 1.45;
   text-align: center;
-}
-
-.ap-bidirectional::before {
-  content: "← ";
-}
-
-.ap-bidirectional::after {
-  content: " →";
+  transform: translateX(-50%);
 }
 
 .ap-knowledge {

@@ -33,7 +33,10 @@ export const ACTION_POTENTIAL_MODES: readonly ModeContent[] = [
     facts: [
       { label: "原因", value: "兴奋区形成局部电流" },
       { label: "通道与离子变化", value: "相邻Na⁺通道依次开放" },
-      { label: "结果", value: "兴奋由刺激点向两侧逐段传导" },
+      {
+        label: "结果",
+        value: "神经冲动以电信号（局部电流）的形式在神经纤维上双向传导。",
+      },
     ],
   },
 ];

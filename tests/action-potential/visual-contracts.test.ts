@@ -271,6 +271,18 @@ describe("action-potential ion visual contracts", () => {
     );
   });
 
+  it("centers the terminal conclusion without decorative arrow content", () => {
+    const conclusionRule = ruleBody(".ap-bidirectional");
+    expect(conclusionRule).toMatch(/left:\s*50%\s*;/);
+    expect(conclusionRule).toMatch(/width:\s*92%\s*;/);
+    expect(conclusionRule).toMatch(/max-width:\s*720px\s*;/);
+    expect(conclusionRule).toMatch(/line-height:\s*1\.45\s*;/);
+    expect(conclusionRule).toMatch(/translateX\(-50%\)/);
+    expect(stylesheet).not.toMatch(
+      /\.ap-bidirectional::(?:before|after)/,
+    );
+  });
+
   it("keeps current arcs above membrane fills but behind charges, channels, and ions", () => {
     const currentLayer = zIndex(".ap-local-current-system");
 

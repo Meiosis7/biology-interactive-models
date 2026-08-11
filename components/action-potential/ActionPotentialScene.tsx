@@ -163,17 +163,11 @@ export function ActionPotentialScene({
           )}
         </div>
 
-        {mode === "conduction" && (
+        {mode === "conduction" && !allSegmentsExcited && (
           <div className="ap-region-labels">
-            {allSegmentsExcited ? (
-              <b>全部膜段已兴奋</b>
-            ) : (
-              <>
-                <span>未兴奋区</span>
-                <b>兴奋区</b>
-                <span>未兴奋区</span>
-              </>
-            )}
+            <span>未兴奋区</span>
+            <b>兴奋区</b>
+            <span>未兴奋区</span>
           </div>
         )}
         {conductionComplete && (
