@@ -62,6 +62,26 @@ describe("ActionPotentialLab", () => {
     expect(screen.getByRole("button", { name: "下一步" })).toBeInTheDocument();
   });
 
+  it("keeps the scene, controls, and knowledge card in one responsive layout", () => {
+    render(<ActionPotentialLab />);
+    fireEvent.click(screen.getByRole("button", { name: /动作电位传导/ }));
+
+    const scene = screen.getByLabelText("动作电位传导动态示意");
+    const controls = screen.getByLabelText("传导步骤控制");
+    const knowledge = screen.getByLabelText("当前模式知识卡");
+    const layout = scene.closest(".ap-layout");
+
+    expect(layout).not.toBeNull();
+    expect(layout).toContainElement(controls);
+    expect(layout).toContainElement(knowledge);
+    expect(scene.compareDocumentPosition(controls)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(controls.compareDocumentPosition(knowledge)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+  });
+
   it("loops generation from the excited hold back to stimulus", () => {
     render(<ActionPotentialLab />);
     fireEvent.click(screen.getByRole("button", { name: /动作电位产生/ }));

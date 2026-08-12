@@ -45,6 +45,10 @@
   margin-inline: auto;
 }
 
+.ap-controls {
+  grid-area: controls;
+}
+
 .lab-header {
   padding: 10px 2px 26px;
 }
@@ -104,9 +108,13 @@
   outline-offset: 3px;
 }
 
-.ap-workspace {
+.ap-workspace,
+.ap-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.65fr) minmax(280px, 0.78fr);
+  grid-template-areas:
+    "scene knowledge"
+    "controls controls";
   gap: 18px;
 }
 
@@ -120,6 +128,7 @@
 }
 
 .ap-scene {
+  grid-area: scene;
   min-width: 0;
   min-height: 470px;
   padding: 24px;
@@ -531,6 +540,7 @@
 }
 
 .ap-knowledge {
+  grid-area: knowledge;
   min-width: 0;
   padding: 24px;
 }
@@ -582,7 +592,7 @@
   flex-wrap: wrap;
   gap: 10px;
   align-items: center;
-  margin-top: 18px;
+  margin-top: 0;
   padding: 16px;
 }
 
@@ -707,11 +717,16 @@
 
 @media (max-width: 720px) {
   .lab-shell {
-    padding: 18px 12px 32px;
+    padding: 12px 10px 24px;
+  }
+
+  .lab-header {
+    padding: 2px 2px 10px;
   }
 
   .lab-header h1 {
-    font-size: clamp(32px, 10vw, 46px);
+    margin-top: 5px;
+    font-size: clamp(29px, 8.8vw, 40px);
   }
 
   .ap-mode-nav {
@@ -726,13 +741,49 @@
     font-size: 12px;
   }
 
-  .ap-workspace {
+  .ap-workspace,
+  .ap-layout {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "scene"
+      "controls"
+      "knowledge";
+    gap: 10px;
   }
 
   .ap-scene {
     min-height: 430px;
     padding: 16px 12px;
+  }
+
+  .ap-controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .ap-control {
+    min-height: 44px;
+    padding: 8px 10px;
+  }
+
+  .ap-knowledge {
+    padding: 16px;
+  }
+
+  .ap-knowledge h2 {
+    margin: 6px 0 8px;
+    font-size: 23px;
+  }
+
+  .ap-knowledge dl {
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .ap-knowledge dl div {
+    padding: 10px;
   }
 
   .ap-fiber-stage {

@@ -88,6 +88,36 @@ function generationPhaseWindows() {
 }
 
 describe("action-potential ion visual contracts", () => {
+  it("places mobile controls between the scene and knowledge card", () => {
+    const layoutRule = ruleBody(".ap-layout");
+    const sceneRule = ruleBody(".ap-scene");
+    const controlsRules = Array.from(
+      stylesheet.matchAll(/\.ap-controls\s*\{([^}]*)\}/g),
+      (match) => match[1],
+    );
+    const knowledgeRule = ruleBody(".ap-knowledge");
+    const mobileRules = stylesheet.match(
+      /@media \(max-width: 720px\) \{([\s\S]*?)\n\}/,
+    )?.[1];
+
+    expect(layoutRule).toMatch(
+      /grid-template-areas:\s*"scene knowledge"\s*"controls controls"/,
+    );
+    expect(sceneRule).toMatch(/grid-area:\s*scene/);
+    expect(controlsRules.some((rule) => /grid-area:\s*controls/.test(rule))).toBe(
+      true,
+    );
+    expect(knowledgeRule).toMatch(/grid-area:\s*knowledge/);
+    expect(mobileRules).toBeDefined();
+    expect(mobileRules).toMatch(
+      /\.ap-layout\s*\{[^}]*grid-template-areas:\s*"scene"\s*"controls"\s*"knowledge"/s,
+    );
+    expect(mobileRules).toMatch(
+      /\.ap-control\s*\{[^}]*min-height:\s*44px/s,
+    );
+    expect(mobileRules).not.toMatch(/position:\s*(?:fixed|sticky)/);
+  });
+
   it("draws the shared fiber with open flat ends", () => {
     const fiberRule = ruleBody(".ap-fiber");
     const firstSegmentRule = ruleBody(".ap-membrane-segment:first-child");

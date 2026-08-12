@@ -171,30 +171,30 @@ export function ActionPotentialLab() {
         <h1 id="lab-title">动作电位的形成和传导</h1>
       </header>
       <ActionPotentialModeNav mode={mode} onModeChange={changeMode} />
-      <section className="ap-workspace">
+      <section className="ap-workspace ap-layout">
         <ActionPotentialScene
           mode={mode}
           frame={frame}
           playing={effectivePlaying}
           animationEpoch={animationEpoch}
         />
+        {mode === "conduction" ? (
+          <ConductionControls
+            busy={conductionBusy}
+            complete={conductionComplete}
+            onNext={nextConductionStep}
+            onReplay={restartConduction}
+          />
+        ) : (
+          <LabControls
+            playing={effectivePlaying}
+            playbackDisabled={reducedMotion}
+            onTogglePlaying={togglePlaying}
+            onReplay={restart}
+          />
+        )}
         <ActionPotentialKnowledgeCard content={content} />
       </section>
-      {mode === "conduction" ? (
-        <ConductionControls
-          busy={conductionBusy}
-          complete={conductionComplete}
-          onNext={nextConductionStep}
-          onReplay={restartConduction}
-        />
-      ) : (
-        <LabControls
-          playing={effectivePlaying}
-          playbackDisabled={reducedMotion}
-          onTogglePlaying={togglePlaying}
-          onReplay={restart}
-        />
-      )}
     </main>
   );
 }
