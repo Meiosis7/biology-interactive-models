@@ -43,4 +43,28 @@ describe("GitHub Pages publishing", () => {
       'new URL("https://meiosis7.github.io/biology-interactive-models/")',
     );
   });
+
+  it("deploys the static export from main with GitHub's Pages actions", () => {
+    const workflow = readFileSync(".github/workflows/pages.yml", "utf8");
+
+    expect(workflow).toContain("branches: [main]");
+    expect(workflow).toContain("pages: write");
+    expect(workflow).toContain("id-token: write");
+    expect(workflow).toContain("node-version: 22");
+    expect(workflow).toContain("npm ci");
+    expect(workflow).toContain("npm test");
+    expect(workflow).toContain("npm run lint");
+    expect(workflow).toContain("npm run build:pages");
+    expect(workflow).toContain("actions/upload-pages-artifact@v4");
+    expect(workflow).toContain("path: ./out");
+    expect(workflow).toContain("actions/deploy-pages@v4");
+  });
+
+  it("links the public Pages website from the repository README", () => {
+    const readme = readFileSync("README.md", "utf8");
+
+    expect(readme).toContain(
+      "https://meiosis7.github.io/biology-interactive-models/",
+    );
+  });
 });
