@@ -55,6 +55,9 @@ describe("GitHub Pages publishing", () => {
     expect(workflow).toContain("npm test");
     expect(workflow).toContain("npm run lint");
     expect(workflow).toContain("npm run build:pages");
+    expect(workflow).toMatch(
+      /actions\/configure-pages@v5[\s\S]*with:[\s\S]*enablement:\s*true/,
+    );
     expect(workflow).toContain("actions/upload-pages-artifact@v4");
     expect(workflow).toContain("path: ./out");
     expect(workflow).toContain("actions/deploy-pages@v4");
