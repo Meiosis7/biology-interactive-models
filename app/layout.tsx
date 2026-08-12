@@ -5,7 +5,8 @@ const title = "高中生物动态交互模型";
 const description =
   "通过动态交互模型探究动作电位、突触传递、免疫调节等高中生物核心过程。";
 const publicSiteUrl = "https://meiosis7.github.io/biology-interactive-models/";
-const socialImageUrl = `${publicSiteUrl}og.png`;
+const socialImageUrl =
+  "https://meiosis7.github.io/biology-interactive-models/og.png";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://meiosis7.github.io/biology-interactive-models/"),
