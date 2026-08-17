@@ -1,211 +1,154 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { MembraneCurveLab } from "../../../models/03-membrane-potential-curve/MembraneCurveLab";
-import { canvasContext, resetCanvasContext } from "../../setup";
 
 describe("MembraneCurveLab", () => {
-  const openAdvanced = () => {
-    fireEvent.click(screen.getByRole("button", { name: "打开进阶模式" }));
-  };
-
-  it("offers four guided observation points before advanced exploration", () => {
+  it("keeps every essential experiment control visible", () => {
     render(<MembraneCurveLab />);
 
-    expect(screen.getByLabelText("基础引导")).toHaveTextContent("先看曲线怎么变");
-    expect(screen.getByRole("button", { name: "观察上升" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "观察下降" }));
-    expect(screen.getByLabelText("当前教学时间")).toHaveTextContent("4.5");
-    expect(screen.queryByRole("button", { name: "对比模式" })).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "打开进阶模式" }));
-    expect(screen.getByRole("button", { name: "对比模式" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "重置" }));
-    expect(screen.queryByRole("button", { name: "对比模式" })).not.toBeInTheDocument();
+    const controls = screen.getByLabelText("实验控制台");
+    expect(within(controls).getByRole("button", { name: "弱刺激" })).toBeVisible();
+    expect(within(controls).getByRole("button", { name: "阈刺激" })).toBeVisible();
+    expect(within(controls).getByRole("button", { name: "强刺激" })).toBeVisible();
+    expect(within(controls).getByRole("button", { name: "开始" })).toBeVisible();
+    expect(within(controls).getByLabelText("时间轴")).toBeVisible();
+    expect(within(controls).getByLabelText("对比曲线")).toBeVisible();
   });
 
-  it("synchronizes cursor and ion explanation", () => {
+  it("removes the old guidance and quiz surfaces", () => {
     render(<MembraneCurveLab />);
-    openAdvanced();
 
-    fireEvent.change(screen.getByLabelText("曲线游标"), {
+    expect(screen.queryByText("基础引导")).not.toBeInTheDocument();
+    expect(screen.queryByText("辨析模式")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "打开进阶模式" })).not.toBeInTheDocument();
+    expect(screen.queryByText(/PDF|教材|根据资料/)).not.toBeInTheDocument();
+  });
+
+  it("synchronizes the time scrubber with stage and sodium flow", () => {
+    render(<MembraneCurveLab />);
+
+    fireEvent.change(screen.getByLabelText("时间轴"), {
       target: { value: "2.5" },
     });
 
-    expect(screen.getByText("Na⁺ 内流")).toBeInTheDocument();
-    expect(
-      within(screen.getByLabelText("当前阶段解释")).getByRole("heading", {
-        name: "去极化",
-      }),
-    ).toBeInTheDocument();
+    expect(screen.getByLabelText("当前阶段")).toHaveTextContent("去极化");
+    expect(screen.getByLabelText("主要离子运动")).toHaveTextContent("Na⁺ 内流");
+    expect(screen.getByLabelText("Na⁺ 通道")).toHaveAttribute("data-open", "true");
+    expect(screen.getByLabelText("K⁺ 通道")).toHaveAttribute("data-open", "false");
   });
 
-  it("overlays equal threshold and strong peaks", () => {
+  it("synchronizes the time scrubber with potassium flow", () => {
     render(<MembraneCurveLab />);
-    openAdvanced();
 
-    fireEvent.click(screen.getByRole("button", { name: "对比模式" }));
+    fireEvent.change(screen.getByLabelText("时间轴"), {
+      target: { value: "4.5" },
+    });
 
-    expect(screen.getByText(/峰值相同/)).toBeInTheDocument();
+    expect(screen.getByLabelText("当前阶段")).toHaveTextContent("复极化");
+    expect(screen.getByLabelText("主要离子运动")).toHaveTextContent("K⁺ 外流");
+    expect(screen.getByLabelText("Na⁺ 通道")).toHaveAttribute("data-open", "false");
+    expect(screen.getByLabelText("K⁺ 通道")).toHaveAttribute("data-open", "true");
   });
 
-  it("hides the threshold reference when requested", () => {
+  it("keeps a clear sodium influx path visible after scrubbing pauses playback", () => {
     render(<MembraneCurveLab />);
-    openAdvanced();
-    resetCanvasContext();
 
-    fireEvent.click(screen.getByLabelText("显示阈电位线"));
-
-    expect(canvasContext.fillText).not.toHaveBeenCalledWith(
-      "-55 mV",
-      expect.any(Number),
-      expect.any(Number),
-    );
-  });
-
-  it("fills the full current stage while keeping a separate cursor line", () => {
-    render(<MembraneCurveLab />);
-    openAdvanced();
-    resetCanvasContext();
-
-    fireEvent.change(screen.getByLabelText("曲线游标"), {
+    fireEvent.change(screen.getByLabelText("时间轴"), {
       target: { value: "2.5" },
     });
 
-    const [fillStart, fillTop, fillWidth, fillHeight] = canvasContext.fillRect.mock.calls.at(-1) ?? [];
-    const [cursorX, cursorY] = canvasContext.moveTo.mock.calls.at(-1) ?? [];
-    expect(fillStart).toBeCloseTo(272);
-    expect(fillTop).toBe(22);
-    expect(fillWidth).toBeCloseTo(102);
-    expect(fillHeight).toBe(270);
-    expect(cursorX).toBeCloseTo(323);
-    expect(cursorY).toBe(22);
+    const sodiumPath = screen.getByLabelText("Na⁺ 内流路径");
+    expect(sodiumPath).toBeVisible();
+    expect(sodiumPath).toHaveTextContent("Na⁺ 内流");
+    expect(sodiumPath.querySelectorAll(".membrane-flow-dot")).toHaveLength(3);
+    expect(screen.queryByLabelText("K⁺ 外流路径")).not.toBeInTheDocument();
+    expect(sodiumPath.closest(".membrane-scene")).not.toHaveClass("is-playing");
   });
 
-  it("uses the complete local-potential interval for weak stimulation", () => {
+  it("keeps a clear potassium efflux path visible after scrubbing pauses playback", () => {
     render(<MembraneCurveLab />);
-    openAdvanced();
+
+    fireEvent.change(screen.getByLabelText("时间轴"), {
+      target: { value: "4.5" },
+    });
+
+    const potassiumPath = screen.getByLabelText("K⁺ 外流路径");
+    expect(potassiumPath).toBeVisible();
+    expect(potassiumPath).toHaveTextContent("K⁺ 外流");
+    expect(potassiumPath.querySelectorAll(".membrane-flow-dot")).toHaveLength(3);
+    expect(screen.queryByLabelText("Na⁺ 内流路径")).not.toBeInTheDocument();
+    expect(potassiumPath.closest(".membrane-scene")).not.toHaveClass("is-playing");
+  });
+
+  it("shows a subthreshold local potential for weak stimulation", () => {
+    render(<MembraneCurveLab />);
     fireEvent.click(screen.getByRole("button", { name: "弱刺激" }));
-    resetCanvasContext();
-
-    fireEvent.change(screen.getByLabelText("曲线游标"), {
+    fireEvent.change(screen.getByLabelText("时间轴"), {
       target: { value: "2.5" },
     });
 
-    const [fillStart, , fillWidth] = canvasContext.fillRect.mock.calls.at(-1) ?? [];
-    expect(fillStart).toBeCloseTo(170);
-    expect(fillWidth).toBeCloseTo(306);
+    expect(screen.getByLabelText("当前阶段")).toHaveTextContent("局部电位");
+    expect(screen.getByLabelText("当前膜电位")).toHaveTextContent("-60 mV");
   });
 
-  it("hides the membrane ion hint when requested", () => {
+  it("turns on comparison without leaving the experiment", () => {
     render(<MembraneCurveLab />);
-    openAdvanced();
-    fireEvent.change(screen.getByLabelText("曲线游标"), {
-      target: { value: "2.5" },
-    });
+    fireEvent.click(screen.getByLabelText("对比曲线"));
 
-    expect(screen.getByText("离子提示：Na⁺ 内流")).toBeInTheDocument();
-    fireEvent.click(screen.getByLabelText("显示离子提示"));
-    expect(screen.queryByText("离子提示：Na⁺ 内流")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("曲线图例")).toHaveTextContent("弱刺激");
+    expect(screen.getByLabelText("曲线图例")).toHaveTextContent("阈刺激");
+    expect(screen.getByLabelText("曲线图例")).toHaveTextContent("强刺激");
+    expect(screen.getByLabelText("对比结论")).toHaveTextContent("峰值相同");
   });
 
-  it("shows the quiz controls", () => {
+  it("starts and pauses the animation from one control", () => {
     render(<MembraneCurveLab />);
-    openAdvanced();
+    fireEvent.click(screen.getByRole("button", { name: "开始" }));
 
-    fireEvent.click(screen.getByRole("button", { name: "辨析模式" }));
-
-    expect(screen.getByRole("group", { name: "阶段选择" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "暂停" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "暂停" }));
+    expect(screen.getByRole("button", { name: "继续" })).toBeInTheDocument();
   });
 
-  it("includes a weak-stimulus local-potential question in the quiz sequence", () => {
+  it("provides a clickable explanation for every action-potential step", () => {
     render(<MembraneCurveLab />);
-    openAdvanced();
-    fireEvent.click(screen.getByRole("button", { name: "辨析模式" }));
-    fireEvent.click(screen.getByRole("button", { name: "下一题位置" }));
 
-    expect(screen.getByText(/观察弱刺激曲线/)).toBeInTheDocument();
-    expect(screen.getByLabelText("阶段播报：局部电位")).toHaveTextContent("局部电位");
-
-    fireEvent.click(screen.getByRole("button", { name: "局部电位" }));
-    fireEvent.click(screen.getByRole("button", { name: "提交判断" }));
-    expect(screen.getByText(/判断正确/)).toBeInTheDocument();
+    const guide = screen.getByLabelText("分步过程解释");
+    expect(within(guide).getAllByRole("button")).toHaveLength(7);
+    expect(within(guide).getByRole("button", { name: "步骤 3 去极化" })).toBeVisible();
+    expect(within(guide).getByRole("button", { name: "步骤 5 复极化" })).toBeVisible();
+    expect(within(guide).getByRole("button", { name: "步骤 6 超极化" })).toBeVisible();
+    expect(within(guide).getByRole("button", { name: "步骤 7 恢复静息" })).toBeVisible();
   });
 
-  it("grades quiz polarity from the live cursor snapshot", () => {
+  it("jumps to hyperpolarization and explains its cause", () => {
     render(<MembraneCurveLab />);
-    openAdvanced();
-    fireEvent.click(screen.getByRole("button", { name: "辨析模式" }));
-    fireEvent.change(screen.getByLabelText("曲线游标"), {
-      target: { value: "2.1" },
-    });
+    fireEvent.click(screen.getByRole("button", { name: "步骤 6 超极化" }));
 
-    fireEvent.click(screen.getByRole("button", { name: "去极化" }));
-    fireEvent.click(screen.getByRole("button", { name: "Na⁺ 内流" }));
-    fireEvent.click(screen.getByRole("button", { name: "膜内相对负" }));
-    fireEvent.click(screen.getByRole("button", { name: "提交判断" }));
-
-    expect(screen.getByText(/判断正确/)).toBeInTheDocument();
+    expect(screen.getByLabelText("当前阶段")).toHaveTextContent("超极化");
+    expect(screen.getByLabelText("当前步骤解释")).toHaveTextContent("K⁺ 通道关闭较慢");
+    expect(screen.getByLabelText("当前步骤解释")).toHaveTextContent("K⁺ 继续外流");
+    expect(screen.getByLabelText("当前步骤解释")).toHaveTextContent("低于静息电位");
   });
 
-  it("counts a correctly answered quiz location only once", () => {
+  it("jumps to recovery and explains the return to resting potential", () => {
     render(<MembraneCurveLab />);
-    openAdvanced();
-    fireEvent.click(screen.getByRole("button", { name: "辨析模式" }));
-    fireEvent.change(screen.getByLabelText("曲线游标"), { target: { value: "2.1" } });
-    fireEvent.click(screen.getByRole("button", { name: "去极化" }));
-    fireEvent.click(screen.getByRole("button", { name: "Na⁺ 内流" }));
-    fireEvent.click(screen.getByRole("button", { name: "膜内相对负" }));
-    fireEvent.click(screen.getByRole("button", { name: "提交判断" }));
-    fireEvent.click(screen.getByRole("button", { name: "提交判断" }));
+    fireEvent.click(screen.getByRole("button", { name: "步骤 7 恢复静息" }));
 
-    expect(screen.getByText(/已答对 1 题/)).toBeInTheDocument();
+    expect(screen.getByLabelText("当前阶段")).toHaveTextContent("恢复静息");
+    expect(screen.getByLabelText("当前步骤解释")).toHaveTextContent("逐渐关闭");
+    expect(screen.getByLabelText("当前步骤解释")).toHaveTextContent("−70 mV");
   });
 
-  it("announces only submitted quiz feedback as a polite status", () => {
+  it("exposes the curve as a direct time interaction surface", () => {
     render(<MembraneCurveLab />);
-    openAdvanced();
-    fireEvent.click(screen.getByRole("button", { name: "辨析模式" }));
 
-    const quizPanel = screen.getByText(/辨析模式 · 已答对/).closest("section");
-    expect(quizPanel).not.toBeNull();
-    const quiz = within(quizPanel!);
-    const score = quiz.getByText(/辨析模式 · 已答对/);
-    const voltagePrompt = quiz.getByText(/当前游标.*mV/);
-    const numericExplanation = within(screen.getByLabelText("当前阶段解释"))
-      .getByText(/mV；膜内相对/);
-
-    expect(quizPanel).not.toHaveAttribute("aria-live");
-    expect(score.closest("[aria-live]")).toBeNull();
-    expect(voltagePrompt.closest("[aria-live]")).toBeNull();
-    expect(numericExplanation.closest("[aria-live]")).toBeNull();
-    expect(quiz.queryByRole("status")).not.toBeInTheDocument();
-
-    fireEvent.click(quiz.getByRole("button", { name: "提交判断" }));
-
-    const statuses = quiz.getAllByRole("status");
-    expect(statuses).toHaveLength(1);
-    expect(statuses[0]).toHaveAttribute("aria-live", "polite");
-    expect(statuses[0]).toHaveAttribute("aria-atomic", "true");
-    expect(statuses[0]).toHaveTextContent(/^判断正确。/);
-    expect(quizPanel?.querySelectorAll("[aria-live]")).toHaveLength(1);
+    expect(screen.getByLabelText("在曲线上拖动时间")).toHaveAttribute("data-interactive", "true");
   });
 
-  it("announces only stage transitions instead of live voltage and quiz counts", () => {
+  it("tells learners that playback forms the curve progressively", () => {
     render(<MembraneCurveLab />);
-    openAdvanced();
 
-    const explanation = screen.getByLabelText("当前阶段解释");
-    const announcer = screen.getByLabelText("阶段播报：静息期");
-    expect(explanation).not.toHaveAttribute("aria-live");
-    expect(announcer).toHaveAttribute("aria-live", "polite");
-    expect(announcer).toHaveTextContent("静息期");
-
-    fireEvent.click(screen.getByRole("button", { name: "辨析模式" }));
-    const quizPanel = screen.getByText(/辨析模式 · 已答对/).closest("section");
-    expect(quizPanel).not.toHaveAttribute("aria-live");
-
-    fireEvent.change(screen.getByLabelText("曲线游标"), { target: { value: "2.5" } });
-    expect(announcer).toHaveTextContent("去极化");
-    expect(announcer).toHaveAccessibleName("阶段播报：去极化");
+    expect(screen.getByText("播放形成曲线，也可拖动回看")).toBeVisible();
   });
 });

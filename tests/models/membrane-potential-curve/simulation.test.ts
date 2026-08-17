@@ -38,7 +38,7 @@ describe("membrane potential curve", () => {
 
   it("treats both zero-millivolt crossings as membrane-inner-positive", () => {
     const depolarizationZero = getCurveSnapshot(2 + 55 / 85, "threshold");
-    const repolarizationZero = getCurveSnapshot(4 + 30 / 110, "threshold");
+    const repolarizationZero = getCurveSnapshot(4 + (30 / 100) * 0.8, "threshold");
 
     expect(depolarizationZero.mv).toBeCloseTo(0);
     expect(depolarizationZero.insidePolarity).toBe("positive");
@@ -63,8 +63,28 @@ describe("membrane potential curve", () => {
     expect(getCurveSnapshot(2.5, "threshold").stage).toBe("depolarization");
     expect(getCurveSnapshot(3, "threshold").stage).toBe("peak");
     expect(getCurveSnapshot(4.2, "threshold").stage).toBe("repolarization");
-    expect(getCurveSnapshot(5, "threshold").stage).toBe("recovery");
+    expect(getCurveSnapshot(4.9, "threshold").stage).toBe("hyperpolarization");
+    expect(getCurveSnapshot(5.6, "threshold").stage).toBe("recovery");
     expect(getCurveSnapshot(6, "threshold").stage).toBe("resting");
+  });
+
+  it("separates hyperpolarization from the return to resting potential", () => {
+    const hyperpolarization = getCurveSnapshot(5.25, "threshold");
+    const recovery = getCurveSnapshot(5.6, "threshold");
+
+    expect(hyperpolarization).toMatchObject({
+      stage: "hyperpolarization",
+      ionFlow: "potassium-out",
+      potassiumOpen: true,
+    });
+    expect(hyperpolarization.mv).toBeLessThan(-70);
+    expect(recovery).toMatchObject({
+      stage: "recovery",
+      ionFlow: "potassium-out",
+      potassiumOpen: true,
+    });
+    expect(recovery.mv).toBeGreaterThan(hyperpolarization.mv);
+    expect(recovery.mv).toBeLessThan(-70);
   });
 
   it("checks stage, ion and polarity together", () => {

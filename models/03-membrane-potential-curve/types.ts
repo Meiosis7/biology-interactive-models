@@ -7,6 +7,7 @@ export type CurveStage =
   | "depolarization"
   | "peak"
   | "repolarization"
+  | "hyperpolarization"
   | "recovery";
 
 export type IonFlow = "none" | "sodium-in" | "potassium-out";

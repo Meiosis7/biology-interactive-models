@@ -38,6 +38,11 @@ const STAGE_ANSWERS: Record<CurveStage, CurveAnswer> = {
     ionFlow: "potassium-out",
     insidePolarity: "negative",
   },
+  hyperpolarization: {
+    stage: "hyperpolarization",
+    ionFlow: "potassium-out",
+    insidePolarity: "negative",
+  },
   recovery: {
     stage: "recovery",
     ionFlow: "potassium-out",
@@ -52,7 +57,8 @@ const STAGE_EXPLANATIONS: Record<CurveStage, string> = {
   depolarization: "去极化期：Na⁺大量内流，膜内由负变正、膜外相对为负。",
   peak: "峰值期：Na⁺内流已停止且K⁺外流尚未成为主要运动，膜内相对为正、膜外相对为负。",
   repolarization: "复极化期：K⁺外流，膜内恢复为相对负、膜外相对正。",
-  recovery: "恢复期：K⁺继续外流后逐渐恢复静息状态，膜内相对为负、膜外相对为正。",
+  hyperpolarization: "超极化期：K⁺通道关闭较慢，K⁺继续外流，膜电位短暂低于静息电位。",
+  recovery: "恢复静息期：K⁺通道逐渐关闭，膜电位由约−80 mV回到约−70 mV。",
 };
 
 const ZERO_MV_TOLERANCE = 1e-9;
@@ -97,7 +103,8 @@ function getActionPotentialStage(time: number): CurveStage {
   if (time < 2) return "threshold";
   if (time < 3) return "depolarization";
   if (time < 4) return "peak";
-  if (time < 5) return "repolarization";
+  if (time < 4.8) return "repolarization";
+  if (time < 5.3) return "hyperpolarization";
   if (time < 6) return "recovery";
   return "resting";
 }
@@ -111,9 +118,11 @@ function getActionPotentialMv(time: number, stage: CurveStage): number {
     case "peak":
       return 30;
     case "repolarization":
-      return interpolate(time, 4, 5, 30, -80);
+      return interpolate(time, 4, 4.8, 30, -70);
+    case "hyperpolarization":
+      return interpolate(time, 4.8, 5.3, -70, -80);
     case "recovery":
-      return interpolate(time, 5, 6, -80, -70);
+      return interpolate(time, 5.3, 6, -80, -70);
     default:
       return -70;
   }
@@ -148,7 +157,10 @@ export function getCurveSnapshot(
     mv,
     insidePolarity: getInsidePolarity(mv),
     sodiumOpen: stage === "depolarization",
-    potassiumOpen: stage === "repolarization" || stage === "recovery",
+    potassiumOpen:
+      stage === "repolarization" ||
+      stage === "hyperpolarization" ||
+      stage === "recovery",
   };
 }
 

@@ -5,72 +5,76 @@ import { getCurveSnapshot } from "./simulation";
 import type { CurveIntensity, CurveSnapshot } from "./types";
 
 const DURATION = 6;
-const PADDING = { top: 22, right: 20, bottom: 38, left: 68 };
+const FULL_CURVE_SEGMENTS = 240;
+const PADDING = { top: 42, right: 22, bottom: 42, left: 62 };
 
 export interface CurveCanvasProps {
   time: number;
   intensity: CurveIntensity;
   snapshot: CurveSnapshot;
   compare: boolean;
-  showLabels: boolean;
-  showThreshold: boolean;
+  onTimeChange: (nextTime: number) => void;
 }
 
 const CURVE_STYLE: Record<CurveIntensity, { color: string; dash: number[]; label: string }> = {
-  weak: { color: "#b798ff", dash: [8, 5], label: "弱刺激（局部电位）" },
-  threshold: { color: "#ff8b6c", dash: [], label: "阈刺激" },
-  strong: { color: "#3de0d1", dash: [2, 5], label: "强刺激" },
+  weak: { color: "#7c6bc4", dash: [8, 6], label: "弱刺激" },
+  threshold: { color: "#ef6a57", dash: [], label: "阈刺激" },
+  strong: { color: "#168f91", dash: [3, 5], label: "强刺激" },
 };
+
+export function getVisibleCurveTimes(time: number): number[] {
+  const visibleTime = Math.min(DURATION, Math.max(0, time));
+  if (visibleTime === 0) return [0];
+
+  const segmentCount = Math.ceil(
+    (visibleTime / DURATION) * FULL_CURVE_SEGMENTS,
+  );
+  return Array.from(
+    { length: segmentCount + 1 },
+    (_, index) => (visibleTime * index) / segmentCount,
+  );
+}
 
 function stageLabel(stage: CurveSnapshot["stage"]) {
   return ({
     resting: "静息",
     local: "局部电位",
-    threshold: "阈电位",
+    threshold: "达阈",
     depolarization: "去极化",
     peak: "反极化",
     repolarization: "复极化",
-    recovery: "恢复",
+    hyperpolarization: "超极化",
+    recovery: "恢复静息",
   })[stage];
 }
 
-function getStageInterval(
-  time: number,
-  intensity: CurveIntensity,
-  stage: CurveSnapshot["stage"],
-): [number, number] {
+function stageInterval(time: number, intensity: CurveIntensity, stage: CurveSnapshot["stage"]): [number, number] {
   if (intensity === "weak") {
     if (stage === "local") return [1, 4];
-    return time < 1 ? [0, 1] : [4, DURATION];
+    return time < 1 ? [0, 1] : [4, 6];
   }
-
   switch (stage) {
     case "threshold": return [1, 2];
     case "depolarization": return [2, 3];
     case "peak": return [3, 4];
-    case "repolarization": return [4, 5];
-    case "recovery": return [5, 6];
-    case "resting": return time < 1 ? [0, 1] : [6, DURATION];
-    default: return [0, DURATION];
+    case "repolarization": return [4, 4.8];
+    case "hyperpolarization": return [4.8, 5.3];
+    case "recovery": return [5.3, 6];
+    default: return time < 1 ? [0, 1] : [6, 6];
   }
 }
 
-export function CurveCanvas({
-  time,
-  intensity,
-  snapshot,
-  compare,
-  showLabels,
-  showThreshold,
-}: CurveCanvasProps) {
+export function CurveCanvas({ time, intensity, snapshot, compare, onTimeChange }: CurveCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const dragging = useRef(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
     const draw = () => {
-      const width = canvas.clientWidth || 700;
-      const height = canvas.clientHeight || 330;
+      const width = canvas.clientWidth || 720;
+      const height = canvas.clientHeight || 390;
       const dpr = window.devicePixelRatio || 1;
       canvas.width = width * dpr;
       canvas.height = height * dpr;
@@ -84,87 +88,153 @@ export function CurveCanvas({
       const x = (value: number) => PADDING.left + (value / DURATION) * plotWidth;
       const y = (mv: number) => PADDING.top + ((35 - mv) / 125) * plotHeight;
 
-      context.font = "12px sans-serif";
+      const gradient = context.createLinearGradient?.(0, PADDING.top, 0, height - PADDING.bottom);
+      if (gradient) {
+        gradient.addColorStop(0, "rgba(234, 242, 238, .74)");
+        gradient.addColorStop(1, "rgba(250, 251, 248, .34)");
+        context.fillStyle = gradient;
+      } else {
+        context.fillStyle = "#f8faf7";
+      }
+      context.fillRect(PADDING.left, PADDING.top, plotWidth, plotHeight);
+
+      context.font = '12px Inter, "PingFang SC", sans-serif';
       [-70, -55, 0, 30].forEach((mv) => {
-        if (mv === -55 && !showThreshold) return;
         context.beginPath();
-        context.strokeStyle = mv === -55 ? "rgba(255, 211, 107, .52)" : "rgba(187, 213, 231, .18)";
+        context.strokeStyle = mv === -55 ? "rgba(213, 138, 34, .58)" : "rgba(95, 119, 114, .16)";
         context.lineWidth = 1;
-        context.setLineDash?.(mv === -55 && showThreshold ? [5, 4] : []);
+        context.setLineDash?.(mv === -55 ? [6, 5] : []);
         context.moveTo(PADDING.left, y(mv));
         context.lineTo(width - PADDING.right, y(mv));
         context.stroke();
         context.setLineDash?.([]);
-        context.fillStyle = "#a9bfd0";
-        context.fillText(`${mv > 0 ? "+" : ""}${mv} mV`, 8, y(mv) + 4);
+        context.fillStyle = mv === -55 ? "#b16f15" : "#71847e";
+        context.fillText(`${mv > 0 ? "+" : ""}${mv}`, 20, y(mv) + 4);
       });
 
-      const [stageStart, stageEnd] = getStageInterval(time, intensity, snapshot.stage);
-      context.fillStyle = "rgba(61, 224, 209, .13)";
-      context.fillRect(x(stageStart), PADDING.top, x(stageEnd) - x(stageStart), plotHeight);
+      const [start, end] = stageInterval(time, intensity, snapshot.stage);
+      context.fillStyle = "rgba(22, 143, 145, .07)";
+      context.fillRect(x(start), PADDING.top, Math.max(2, x(end) - x(start)), plotHeight);
 
       const intensities: CurveIntensity[] = compare ? ["weak", "threshold", "strong"] : [intensity];
       intensities.forEach((curveIntensity) => {
         const style = CURVE_STYLE[curveIntensity];
         context.beginPath();
-        for (let index = 0; index <= 180; index += 1) {
-          const pointTime = (DURATION * index) / 180;
+        getVisibleCurveTimes(time).forEach((pointTime, index) => {
           const point = getCurveSnapshot(pointTime, curveIntensity);
           if (index === 0) context.moveTo(x(pointTime), y(point.mv));
           else context.lineTo(x(pointTime), y(point.mv));
-        }
+        });
         context.strokeStyle = style.color;
-        context.lineWidth = curveIntensity === intensity ? 3.2 : 2.2;
+        context.lineWidth = curveIntensity === intensity ? 3.5 : 2;
         context.setLineDash?.(style.dash);
         context.stroke();
         context.setLineDash?.([]);
       });
 
       context.beginPath();
-      context.strokeStyle = "#f5fbff";
-      context.lineWidth = 1.5;
+      context.strokeStyle = "rgba(24, 49, 59, .62)";
+      context.lineWidth = 1;
       context.moveTo(x(time), PADDING.top);
       context.lineTo(x(time), height - PADDING.bottom);
       context.stroke();
       context.beginPath();
-      context.fillStyle = "#f5fbff";
-      context.arc?.(x(time), y(snapshot.mv), 5, 0, Math.PI * 2);
+      context.fillStyle = CURVE_STYLE[intensity].color;
+      context.arc?.(x(time), y(snapshot.mv), 7, 0, Math.PI * 2);
       context.fill?.();
 
-      if (showLabels) {
-        context.fillStyle = "#f5fbff";
-        context.fillText(`当前：${stageLabel(snapshot.stage)}`, Math.min(x(time) + 8, width - 110), PADDING.top + 15);
+      context.fillStyle = "#27434c";
+      context.font = '700 12px Inter, "PingFang SC", sans-serif';
+      context.fillText(stageLabel(snapshot.stage), Math.min(x(time) + 10, width - 88), PADDING.top + 18);
+      context.font = '11px Inter, "PingFang SC", sans-serif';
+      context.fillStyle = "#6f817b";
+      for (let tick = 0; tick <= DURATION; tick += 1) {
+        context.fillText(String(tick), x(tick) - 3, height - 17);
       }
-      [0, 1, 2, 3, 4, 5, 6].forEach((tick) => {
-        context.fillStyle = "#a9bfd0";
-        context.fillText(String(tick), x(tick) - 3, height - 12);
-      });
+      context.fillText("mV", 20, PADDING.top - 12);
+      context.fillText("时间", width - 48, height - 17);
     };
+
     draw();
     if (typeof ResizeObserver === "undefined") return;
     const observer = new ResizeObserver(draw);
     observer.observe(canvas);
     return () => observer.disconnect();
-  }, [compare, intensity, showLabels, showThreshold, snapshot, time]);
+  }, [compare, intensity, snapshot, time]);
+
+  const updateFromPointer = (clientX: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const width = rect.width || canvas.clientWidth || 720;
+    const plotWidth = width - PADDING.left - PADDING.right;
+    const relativeX = clientX - rect.left - PADDING.left;
+    onTimeChange((Math.min(plotWidth, Math.max(0, relativeX)) / plotWidth) * DURATION);
+  };
 
   const legendIntensities: CurveIntensity[] = compare ? ["weak", "threshold", "strong"] : [intensity];
+
   return (
     <figure className="membrane-curve-card">
       <figcaption>
-        <span>膜电位变化曲线</span>
-        <strong>{snapshot.mv.toFixed(0)} mV</strong>
+        <div>
+          <span>膜电位曲线</span>
+          <small>播放形成曲线，也可拖动回看</small>
+        </div>
+        <strong>{snapshot.mv > 0 ? "+" : ""}{snapshot.mv.toFixed(0)} mV</strong>
       </figcaption>
       <canvas
         ref={canvasRef}
-        role="img"
-        aria-label={`膜电位曲线，当前处于${stageLabel(snapshot.stage)}，膜电位${snapshot.mv.toFixed(0)} mV。`}
+        role="slider"
+        tabIndex={0}
+        aria-label="在曲线上拖动时间"
+        aria-valuemin={0}
+        aria-valuemax={DURATION}
+        aria-valuenow={Number(time.toFixed(1))}
+        aria-valuetext={`${stageLabel(snapshot.stage)}，${snapshot.mv.toFixed(0)} mV`}
+        data-interactive="true"
+        onPointerDown={(event) => {
+          dragging.current = true;
+          event.currentTarget.setPointerCapture?.(event.pointerId);
+          updateFromPointer(event.clientX);
+        }}
+        onPointerMove={(event) => {
+          if (dragging.current) updateFromPointer(event.clientX);
+        }}
+        onPointerUp={() => { dragging.current = false; }}
+        onPointerCancel={() => { dragging.current = false; }}
+        onKeyDown={(event) => {
+          if (event.key === "ArrowLeft" || event.key === "ArrowDown") {
+            event.preventDefault();
+            onTimeChange(time - 0.1);
+          }
+          if (event.key === "ArrowRight" || event.key === "ArrowUp") {
+            event.preventDefault();
+            onTimeChange(time + 0.1);
+          }
+          if (event.key === "Home") onTimeChange(0);
+          if (event.key === "End") onTimeChange(DURATION);
+        }}
       />
       <div className="membrane-legend" aria-label="曲线图例">
         {legendIntensities.map((curveIntensity) => (
-          <span key={curveIntensity}><i style={{ borderTopColor: CURVE_STYLE[curveIntensity].color, borderTopStyle: CURVE_STYLE[curveIntensity].dash.length ? "dashed" : "solid" }} />{CURVE_STYLE[curveIntensity].label}</span>
+          <span key={curveIntensity}>
+            <i
+              style={{
+                borderTopColor: CURVE_STYLE[curveIntensity].color,
+                borderTopStyle: CURVE_STYLE[curveIntensity].dash.length ? "dashed" : "solid",
+              }}
+            />
+            {CURVE_STYLE[curveIntensity].label}
+          </span>
         ))}
+        {compare && (
+          <strong className="membrane-compare-result" aria-label="对比结论">
+            <b aria-hidden="true">≡</b>
+            全或无：阈刺激与强刺激峰值相同
+          </strong>
+        )}
       </div>
-      <p>横轴：教学时间单位。曲线为典型示意，不表示所有神经元完全相同。</p>
     </figure>
   );
 }
