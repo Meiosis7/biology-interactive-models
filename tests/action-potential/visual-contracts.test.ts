@@ -88,6 +88,43 @@ function generationPhaseWindows() {
 }
 
 describe("action-potential ion visual contracts", () => {
+  it("drifts free ions slowly with pause, conduction, mobile, and reduced-motion rules", () => {
+    const ionRule = ruleBody(".ap-free-ion");
+    const runningRule = ruleBody(
+      '.ap-scene[data-playing="true"] .ap-free-ion,\n.ap-scene--conduction .ap-free-ion',
+    );
+    const keyframes = stylesheet.match(
+      /@keyframes ap-free-ion-drift\s*\{([\s\S]*?)\n\}/,
+    )?.[1];
+
+    expect(ionRule).toMatch(
+      /animation:\s*ap-free-ion-drift var\(--free-ion-drift-duration\) ease-in-out infinite/,
+    );
+    expect(ionRule).toMatch(/animation-delay:\s*var\(--free-ion-drift-delay\)/);
+    expect(ionRule).toMatch(/animation-play-state:\s*paused/);
+    expect(runningRule).toMatch(/animation-play-state:\s*running/);
+    expect(keyframes).toBeDefined();
+    expect(keyframes).toMatch(/var\(--free-ion-active-drift-x\)/);
+    expect(keyframes).toMatch(/var\(--free-ion-active-drift-y\)/);
+
+    const mobileRule = stylesheet.match(
+      /@media \(max-width:\s*720px\)[\s\S]*?\.ap-free-ion\s*\{([^}]*)\}/,
+    )?.[1];
+    expect(mobileRule).toMatch(
+      /--free-ion-active-drift-x:\s*var\(--free-ion-mobile-drift-x\)/,
+    );
+    expect(mobileRule).toMatch(
+      /--free-ion-active-drift-y:\s*var\(--free-ion-mobile-drift-y\)/,
+    );
+
+    const reducedRule = stylesheet.match(
+      /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.ap-free-ion\s*\{([^}]*)\}/,
+    )?.[1];
+    expect(reducedRule).toBeDefined();
+    expect(reducedRule).toMatch(/animation:\s*none/);
+    expect(reducedRule).toMatch(/transform:\s*translate\(-50%,\s*-50%\)/);
+  });
+
   it("places mobile controls between the scene and knowledge card", () => {
     const layoutRule = ruleBody(".ap-layout");
     const sceneRule = ruleBody(".ap-scene");
@@ -322,7 +359,7 @@ describe("action-potential ion visual contracts", () => {
     expect(currentLayer).toBeLessThan(zIndex(".ap-ion-stream"));
   });
 
-  it("keeps static free ions below teaching overlays and compact on mobile", () => {
+  it("keeps free ions below teaching overlays and compact on mobile", () => {
     const distributionRule = ruleBody(".ap-free-ion-distribution");
     const ionRule = ruleBody(".ap-free-ion");
     const currentLayer = zIndex(".ap-local-current-system");
@@ -331,7 +368,7 @@ describe("action-potential ion visual contracts", () => {
     expect(distributionRule).toMatch(/inset:\s*0/);
     expect(distributionRule).toMatch(/z-index:\s*1/);
     expect(distributionRule).toMatch(/pointer-events:\s*none/);
-    expect(ionRule).not.toMatch(/animation:/);
+    expect(ionRule).toMatch(/animation-play-state:\s*paused/);
     expect(1).toBeLessThan(currentLayer);
     expect(1).toBeLessThan(zIndex(".ap-segment-charge"));
     expect(1).toBeLessThan(zIndex(".ap-ion-channel"));

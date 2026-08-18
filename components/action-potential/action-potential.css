@@ -276,6 +276,8 @@
 .ap-free-ion-region--outside-bottom { bottom: -108px; }
 
 .ap-free-ion {
+  --free-ion-active-drift-x: var(--free-ion-drift-x);
+  --free-ion-active-drift-y: var(--free-ion-drift-y);
   position: absolute;
   left: var(--free-ion-x);
   top: var(--free-ion-y);
@@ -293,6 +295,15 @@
   font-weight: 800;
   opacity: .78;
   transform: translate(-50%, -50%);
+  animation: ap-free-ion-drift var(--free-ion-drift-duration) ease-in-out infinite;
+  animation-delay: var(--free-ion-drift-delay);
+  animation-play-state: paused;
+  will-change: transform;
+}
+
+.ap-scene[data-playing="true"] .ap-free-ion,
+.ap-scene--conduction .ap-free-ion {
+  animation-play-state: running;
 }
 
 .ap-free-ion--sodium { --free-ion-fill: var(--ap-sodium-particle-fill); }
@@ -756,6 +767,22 @@
   }
 }
 
+@keyframes ap-free-ion-drift {
+  0%, 100% {
+    transform: translate(-50%, -50%) translate(0, 0);
+  }
+
+  38% {
+    transform: translate(-50%, -50%)
+      translate(var(--free-ion-active-drift-x), var(--free-ion-active-drift-y));
+  }
+
+  72% {
+    transform: translate(-50%, -50%)
+      translate(var(--free-ion-active-drift-y), var(--free-ion-active-drift-x));
+  }
+}
+
 @media (max-width: 720px) {
   .lab-shell {
     padding: 12px 10px 24px;
@@ -882,6 +909,8 @@
   .ap-free-ion-region--outside-bottom { bottom: -92px; }
 
   .ap-free-ion {
+    --free-ion-active-drift-x: var(--free-ion-mobile-drift-x);
+    --free-ion-active-drift-y: var(--free-ion-mobile-drift-y);
     width: 14px;
     height: 14px;
     font-size: 5px;
@@ -915,6 +944,11 @@
 
   .ap-ion-particle:nth-of-type(3) {
     --ion-static-offset-y: 14px;
+  }
+
+  .ap-free-ion {
+    animation: none;
+    transform: translate(-50%, -50%);
   }
 
 }
