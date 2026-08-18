@@ -322,6 +322,30 @@ describe("action-potential ion visual contracts", () => {
     expect(currentLayer).toBeLessThan(zIndex(".ap-ion-stream"));
   });
 
+  it("keeps static free ions below teaching overlays and compact on mobile", () => {
+    const distributionRule = ruleBody(".ap-free-ion-distribution");
+    const ionRule = ruleBody(".ap-free-ion");
+    const currentLayer = zIndex(".ap-local-current-system");
+
+    expect(distributionRule).toMatch(/position:\s*absolute/);
+    expect(distributionRule).toMatch(/inset:\s*0/);
+    expect(distributionRule).toMatch(/z-index:\s*1/);
+    expect(distributionRule).toMatch(/pointer-events:\s*none/);
+    expect(ionRule).not.toMatch(/animation:/);
+    expect(1).toBeLessThan(currentLayer);
+    expect(1).toBeLessThan(zIndex(".ap-segment-charge"));
+    expect(1).toBeLessThan(zIndex(".ap-ion-channel"));
+    expect(1).toBeLessThan(zIndex(".ap-ion-stream"));
+
+    const mobileIonRule = stylesheet.match(
+      /@media \(max-width:\s*720px\)[\s\S]*?\.ap-free-ion\s*\{([^}]*)\}/,
+    )?.[1];
+    expect(mobileIonRule).toBeDefined();
+    expect(mobileIonRule).toMatch(/width:\s*14px/);
+    expect(mobileIonRule).toMatch(/height:\s*14px/);
+    expect(mobileIonRule).toMatch(/font-size:\s*5px/);
+  });
+
   it("uses explicit sodium and potassium fill tokens with 4.5:1 label contrast at desktop and mobile", () => {
     const label = hexToken("--ap-ion-particle-label");
     const sodiumFill = hexToken("--ap-sodium-particle-fill");

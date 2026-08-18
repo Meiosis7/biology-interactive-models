@@ -1,6 +1,7 @@
 import { Fragment } from "react";
 import type { ActionPotentialFrame, ActionPotentialMode } from "./types";
 import { IonChannel } from "./IonChannel";
+import { IonDistribution } from "./IonDistribution";
 import { IonStream } from "./IonStream";
 import { LocalCurrentFlow } from "./LocalCurrentFlow";
 
@@ -69,6 +70,7 @@ export function ActionPotentialScene({
         ))}
 
         <div className="ap-fiber" data-testid="shared-fiber">
+          <IonDistribution />
           {frame.segments.map((segment) => (
             <div
               key={segment.id}

@@ -144,6 +144,38 @@ describe("action-potential shared-fiber components", () => {
     ).toHaveLength(14);
   });
 
+  it("keeps one free-ion distribution stable across all three modes", () => {
+    const { rerender } = render(
+      <ActionPotentialScene
+        mode="resting"
+        frame={getActionPotentialFrame("resting", 0)}
+        playing
+      />,
+    );
+    const distribution = screen.getByTestId("free-ion-distribution");
+
+    rerender(
+      <ActionPotentialScene
+        mode="generation"
+        frame={getActionPotentialFrame("generation", 0.55)}
+        playing
+      />,
+    );
+    expect(screen.getByTestId("free-ion-distribution")).toBe(distribution);
+
+    rerender(
+      <ActionPotentialScene
+        mode="conduction"
+        frame={getConductionStepFrame(1, 1)}
+        playing={false}
+      />,
+    );
+    expect(screen.getByTestId("free-ion-distribution")).toBe(distribution);
+    expect(screen.getByLabelText("上方膜外 Na⁺多、K⁺少")).toBeInTheDocument();
+    expect(screen.getByLabelText("膜内 K⁺多、Na⁺少")).toBeInTheDocument();
+    expect(screen.getByLabelText("下方膜外 Na⁺多、K⁺少")).toBeInTheDocument();
+  });
+
   it("renders stable top and bottom sodium channels for every segment", () => {
     const { container } = render(
       <ActionPotentialScene
