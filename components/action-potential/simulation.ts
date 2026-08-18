@@ -75,7 +75,7 @@ export function getConductionStepFrame(
       potassiumOutflow: false,
       stimulusVisible: true,
       localCurrentStep: null,
-      instruction: "中央膜段已经形成动作电位",
+      instruction: "受刺激部位已经形成动作电位",
     };
   }
 
@@ -106,7 +106,7 @@ export function getConductionStepFrame(
       potassiumOutflow: false,
       stimulusVisible: true,
       localCurrentStep: null,
-      instruction: "局部电流使相邻膜段 Na⁺通道开放",
+      instruction: "局部电流使相邻部位 Na⁺通道开放",
     };
   }
 
@@ -118,7 +118,7 @@ export function getConductionStepFrame(
       potassiumOutflow: false,
       stimulusVisible: true,
       localCurrentStep: null,
-      instruction: "Na⁺从上下通道进入相邻膜段",
+      instruction: "Na⁺从上下通道进入相邻部位膜内",
     };
   }
 
@@ -132,7 +132,7 @@ export function getConductionStepFrame(
     instruction:
       finalRound && complete
         ? "神经冲动以电信号（局部电流）的形式在神经纤维上双向传导。"
-        : "相邻膜段形成动作电位",
+        : "相邻部位形成动作电位",
   };
 }
 
@@ -168,7 +168,7 @@ export function getActionPotentialFrame(
       potassiumOutflow: false,
       stimulusVisible: true,
       localCurrentStep: null,
-      instruction: "刺激中央膜段",
+      instruction: "刺激局部神经纤维",
     };
   }
 
@@ -182,7 +182,7 @@ export function getActionPotentialFrame(
       potassiumOutflow: false,
       stimulusVisible: true,
       localCurrentStep: null,
-      instruction: "中央 Na⁺通道开放",
+      instruction: "局部 Na⁺通道开放",
     };
   }
 
@@ -194,7 +194,7 @@ export function getActionPotentialFrame(
       potassiumOutflow: false,
       stimulusVisible: true,
       localCurrentStep: null,
-      instruction: "Na⁺从膜外进入中央膜段",
+      instruction: "Na⁺从膜外进入膜内",
     };
   }
 
@@ -205,6 +205,6 @@ export function getActionPotentialFrame(
     potassiumOutflow: false,
     stimulusVisible: true,
     localCurrentStep: null,
-    instruction: "中央膜段兴奋，局部外负内正",
+    instruction: "受刺激部位兴奋，膜外为负、膜内为正",
   };
 }

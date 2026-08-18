@@ -41,7 +41,7 @@ export function ActionPotentialScene({
           {mode === "resting"
             ? "外正内负"
             : mode === "generation"
-              ? "局部外负内正"
+              ? "局部膜外为负、膜内为正"
               : "双向传导"}
         </b>
       </div>
@@ -77,7 +77,7 @@ export function ActionPotentialScene({
               data-segment-id={segment.id}
               data-segment-polarity={segment.polarity}
               data-current-target={segment.currentTarget}
-              aria-label={`第${segment.id + 1}膜段${segment.polarity === "excited" ? "外负内正" : "外正内负"}`}
+              aria-label={`第${segment.id + 1}膜段${segment.polarity === "excited" ? "膜外为负、膜内为正" : "外正内负"}`}
             >
               {(
                 [

@@ -55,6 +55,43 @@ describe("action-potential shared-fiber frames", () => {
     expect(getConductionStepFrame(5, 1).instruction).toBe("形成局部电流");
   });
 
+  it("uses local rather than central generation and conduction copy", () => {
+    expect(getActionPotentialFrame("generation", 0.05).instruction).toBe(
+      "刺激局部神经纤维",
+    );
+    expect(getActionPotentialFrame("generation", 0.25).instruction).toBe(
+      "局部 Na⁺通道开放",
+    );
+    expect(getActionPotentialFrame("generation", 0.55).instruction).toBe(
+      "Na⁺从膜外进入膜内",
+    );
+    expect(getActionPotentialFrame("generation", 0.9).instruction).toBe(
+      "受刺激部位兴奋，膜外为负、膜内为正",
+    );
+    expect(getConductionStepFrame(0, 1).instruction).toBe(
+      "受刺激部位已经形成动作电位",
+    );
+    expect(getConductionStepFrame(2, 0.1).instruction).toBe(
+      "局部电流使相邻部位 Na⁺通道开放",
+    );
+    expect(getConductionStepFrame(2, 0.5).instruction).toBe(
+      "Na⁺从上下通道进入相邻部位膜内",
+    );
+    expect(getConductionStepFrame(2, 1).instruction).toBe(
+      "相邻部位形成动作电位",
+    );
+    expect(
+      JSON.stringify([
+        getActionPotentialFrame("generation", 0.05),
+        getActionPotentialFrame("generation", 0.25),
+        getActionPotentialFrame("generation", 0.55),
+        getActionPotentialFrame("generation", 0.9),
+        getConductionStepFrame(0, 1),
+        getConductionStepFrame(2, 0.5),
+      ]),
+    ).not.toMatch(/中央/);
+  });
+
   it.each([
     [0, 1, "excited", [3], null],
     [1, 0, "local-current", [3], 1],

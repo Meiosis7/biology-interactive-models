@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ActionPotentialLab } from "../../components/action-potential/ActionPotentialLab";
@@ -290,6 +291,18 @@ describe("ActionPotentialLab", () => {
     fireEvent.click(screen.getByRole("button", { name: "下一步" }));
     expect(screen.getByText("形成局部电流")).toBeInTheDocument();
     expect(document.body).not.toHaveTextContent(/第[123]轮/);
+  });
+
+  it("removes cross-model navigation and central-position copy", () => {
+    const pageSource = readFileSync(
+      "app/models/action-potential/page.tsx",
+      "utf8",
+    );
+    expect(pageSource).not.toMatch(/ModelNav|model-shell/);
+
+    render(<ActionPotentialLab />);
+    fireEvent.click(screen.getByRole("button", { name: /动作电位产生/ }));
+    expect(document.body).not.toHaveTextContent(/中央|外负内正/);
   });
 
   it("uses representative static ion frames with disabled playback for reduced motion", () => {

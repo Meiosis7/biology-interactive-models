@@ -25,6 +25,7 @@
 - Modify: `app/models/action-potential/page.tsx`
 - Modify: `components/action-potential/modeData.ts`
 - Modify: `components/action-potential/simulation.ts`
+- Modify: `components/action-potential/ActionPotentialScene.tsx`
 - Modify: `tests/action-potential/simulation.test.ts`
 - Modify: `tests/action-potential/mode-components.test.tsx`
 - Modify: `tests/action-potential/lab.test.tsx`
@@ -94,7 +95,7 @@ export default function ActionPotentialPage() {
 }
 ```
 
-将 `modeData.ts` 的产生模式和传导原因改成批准文案，将 `simulation.ts` 的五处阶段提示改成 Step 1 的精确字符串，并把传导阶段提示改为：
+将 `modeData.ts` 的产生模式和传导原因改成批准文案，将 `simulation.ts` 的五处阶段提示改成 Step 1 的精确字符串；同时把 `ActionPotentialScene.tsx` 中面向学生的“局部外负内正”改成“局部膜外为负、膜内为正”，膜段无障碍名称改成“膜外为负、膜内为正”。传导阶段提示改为：
 
 ```ts
 instruction: "局部电流使相邻部位 Na⁺通道开放"
@@ -111,7 +112,7 @@ Expected: PASS，且无控制台错误或 React 警告。
 - [ ] **Step 5: 提交文案与页面精简**
 
 ```bash
-git add app/models/action-potential/page.tsx components/action-potential/modeData.ts components/action-potential/simulation.ts tests/action-potential/simulation.test.ts tests/action-potential/mode-components.test.tsx tests/action-potential/lab.test.tsx
+git add app/models/action-potential/page.tsx components/action-potential/modeData.ts components/action-potential/simulation.ts components/action-potential/ActionPotentialScene.tsx tests/action-potential/simulation.test.ts tests/action-potential/mode-components.test.tsx tests/action-potential/lab.test.tsx
 git commit -m "fix: align action potential teaching copy"
 ```
 

@@ -18,11 +18,12 @@ export const ACTION_POTENTIAL_MODES: readonly ModeContent[] = [
     id: "generation",
     label: "动作电位产生",
     title: "局部动作电位产生",
-    summary: "刺激使局部Na⁺通道开放，Na⁺内流，局部变为外负内正。",
+    summary:
+      "刺激使局部 Na⁺通道开放，Na⁺内流，受刺激部位膜外为负、膜内为正。",
     facts: [
       { label: "原因", value: "刺激局部神经纤维" },
-      { label: "通道与离子变化", value: "局部Na⁺通道开放，Na⁺内流" },
-      { label: "结果", value: "局部变为外负内正" },
+      { label: "通道与离子变化", value: "局部 Na⁺通道开放，Na⁺内流" },
+      { label: "结果", value: "受刺激部位膜外为负、膜内为正" },
     ],
   },
   {
@@ -31,7 +32,10 @@ export const ACTION_POTENTIAL_MODES: readonly ModeContent[] = [
     title: "相邻部位依次兴奋",
     summary: "神经冲动以电信号（局部电流）的形式在神经纤维上双向传导。",
     facts: [
-      { label: "原因", value: "兴奋区形成局部电流" },
+      {
+        label: "原因",
+        value: "兴奋部位与未兴奋部位之间形成局部电流",
+      },
       { label: "通道与离子变化", value: "相邻Na⁺通道依次开放" },
       {
         label: "结果",
