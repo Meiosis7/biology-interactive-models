@@ -73,6 +73,126 @@ describe("action-potential free-ion distribution", () => {
     expect(readMotion()).toEqual(before);
   });
 
+  it("adds a stable unique effective motion phase to all six bounded profiles", () => {
+    const { container, rerender } = render(<IonDistribution />);
+    const readMotion = () =>
+      Array.from(
+        container.querySelectorAll<HTMLElement>("[data-free-ion-species]"),
+      ).map((ion) => {
+        const baseDelay = Number.parseFloat(
+          ion.style.getPropertyValue("--free-ion-drift-delay"),
+        );
+        const phaseOffset = Number.parseFloat(
+          ion.style.getPropertyValue("--free-ion-phase-offset"),
+        );
+
+        return {
+          profile: ion.dataset.motionProfile,
+          desktopX: Number.parseFloat(
+            ion.style.getPropertyValue("--free-ion-drift-x"),
+          ),
+          desktopY: Number.parseFloat(
+            ion.style.getPropertyValue("--free-ion-drift-y"),
+          ),
+          mobileX: Number.parseFloat(
+            ion.style.getPropertyValue("--free-ion-mobile-drift-x"),
+          ),
+          mobileY: Number.parseFloat(
+            ion.style.getPropertyValue("--free-ion-mobile-drift-y"),
+          ),
+          duration: Number.parseFloat(
+            ion.style.getPropertyValue("--free-ion-drift-duration"),
+          ),
+          baseDelay,
+          phaseOffset,
+          effectiveDelay: Number.parseFloat(
+            (baseDelay + phaseOffset).toFixed(2),
+          ),
+        };
+      });
+
+    const before = readMotion();
+    expect(before).toHaveLength(26);
+    expect(new Set(before.map(({ profile }) => profile)).size).toBe(6);
+    expect(new Set(before.map(({ effectiveDelay }) => effectiveDelay)).size).toBe(
+      26,
+    );
+    expect(
+      new Set(
+        before.map(
+          ({
+            profile,
+            desktopX,
+            desktopY,
+            mobileX,
+            mobileY,
+            duration,
+            effectiveDelay,
+          }) =>
+            JSON.stringify([
+              profile,
+              desktopX,
+              desktopY,
+              mobileX,
+              mobileY,
+              duration,
+              effectiveDelay,
+            ]),
+        ),
+      ).size,
+    ).toBe(26);
+
+    for (const motion of before) {
+      expect(Math.abs(motion.desktopX)).toBeLessThanOrEqual(3);
+      expect(Math.abs(motion.desktopY)).toBeLessThanOrEqual(3);
+      expect(Math.abs(motion.mobileX)).toBeLessThanOrEqual(2);
+      expect(Math.abs(motion.mobileY)).toBeLessThanOrEqual(2);
+      expect(motion.duration).toBeGreaterThanOrEqual(7);
+      expect(motion.duration).toBeLessThanOrEqual(11);
+      expect(motion.baseDelay).toBeLessThan(0);
+      expect(motion.phaseOffset).toBeLessThan(0);
+      expect(motion.effectiveDelay).toBeLessThan(0);
+    }
+
+    rerender(<IonDistribution />);
+    expect(readMotion()).toEqual(before);
+  });
+
+  it("marks the collision-safe mobile lane with a stable semantic identity", () => {
+    const { container, rerender } = render(<IonDistribution />);
+    const readLane = () =>
+      Array.from(
+        container.querySelectorAll<HTMLElement>("[data-mobile-lane]"),
+      ).map((ion) => ({
+        lane: ion.dataset.mobileLane,
+        region: ion.parentElement?.dataset.freeIonRegion,
+        species: ion.dataset.freeIonSpecies,
+        x: ion.style.getPropertyValue("--free-ion-x"),
+        y: ion.style.getPropertyValue("--free-ion-y"),
+      }));
+
+    expect(readLane()).toEqual([
+      {
+        lane: "inside-channel-clear",
+        region: "inside",
+        species: "potassium",
+        x: "14%",
+        y: "12%",
+      },
+    ]);
+
+    rerender(<IonDistribution />);
+    expect(readLane()).toEqual([
+      {
+        lane: "inside-channel-clear",
+        region: "inside",
+        species: "potassium",
+        x: "14%",
+        y: "12%",
+      },
+    ]);
+  });
+
   it("places inside ions on deterministic lanes clear of overlays and streams", () => {
     const { container } = render(<IonDistribution />);
     const insideIons = Array.from(

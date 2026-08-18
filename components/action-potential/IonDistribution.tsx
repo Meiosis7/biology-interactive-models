@@ -2,11 +2,13 @@ import type { CSSProperties } from "react";
 
 type FreeIonSpecies = "sodium" | "potassium";
 type FreeIonRegion = "outside-top" | "inside" | "outside-bottom";
+type FreeIonMobileLane = "inside-channel-clear";
 
 interface FreeIonPoint {
   species: FreeIonSpecies;
   x: number;
   y: number;
+  mobileLane?: FreeIonMobileLane;
 }
 
 interface FreeIonMotionProfile {
@@ -27,6 +29,8 @@ const MOTION_PROFILES: readonly FreeIonMotionProfile[] = [
   { x: "-1px", y: "-2px", mobileX: "-1px", mobileY: "-2px", duration: "10.8s", delay: "-4.4s" },
 ] as const;
 
+const PER_ION_PHASE_SECONDS = 0.31;
+
 const LABELS: Record<FreeIonSpecies, string> = {
   sodium: "Na⁺",
   potassium: "K⁺",
@@ -44,7 +48,12 @@ const OUTSIDE_POINTS: readonly FreeIonPoint[] = [
 ] as const;
 
 const INSIDE_POINTS: readonly FreeIonPoint[] = [
-  { species: "potassium", x: 14, y: 12 },
+  {
+    species: "potassium",
+    x: 14,
+    y: 12,
+    mobileLane: "inside-channel-clear",
+  },
   { species: "potassium", x: 14, y: 38 },
   { species: "potassium", x: 43, y: 12 },
   { species: "potassium", x: 43, y: 38 },
@@ -69,44 +78,58 @@ const REGIONS: ReadonlyArray<{
 export function IonDistribution() {
   return (
     <div className="ap-free-ion-distribution" data-testid="free-ion-distribution">
-      {REGIONS.map((region, regionIndex) => (
-        <div
-          key={region.id}
-          className={`ap-free-ion-region ap-free-ion-region--${region.id}`}
-          data-free-ion-region={region.id}
-          role="img"
-          aria-label={region.label}
-        >
-          {region.ions.map((ion, index) => {
-            const profileIndex = (regionIndex * 2 + index) % MOTION_PROFILES.length;
-            const motion = MOTION_PROFILES[profileIndex];
+      {REGIONS.map((region, regionIndex) => {
+        const firstIonIndex = REGIONS.slice(0, regionIndex).reduce(
+          (total, current) => total + current.ions.length,
+          0,
+        );
 
-            return (
-              <i
-                key={`${ion.species}-${index}`}
-                className={`ap-free-ion ap-free-ion--${ion.species}`}
-                data-free-ion-species={ion.species}
-                data-motion-profile={profileIndex}
-                style={
-                  {
-                    "--free-ion-x": `${ion.x}%`,
-                    "--free-ion-y": `${ion.y}%`,
-                    "--free-ion-drift-x": motion.x,
-                    "--free-ion-drift-y": motion.y,
-                    "--free-ion-mobile-drift-x": motion.mobileX,
-                    "--free-ion-mobile-drift-y": motion.mobileY,
-                    "--free-ion-drift-duration": motion.duration,
-                    "--free-ion-drift-delay": motion.delay,
-                  } as CSSProperties
-                }
-                aria-hidden="true"
-              >
-                {LABELS[ion.species]}
-              </i>
-            );
-          })}
-        </div>
-      ))}
+        return (
+          <div
+            key={region.id}
+            className={`ap-free-ion-region ap-free-ion-region--${region.id}`}
+            data-free-ion-region={region.id}
+            role="img"
+            aria-label={region.label}
+          >
+            {region.ions.map((ion, index) => {
+              const profileIndex =
+                (regionIndex * 2 + index) % MOTION_PROFILES.length;
+              const motion = MOTION_PROFILES[profileIndex];
+              const phaseOffset = `-${(
+                (firstIonIndex + index + 1) *
+                PER_ION_PHASE_SECONDS
+              ).toFixed(2)}s`;
+
+              return (
+                <i
+                  key={`${ion.species}-${index}`}
+                  className={`ap-free-ion ap-free-ion--${ion.species}`}
+                  data-free-ion-species={ion.species}
+                  data-mobile-lane={ion.mobileLane}
+                  data-motion-profile={profileIndex}
+                  style={
+                    {
+                      "--free-ion-x": `${ion.x}%`,
+                      "--free-ion-y": `${ion.y}%`,
+                      "--free-ion-drift-x": motion.x,
+                      "--free-ion-drift-y": motion.y,
+                      "--free-ion-mobile-drift-x": motion.mobileX,
+                      "--free-ion-mobile-drift-y": motion.mobileY,
+                      "--free-ion-drift-duration": motion.duration,
+                      "--free-ion-drift-delay": motion.delay,
+                      "--free-ion-phase-offset": phaseOffset,
+                    } as CSSProperties
+                  }
+                  aria-hidden="true"
+                >
+                  {LABELS[ion.species]}
+                </i>
+              );
+            })}
+          </div>
+        );
+      })}
     </div>
   );
 }

@@ -100,7 +100,9 @@ describe("action-potential ion visual contracts", () => {
     expect(ionRule).toMatch(
       /animation:\s*ap-free-ion-drift var\(--free-ion-drift-duration\) ease-in-out infinite/,
     );
-    expect(ionRule).toMatch(/animation-delay:\s*var\(--free-ion-drift-delay\)/);
+    expect(ionRule).toMatch(
+      /animation-delay:\s*calc\(var\(--free-ion-drift-delay\) \+ var\(--free-ion-phase-offset\)\)/,
+    );
     expect(ionRule).toMatch(/animation-play-state:\s*paused/);
     expect(runningRule).toMatch(/animation-play-state:\s*running/);
     expect(keyframes).toBeDefined();
@@ -118,7 +120,7 @@ describe("action-potential ion visual contracts", () => {
     );
 
     const mobileCollisionSafeLaneRule = stylesheet.match(
-      /@media \(max-width:\s*720px\)[\s\S]*?\.ap-free-ion-region--inside\s*>\s*\.ap-free-ion:first-child\s*\{([^}]*)\}/,
+      /@media \(max-width:\s*720px\)[\s\S]*?\.ap-free-ion\[data-mobile-lane="inside-channel-clear"\]\s*\{([^}]*)\}/,
     )?.[1];
     expect(mobileCollisionSafeLaneRule).toBeDefined();
     expect(mobileCollisionSafeLaneRule).toMatch(
@@ -126,6 +128,9 @@ describe("action-potential ion visual contracts", () => {
     );
     expect(mobileCollisionSafeLaneRule).toMatch(
       /--free-ion-active-drift-y:\s*0px/,
+    );
+    expect(stylesheet).not.toMatch(
+      /\.ap-free-ion-region--inside\s*>\s*\.ap-free-ion:first-child/,
     );
 
     const reducedRule = stylesheet.match(
@@ -392,6 +397,33 @@ describe("action-potential ion visual contracts", () => {
     expect(mobileIonRule).toMatch(/width:\s*14px/);
     expect(mobileIonRule).toMatch(/height:\s*14px/);
     expect(mobileIonRule).toMatch(/font-size:\s*5px/);
+  });
+
+  it("gives both free-ion species 4.5:1 label contrast without element opacity", () => {
+    const label = hexToken("--ap-ion-particle-label");
+    const sodiumFill = hexToken("--ap-sodium-particle-fill");
+    const potassiumFill = hexToken("--ap-potassium-particle-fill");
+    const ionRule = ruleBody(".ap-free-ion");
+
+    expect(contrastRatio(label, sodiumFill)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(label, potassiumFill)).toBeGreaterThanOrEqual(4.5);
+    expect(ionRule).not.toMatch(/\bopacity\s*:/);
+    expect(ionRule).toMatch(
+      /color:\s*var\(--ap-ion-particle-label\)\s*;/,
+    );
+    expect(ionRule).toMatch(/background:\s*var\(--free-ion-fill\)\s*;/);
+    expect(ruleBody(".ap-free-ion--sodium")).toMatch(
+      /--free-ion-fill:\s*var\(--ap-sodium-particle-fill\)\s*;/,
+    );
+    expect(ruleBody(".ap-free-ion--potassium")).toMatch(
+      /--free-ion-fill:\s*var\(--ap-potassium-particle-fill\)\s*;/,
+    );
+
+    const mobileIonRule = stylesheet.match(
+      /@media \(max-width:\s*720px\)[\s\S]*?\.ap-free-ion\s*\{([^}]*)\}/,
+    )?.[1];
+    expect(mobileIonRule).toBeDefined();
+    expect(mobileIonRule).not.toMatch(/(?:background|color|opacity)\s*:/);
   });
 
   it("uses explicit sodium and potassium fill tokens with 4.5:1 label contrast at desktop and mobile", () => {
