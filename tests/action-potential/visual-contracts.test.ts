@@ -52,6 +52,16 @@ function contrastRatio(first: string, second: string) {
   );
 }
 
+function saturation(hex: string) {
+  const [red, green, blue] = hex
+    .slice(1)
+    .match(/.{2}/g)!
+    .map((channel) => Number.parseInt(channel, 16) / 255);
+  const maximum = Math.max(red, green, blue);
+  const minimum = Math.min(red, green, blue);
+  return maximum === minimum ? 0 : (maximum - minimum) / maximum;
+}
+
 function milliseconds(rule: string, property: string) {
   const match = rule.match(new RegExp(`${property}:\\s*(\\d+)ms\\s*;`));
   expect(match, `missing millisecond property ${property}`).not.toBeNull();
@@ -399,24 +409,38 @@ describe("action-potential ion visual contracts", () => {
     expect(mobileIonRule).toMatch(/font-size:\s*5px/);
   });
 
-  it("gives both free-ion species 4.5:1 label contrast without element opacity", () => {
+  it("uses dedicated muted free-ion fills with 4.5:1 label contrast and no element opacity", () => {
     const label = hexToken("--ap-ion-particle-label");
-    const sodiumFill = hexToken("--ap-sodium-particle-fill");
-    const potassiumFill = hexToken("--ap-potassium-particle-fill");
+    const sodiumParticleFill = hexToken("--ap-sodium-particle-fill");
+    const potassiumParticleFill = hexToken("--ap-potassium-particle-fill");
+    const sodiumFreeIonFill = hexToken("--ap-free-ion-sodium-fill");
+    const potassiumFreeIonFill = hexToken("--ap-free-ion-potassium-fill");
     const ionRule = ruleBody(".ap-free-ion");
+    const sodiumRule = ruleBody(".ap-free-ion--sodium");
+    const potassiumRule = ruleBody(".ap-free-ion--potassium");
 
-    expect(contrastRatio(label, sodiumFill)).toBeGreaterThanOrEqual(4.5);
-    expect(contrastRatio(label, potassiumFill)).toBeGreaterThanOrEqual(4.5);
-    expect(ionRule).not.toMatch(/\bopacity\s*:/);
+    expect(sodiumFreeIonFill).not.toBe(sodiumParticleFill);
+    expect(potassiumFreeIonFill).not.toBe(potassiumParticleFill);
+    expect(saturation(sodiumFreeIonFill)).toBeLessThan(
+      saturation(sodiumParticleFill),
+    );
+    expect(saturation(potassiumFreeIonFill)).toBeLessThan(
+      saturation(potassiumParticleFill),
+    );
+    expect(contrastRatio(label, sodiumFreeIonFill)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(label, potassiumFreeIonFill)).toBeGreaterThanOrEqual(4.5);
+    expect(`${ionRule}${sodiumRule}${potassiumRule}`).not.toMatch(
+      /\bopacity\s*:/,
+    );
     expect(ionRule).toMatch(
       /color:\s*var\(--ap-ion-particle-label\)\s*;/,
     );
     expect(ionRule).toMatch(/background:\s*var\(--free-ion-fill\)\s*;/);
-    expect(ruleBody(".ap-free-ion--sodium")).toMatch(
-      /--free-ion-fill:\s*var\(--ap-sodium-particle-fill\)\s*;/,
+    expect(sodiumRule).toMatch(
+      /--free-ion-fill:\s*var\(--ap-free-ion-sodium-fill\)\s*;/,
     );
-    expect(ruleBody(".ap-free-ion--potassium")).toMatch(
-      /--free-ion-fill:\s*var\(--ap-potassium-particle-fill\)\s*;/,
+    expect(potassiumRule).toMatch(
+      /--free-ion-fill:\s*var\(--ap-free-ion-potassium-fill\)\s*;/,
     );
 
     const mobileIonRule = stylesheet.match(

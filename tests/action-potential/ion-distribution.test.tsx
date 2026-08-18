@@ -117,6 +117,22 @@ describe("action-potential free-ion distribution", () => {
     expect(new Set(before.map(({ effectiveDelay }) => effectiveDelay)).size).toBe(
       26,
     );
+    const phasesByProfile = new Map<string, number[]>();
+    for (const motion of before) {
+      const normalizedPhase = Number(
+        (
+          ((motion.effectiveDelay % motion.duration) + motion.duration) %
+          motion.duration
+        ).toFixed(2),
+      );
+      const phases = phasesByProfile.get(motion.profile) ?? [];
+      phases.push(normalizedPhase);
+      phasesByProfile.set(motion.profile, phases);
+    }
+    expect(phasesByProfile).toHaveLength(6);
+    for (const phases of phasesByProfile.values()) {
+      expect(new Set(phases).size).toBe(phases.length);
+    }
     expect(
       new Set(
         before.map(

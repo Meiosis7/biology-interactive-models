@@ -11,6 +11,8 @@
   --ap-ion-particle-label: #ffffff;
   --ap-sodium-particle-fill: #0b6673;
   --ap-potassium-particle-fill: #5a3e91;
+  --ap-free-ion-sodium-fill: #3a7f89;
+  --ap-free-ion-potassium-fill: #7667a6;
   --ap-border: rgba(38, 43, 48, 0.18);
 }
 
@@ -305,8 +307,8 @@
   animation-play-state: running;
 }
 
-.ap-free-ion--sodium { --free-ion-fill: var(--ap-sodium-particle-fill); }
-.ap-free-ion--potassium { --free-ion-fill: var(--ap-potassium-particle-fill); }
+.ap-free-ion--sodium { --free-ion-fill: var(--ap-free-ion-sodium-fill); }
+.ap-free-ion--potassium { --free-ion-fill: var(--ap-free-ion-potassium-fill); }
 
 .ap-segment-charge {
   position: absolute;
