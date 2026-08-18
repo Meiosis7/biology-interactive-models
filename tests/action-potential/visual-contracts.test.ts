@@ -397,6 +397,14 @@ describe("action-potential ion visual contracts", () => {
     expect(stylesheet).not.toMatch(/ap-sodium-bypass-(?:up|down)/);
   });
 
+  it("keeps the aligned stimulus above the sodium pore", () => {
+    const stimulusRule = ruleBody(".ap-stimulus");
+    expect(stimulusRule).toMatch(/left:\s*50%\s*;/);
+    expect(stimulusRule).toMatch(/top:\s*-82px\s*;/);
+    expect(stimulusRule).toMatch(/height:\s*64px\s*;/);
+    expect(stimulusRule).toMatch(/transform:\s*translateX\(-50%\)\s*;/);
+  });
+
   it("moves sodium on the same vertical axis as its pore", () => {
     const particleRule = ruleBody(".ap-ion-particle");
     expect(particleRule).toMatch(

@@ -362,9 +362,9 @@
   position: absolute;
   z-index: 8;
   left: 50%;
-  top: -68px;
+  top: -82px;
   width: 3px;
-  height: 72px;
+  height: 64px;
   background: var(--ap-red);
   transform: translateX(-50%);
 }

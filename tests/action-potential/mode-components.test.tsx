@@ -217,7 +217,7 @@ describe("action-potential shared-fiber components", () => {
         center.querySelector(
           `[data-ion-species="sodium"][data-membrane-surface="${surface}"]`,
         ),
-      ).toBeTruthy();
+      ).toHaveAttribute("data-stream-axis", "channel-pore");
     }
   });
 
