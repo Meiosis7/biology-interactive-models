@@ -40,4 +40,30 @@ describe("action-potential free-ion distribution", () => {
       ).map((ion) => [ion.dataset.freeIonSpecies, ion.getAttribute("style")]),
     ).toEqual(before);
   });
+
+  it("places inside ions on deterministic lanes clear of overlays and streams", () => {
+    const { container } = render(<IonDistribution />);
+    const insideIons = Array.from(
+      container.querySelectorAll<HTMLElement>(
+        '[data-free-ion-region="inside"] [data-free-ion-species]',
+      ),
+    ).map((ion) => ({
+      species: ion.dataset.freeIonSpecies,
+      x: ion.style.getPropertyValue("--free-ion-x"),
+      y: ion.style.getPropertyValue("--free-ion-y"),
+    }));
+
+    expect(insideIons).toEqual([
+      { species: "potassium", x: "14%", y: "12%" },
+      { species: "potassium", x: "14%", y: "38%" },
+      { species: "potassium", x: "43%", y: "12%" },
+      { species: "potassium", x: "43%", y: "38%" },
+      { species: "potassium", x: "57%", y: "12%" },
+      { species: "potassium", x: "57%", y: "38%" },
+      { species: "potassium", x: "86%", y: "12%" },
+      { species: "potassium", x: "86%", y: "38%" },
+      { species: "sodium", x: "71%", y: "12%" },
+      { species: "sodium", x: "71%", y: "38%" },
+    ]);
+  });
 });

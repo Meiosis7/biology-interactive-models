@@ -26,16 +26,16 @@ const OUTSIDE_POINTS: readonly FreeIonPoint[] = [
 ] as const;
 
 const INSIDE_POINTS: readonly FreeIonPoint[] = [
-  { species: "potassium", x: 14, y: 24 },
-  { species: "potassium", x: 28, y: 72 },
-  { species: "potassium", x: 42, y: 24 },
-  { species: "potassium", x: 58, y: 72 },
-  { species: "potassium", x: 72, y: 24 },
-  { species: "potassium", x: 86, y: 72 },
-  { species: "potassium", x: 7, y: 70 },
-  { species: "potassium", x: 93, y: 28 },
-  { species: "sodium", x: 21, y: 26 },
-  { species: "sodium", x: 79, y: 70 },
+  { species: "potassium", x: 14, y: 12 },
+  { species: "potassium", x: 14, y: 38 },
+  { species: "potassium", x: 43, y: 12 },
+  { species: "potassium", x: 43, y: 38 },
+  { species: "potassium", x: 57, y: 12 },
+  { species: "potassium", x: 57, y: 38 },
+  { species: "potassium", x: 86, y: 12 },
+  { species: "potassium", x: 86, y: 38 },
+  { species: "sodium", x: 71, y: 12 },
+  { species: "sodium", x: 71, y: 38 },
 ] as const;
 
 const REGIONS: ReadonlyArray<{
