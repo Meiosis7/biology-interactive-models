@@ -6,7 +6,10 @@ import {
   getActionPotentialFrame,
   getConductionStepFrame,
 } from "../../components/action-potential/simulation";
-import type { ActionPotentialMode } from "../../components/action-potential/types";
+import type {
+  ActionPotentialMode,
+  ConductionStep,
+} from "../../components/action-potential/types";
 
 const excitedIds = (mode: ActionPotentialMode, progress: number) =>
   getActionPotentialFrame(mode, progress).segments
@@ -155,6 +158,24 @@ describe("action-potential shared-fiber frames", () => {
     expect(firstExcited.localCurrentStep).toBeNull();
     expect(secondCurrent.segments.filter((item) => item.polarity === "excited").map((item) => item.id)).toEqual([2, 3, 4]);
     expect(secondCurrent.localCurrentStep).toBe(2);
+  });
+
+  it("alternates local current and adjacent action potential until conducted", () => {
+    const steps = [0, 1, 2, 3, 4, 5, 6] as const satisfies readonly ConductionStep[];
+    const frames = steps.map((step) => getConductionStepFrame(step, 1));
+
+    expect(frames.map((frame) => frame.phase)).toEqual([
+      "excited",
+      "local-current",
+      "neighbor-excited",
+      "local-current",
+      "neighbor-excited",
+      "local-current",
+      "conducted",
+    ]);
+    expect(JSON.stringify(frames.map((frame) => frame.instruction))).not.toMatch(
+      /中央|第[一二三123]轮|第\d+步/,
+    );
   });
 
   it("only accumulates excited segments during conduction", () => {
