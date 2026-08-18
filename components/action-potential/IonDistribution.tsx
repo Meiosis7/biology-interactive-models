@@ -9,6 +9,24 @@ interface FreeIonPoint {
   y: number;
 }
 
+interface FreeIonMotionProfile {
+  x: string;
+  y: string;
+  mobileX: string;
+  mobileY: string;
+  duration: string;
+  delay: string;
+}
+
+const MOTION_PROFILES: readonly FreeIonMotionProfile[] = [
+  { x: "3px", y: "1px", mobileX: "2px", mobileY: "1px", duration: "7.2s", delay: "-1.4s" },
+  { x: "-2px", y: "3px", mobileX: "-1px", mobileY: "2px", duration: "8.1s", delay: "-3.7s" },
+  { x: "2px", y: "-3px", mobileX: "1px", mobileY: "-2px", duration: "9.3s", delay: "-5.1s" },
+  { x: "-3px", y: "-1px", mobileX: "-2px", mobileY: "-1px", duration: "10.4s", delay: "-2.2s" },
+  { x: "1px", y: "3px", mobileX: "1px", mobileY: "2px", duration: "7.8s", delay: "-6s" },
+  { x: "-1px", y: "-2px", mobileX: "-1px", mobileY: "-2px", duration: "10.8s", delay: "-4.4s" },
+] as const;
+
 const LABELS: Record<FreeIonSpecies, string> = {
   sodium: "Na⁺",
   potassium: "K⁺",
@@ -51,7 +69,7 @@ const REGIONS: ReadonlyArray<{
 export function IonDistribution() {
   return (
     <div className="ap-free-ion-distribution" data-testid="free-ion-distribution">
-      {REGIONS.map((region) => (
+      {REGIONS.map((region, regionIndex) => (
         <div
           key={region.id}
           className={`ap-free-ion-region ap-free-ion-region--${region.id}`}
@@ -59,22 +77,34 @@ export function IonDistribution() {
           role="img"
           aria-label={region.label}
         >
-          {region.ions.map((ion, index) => (
-            <i
-              key={`${ion.species}-${index}`}
-              className={`ap-free-ion ap-free-ion--${ion.species}`}
-              data-free-ion-species={ion.species}
-              style={
-                {
-                  "--free-ion-x": `${ion.x}%`,
-                  "--free-ion-y": `${ion.y}%`,
-                } as CSSProperties
-              }
-              aria-hidden="true"
-            >
-              {LABELS[ion.species]}
-            </i>
-          ))}
+          {region.ions.map((ion, index) => {
+            const profileIndex = (regionIndex * 2 + index) % MOTION_PROFILES.length;
+            const motion = MOTION_PROFILES[profileIndex];
+
+            return (
+              <i
+                key={`${ion.species}-${index}`}
+                className={`ap-free-ion ap-free-ion--${ion.species}`}
+                data-free-ion-species={ion.species}
+                data-motion-profile={profileIndex}
+                style={
+                  {
+                    "--free-ion-x": `${ion.x}%`,
+                    "--free-ion-y": `${ion.y}%`,
+                    "--free-ion-drift-x": motion.x,
+                    "--free-ion-drift-y": motion.y,
+                    "--free-ion-mobile-drift-x": motion.mobileX,
+                    "--free-ion-mobile-drift-y": motion.mobileY,
+                    "--free-ion-drift-duration": motion.duration,
+                    "--free-ion-drift-delay": motion.delay,
+                  } as CSSProperties
+                }
+                aria-hidden="true"
+              >
+                {LABELS[ion.species]}
+              </i>
+            );
+          })}
         </div>
       ))}
     </div>
