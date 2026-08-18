@@ -916,6 +916,11 @@
     font-size: 5px;
   }
 
+  .ap-free-ion-region--inside > .ap-free-ion:first-child {
+    --free-ion-active-drift-x: 2px;
+    --free-ion-active-drift-y: 0px;
+  }
+
   .ap-controls p {
     width: 100%;
     margin-left: 0;

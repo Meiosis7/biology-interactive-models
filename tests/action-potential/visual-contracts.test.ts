@@ -117,6 +117,17 @@ describe("action-potential ion visual contracts", () => {
       /--free-ion-active-drift-y:\s*var\(--free-ion-mobile-drift-y\)/,
     );
 
+    const mobileCollisionSafeLaneRule = stylesheet.match(
+      /@media \(max-width:\s*720px\)[\s\S]*?\.ap-free-ion-region--inside\s*>\s*\.ap-free-ion:first-child\s*\{([^}]*)\}/,
+    )?.[1];
+    expect(mobileCollisionSafeLaneRule).toBeDefined();
+    expect(mobileCollisionSafeLaneRule).toMatch(
+      /--free-ion-active-drift-x:\s*2px/,
+    );
+    expect(mobileCollisionSafeLaneRule).toMatch(
+      /--free-ion-active-drift-y:\s*0px/,
+    );
+
     const reducedRule = stylesheet.match(
       /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.ap-free-ion\s*\{([^}]*)\}/,
     )?.[1];
