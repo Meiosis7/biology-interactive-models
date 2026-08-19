@@ -1,3 +1,3 @@
-:HL["/biology-interactive-models/_next/static/chunks/16ei893jghnd-.css","style"]
-:HL["/biology-interactive-models/_next/static/chunks/0dnmr7lhz-yl2.css","style"]
-0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}},"staleTime":300,"buildId":"_yHOgDpJ5IVghSxFBELP-"}
+:HL["/biology-interactive-models/_next/static/chunks/0lbzgck0vyg81.css","style"]
+:HL["/biology-interactive-models/_next/static/chunks/0zm0k~972mbg1.css","style"]
+0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}},"staleTime":300,"buildId":"9i3YbiVUQ-0aENnhY8eAs"}
