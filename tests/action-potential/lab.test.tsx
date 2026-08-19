@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ActionPotentialLab } from "../../components/action-potential/ActionPotentialLab";
@@ -86,18 +87,24 @@ describe("ActionPotentialLab", () => {
     render(<ActionPotentialLab />);
     fireEvent.click(screen.getByRole("button", { name: /动作电位产生/ }));
 
+    expect(screen.getByRole("img", { name: "刺激点" })).toBeInTheDocument();
+
     runNextFrame(0);
     runNextFrame(5999);
     expect(screen.getByLabelText("动作电位产生动态示意")).toHaveAttribute(
       "data-phase",
       "excited",
     );
+    expect(
+      screen.queryByRole("img", { name: "刺激点" }),
+    ).not.toBeInTheDocument();
 
     runNextFrame(6001);
     expect(screen.getByLabelText("动作电位产生动态示意")).toHaveAttribute(
       "data-phase",
       "stimulus",
     );
+    expect(screen.getByRole("img", { name: "刺激点" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "暂停" })).toBeInTheDocument();
     expect(callbacks.size).toBe(1);
     expect(screen.getByLabelText("当前模式知识卡")).not.toHaveTextContent(
@@ -185,12 +192,20 @@ describe("ActionPotentialLab", () => {
       "data-phase",
       "sodium-in",
     );
+    expect(
+      screen.queryByRole("img", { name: "刺激点" }),
+    ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /静息电位/ }));
     fireEvent.click(screen.getByRole("button", { name: /动作电位产生/ }));
     expect(screen.getByLabelText("动作电位产生动态示意")).toHaveAttribute(
       "data-phase",
       "stimulus",
     );
+    expect(screen.getByRole("img", { name: "刺激点" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /动作电位传导/ }));
+    expect(
+      screen.queryByRole("img", { name: "刺激点" }),
+    ).not.toBeInTheDocument();
   });
 
   it("pauses and replays the current mode", () => {
@@ -290,6 +305,18 @@ describe("ActionPotentialLab", () => {
     fireEvent.click(screen.getByRole("button", { name: "下一步" }));
     expect(screen.getByText("形成局部电流")).toBeInTheDocument();
     expect(document.body).not.toHaveTextContent(/第[123]轮/);
+  });
+
+  it("removes cross-model navigation and central-position copy", () => {
+    const pageSource = readFileSync(
+      "app/models/action-potential/page.tsx",
+      "utf8",
+    );
+    expect(pageSource).not.toMatch(/ModelNav|model-shell/);
+
+    render(<ActionPotentialLab />);
+    fireEvent.click(screen.getByRole("button", { name: /动作电位产生/ }));
+    expect(document.body).not.toHaveTextContent(/中央|外负内正/);
   });
 
   it("uses representative static ion frames with disabled playback for reduced motion", () => {

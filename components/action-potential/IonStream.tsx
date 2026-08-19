@@ -24,6 +24,7 @@ export function IonStream({ species, direction, label, surface }: IonStreamProps
       data-ion-direction={direction}
       data-membrane-surface={surface}
       data-screen-direction={screenDirection}
+      data-stream-axis="channel-pore"
       role="img"
       aria-label={label}
     >

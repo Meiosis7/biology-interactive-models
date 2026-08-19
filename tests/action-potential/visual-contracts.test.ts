@@ -52,6 +52,16 @@ function contrastRatio(first: string, second: string) {
   );
 }
 
+function saturation(hex: string) {
+  const [red, green, blue] = hex
+    .slice(1)
+    .match(/.{2}/g)!
+    .map((channel) => Number.parseInt(channel, 16) / 255);
+  const maximum = Math.max(red, green, blue);
+  const minimum = Math.min(red, green, blue);
+  return maximum === minimum ? 0 : (maximum - minimum) / maximum;
+}
+
 function milliseconds(rule: string, property: string) {
   const match = rule.match(new RegExp(`${property}:\\s*(\\d+)ms\\s*;`));
   expect(match, `missing millisecond property ${property}`).not.toBeNull();
@@ -88,6 +98,59 @@ function generationPhaseWindows() {
 }
 
 describe("action-potential ion visual contracts", () => {
+  it("drifts free ions slowly with pause, conduction, mobile, and reduced-motion rules", () => {
+    const ionRule = ruleBody(".ap-free-ion");
+    const runningRule = ruleBody(
+      '.ap-scene[data-playing="true"] .ap-free-ion,\n.ap-scene--conduction .ap-free-ion',
+    );
+    const keyframes = stylesheet.match(
+      /@keyframes ap-free-ion-drift\s*\{([\s\S]*?)\n\}/,
+    )?.[1];
+
+    expect(ionRule).toMatch(
+      /animation:\s*ap-free-ion-drift var\(--free-ion-drift-duration\) ease-in-out infinite/,
+    );
+    expect(ionRule).toMatch(
+      /animation-delay:\s*calc\(var\(--free-ion-drift-delay\) \+ var\(--free-ion-phase-offset\)\)/,
+    );
+    expect(ionRule).toMatch(/animation-play-state:\s*paused/);
+    expect(runningRule).toMatch(/animation-play-state:\s*running/);
+    expect(keyframes).toBeDefined();
+    expect(keyframes).toMatch(/var\(--free-ion-active-drift-x\)/);
+    expect(keyframes).toMatch(/var\(--free-ion-active-drift-y\)/);
+
+    const mobileRule = stylesheet.match(
+      /@media \(max-width:\s*720px\)[\s\S]*?\.ap-free-ion\s*\{([^}]*)\}/,
+    )?.[1];
+    expect(mobileRule).toMatch(
+      /--free-ion-active-drift-x:\s*var\(--free-ion-mobile-drift-x\)/,
+    );
+    expect(mobileRule).toMatch(
+      /--free-ion-active-drift-y:\s*var\(--free-ion-mobile-drift-y\)/,
+    );
+
+    const mobileCollisionSafeLaneRule = stylesheet.match(
+      /@media \(max-width:\s*720px\)[\s\S]*?\.ap-free-ion\[data-mobile-lane="inside-channel-clear"\]\s*\{([^}]*)\}/,
+    )?.[1];
+    expect(mobileCollisionSafeLaneRule).toBeDefined();
+    expect(mobileCollisionSafeLaneRule).toMatch(
+      /--free-ion-active-drift-x:\s*2px/,
+    );
+    expect(mobileCollisionSafeLaneRule).toMatch(
+      /--free-ion-active-drift-y:\s*0px/,
+    );
+    expect(stylesheet).not.toMatch(
+      /\.ap-free-ion-region--inside\s*>\s*\.ap-free-ion:first-child/,
+    );
+
+    const reducedRule = stylesheet.match(
+      /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.ap-free-ion\s*\{([^}]*)\}/,
+    )?.[1];
+    expect(reducedRule).toBeDefined();
+    expect(reducedRule).toMatch(/animation:\s*none/);
+    expect(reducedRule).toMatch(/transform:\s*translate\(-50%,\s*-50%\)/);
+  });
+
   it("places mobile controls between the scene and knowledge card", () => {
     const layoutRule = ruleBody(".ap-layout");
     const sceneRule = ruleBody(".ap-scene");
@@ -322,6 +385,71 @@ describe("action-potential ion visual contracts", () => {
     expect(currentLayer).toBeLessThan(zIndex(".ap-ion-stream"));
   });
 
+  it("keeps free ions below teaching overlays and compact on mobile", () => {
+    const distributionRule = ruleBody(".ap-free-ion-distribution");
+    const ionRule = ruleBody(".ap-free-ion");
+    const currentLayer = zIndex(".ap-local-current-system");
+
+    expect(distributionRule).toMatch(/position:\s*absolute/);
+    expect(distributionRule).toMatch(/inset:\s*0/);
+    expect(distributionRule).toMatch(/z-index:\s*1/);
+    expect(distributionRule).toMatch(/pointer-events:\s*none/);
+    expect(ionRule).toMatch(/animation-play-state:\s*paused/);
+    expect(1).toBeLessThan(currentLayer);
+    expect(1).toBeLessThan(zIndex(".ap-segment-charge"));
+    expect(1).toBeLessThan(zIndex(".ap-ion-channel"));
+    expect(1).toBeLessThan(zIndex(".ap-ion-stream"));
+
+    const mobileIonRule = stylesheet.match(
+      /@media \(max-width:\s*720px\)[\s\S]*?\.ap-free-ion\s*\{([^}]*)\}/,
+    )?.[1];
+    expect(mobileIonRule).toBeDefined();
+    expect(mobileIonRule).toMatch(/width:\s*14px/);
+    expect(mobileIonRule).toMatch(/height:\s*14px/);
+    expect(mobileIonRule).toMatch(/font-size:\s*5px/);
+  });
+
+  it("uses dedicated muted free-ion fills with 4.5:1 label contrast and no element opacity", () => {
+    const label = hexToken("--ap-ion-particle-label");
+    const sodiumParticleFill = hexToken("--ap-sodium-particle-fill");
+    const potassiumParticleFill = hexToken("--ap-potassium-particle-fill");
+    const sodiumFreeIonFill = hexToken("--ap-free-ion-sodium-fill");
+    const potassiumFreeIonFill = hexToken("--ap-free-ion-potassium-fill");
+    const ionRule = ruleBody(".ap-free-ion");
+    const sodiumRule = ruleBody(".ap-free-ion--sodium");
+    const potassiumRule = ruleBody(".ap-free-ion--potassium");
+
+    expect(sodiumFreeIonFill).not.toBe(sodiumParticleFill);
+    expect(potassiumFreeIonFill).not.toBe(potassiumParticleFill);
+    expect(saturation(sodiumFreeIonFill)).toBeLessThan(
+      saturation(sodiumParticleFill),
+    );
+    expect(saturation(potassiumFreeIonFill)).toBeLessThan(
+      saturation(potassiumParticleFill),
+    );
+    expect(contrastRatio(label, sodiumFreeIonFill)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(label, potassiumFreeIonFill)).toBeGreaterThanOrEqual(4.5);
+    expect(`${ionRule}${sodiumRule}${potassiumRule}`).not.toMatch(
+      /\bopacity\s*:/,
+    );
+    expect(ionRule).toMatch(
+      /color:\s*var\(--ap-ion-particle-label\)\s*;/,
+    );
+    expect(ionRule).toMatch(/background:\s*var\(--free-ion-fill\)\s*;/);
+    expect(sodiumRule).toMatch(
+      /--free-ion-fill:\s*var\(--ap-free-ion-sodium-fill\)\s*;/,
+    );
+    expect(potassiumRule).toMatch(
+      /--free-ion-fill:\s*var\(--ap-free-ion-potassium-fill\)\s*;/,
+    );
+
+    const mobileIonRule = stylesheet.match(
+      /@media \(max-width:\s*720px\)[\s\S]*?\.ap-free-ion\s*\{([^}]*)\}/,
+    )?.[1];
+    expect(mobileIonRule).toBeDefined();
+    expect(mobileIonRule).not.toMatch(/(?:background|color|opacity)\s*:/);
+  });
+
   it("uses explicit sodium and potassium fill tokens with 4.5:1 label contrast at desktop and mobile", () => {
     const label = hexToken("--ap-ion-particle-label");
     const sodiumFill = hexToken("--ap-sodium-particle-fill");
@@ -395,6 +523,14 @@ describe("action-potential ion visual contracts", () => {
     );
     expect(stylesheet).not.toMatch(/--ion-bypass-x/);
     expect(stylesheet).not.toMatch(/ap-sodium-bypass-(?:up|down)/);
+  });
+
+  it("keeps the aligned stimulus above the sodium pore", () => {
+    const stimulusRule = ruleBody(".ap-stimulus");
+    expect(stimulusRule).toMatch(/left:\s*50%\s*;/);
+    expect(stimulusRule).toMatch(/top:\s*-82px\s*;/);
+    expect(stimulusRule).toMatch(/height:\s*64px\s*;/);
+    expect(stimulusRule).toMatch(/transform:\s*translateX\(-50%\)\s*;/);
   });
 
   it("moves sodium on the same vertical axis as its pore", () => {

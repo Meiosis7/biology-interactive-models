@@ -13,7 +13,17 @@ import {
 describe("action-potential shared-fiber components", () => {
   it("uses the approved ion and relay teaching summaries", () => {
     expect(ACTION_POTENTIAL_MODES[0].summary).toContain("K⁺外流");
-    expect(ACTION_POTENTIAL_MODES[1].summary).toContain("局部Na⁺通道开放");
+    expect(ACTION_POTENTIAL_MODES[1].summary).toBe(
+      "刺激使局部 Na⁺通道开放，Na⁺内流，受刺激部位膜外为负、膜内为正。",
+    );
+    expect(ACTION_POTENTIAL_MODES[1].facts[2]).toEqual({
+      label: "结果",
+      value: "受刺激部位膜外为负、膜内为正",
+    });
+    expect(ACTION_POTENTIAL_MODES[2].facts[0]).toEqual({
+      label: "原因",
+      value: "兴奋部位与未兴奋部位之间形成局部电流",
+    });
     expect(ACTION_POTENTIAL_MODES[2].summary).toContain(
       "神经冲动以电信号（局部电流）的形式在神经纤维上双向传导。",
     );
@@ -23,6 +33,9 @@ describe("action-potential shared-fiber components", () => {
     });
     expect(JSON.stringify(ACTION_POTENTIAL_MODES)).not.toMatch(
       /曲线|mV|−70|-70|复极化|超极化|恢复/,
+    );
+    expect(JSON.stringify(ACTION_POTENTIAL_MODES)).not.toMatch(
+      /中央|外负内正/,
     );
   });
 
@@ -61,7 +74,9 @@ describe("action-potential shared-fiber components", () => {
     expect(container.querySelector('[data-segment-id="3"]')).toBe(
       centralSegment,
     );
-    expect(screen.getByLabelText("第4膜段外负内正")).toBeInTheDocument();
+    expect(
+      screen.getByLabelText("第4膜段膜外为负、膜内为正"),
+    ).toBeInTheDocument();
     expect(screen.queryByText("K⁺外流")).not.toBeInTheDocument();
     expect(screen.queryByText(/恢复/)).not.toBeInTheDocument();
   });
@@ -127,6 +142,38 @@ describe("action-potential shared-fiber components", () => {
     expect(
       container.querySelectorAll('[data-channel-species="sodium"]'),
     ).toHaveLength(14);
+  });
+
+  it("keeps one free-ion distribution stable across all three modes", () => {
+    const { rerender } = render(
+      <ActionPotentialScene
+        mode="resting"
+        frame={getActionPotentialFrame("resting", 0)}
+        playing
+      />,
+    );
+    const distribution = screen.getByTestId("free-ion-distribution");
+
+    rerender(
+      <ActionPotentialScene
+        mode="generation"
+        frame={getActionPotentialFrame("generation", 0.55)}
+        playing
+      />,
+    );
+    expect(screen.getByTestId("free-ion-distribution")).toBe(distribution);
+
+    rerender(
+      <ActionPotentialScene
+        mode="conduction"
+        frame={getConductionStepFrame(1, 1)}
+        playing={false}
+      />,
+    );
+    expect(screen.getByTestId("free-ion-distribution")).toBe(distribution);
+    expect(screen.getByLabelText("上方膜外 Na⁺多、K⁺少")).toBeInTheDocument();
+    expect(screen.getByLabelText("膜内 K⁺多、Na⁺少")).toBeInTheDocument();
+    expect(screen.getByLabelText("下方膜外 Na⁺多、K⁺少")).toBeInTheDocument();
   });
 
   it("renders stable top and bottom sodium channels for every segment", () => {
@@ -202,7 +249,7 @@ describe("action-potential shared-fiber components", () => {
         center.querySelector(
           `[data-ion-species="sodium"][data-membrane-surface="${surface}"]`,
         ),
-      ).toBeTruthy();
+      ).toHaveAttribute("data-stream-axis", "channel-pore");
     }
   });
 
@@ -625,7 +672,9 @@ describe("action-potential shared-fiber components", () => {
     expect(
       screen.getByRole("img", { name: "Na⁺经第4膜段下膜进入膜内" }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "刺激点" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("img", { name: "刺激点" }),
+    ).not.toBeInTheDocument();
 
     rerender(
       <ActionPotentialScene
@@ -638,6 +687,46 @@ describe("action-potential shared-fiber components", () => {
     expect(current).toHaveAccessibleDescription(
       "膜内局部电流向两侧未兴奋区；膜外局部电流返回兴奋区",
     );
+  });
+
+  it("renders the stimulus only for the first generation frame", () => {
+    const stimulusFrame = getActionPotentialFrame("generation", 0.05);
+    const { rerender } = render(
+      <ActionPotentialScene
+        mode="generation"
+        frame={stimulusFrame}
+        playing={false}
+      />,
+    );
+
+    expect(screen.getByRole("img", { name: "刺激点" })).toBeInTheDocument();
+
+    for (const progress of [0.25, 0.55, 0.9]) {
+      rerender(
+        <ActionPotentialScene
+          mode="generation"
+          frame={getActionPotentialFrame("generation", progress)}
+          playing={false}
+        />,
+      );
+      expect(
+        screen.queryByRole("img", { name: "刺激点" }),
+      ).not.toBeInTheDocument();
+    }
+
+    rerender(
+      <ActionPotentialScene
+        mode="conduction"
+        frame={{
+          ...getConductionStepFrame(0, 1),
+          stimulusVisible: true,
+        }}
+        playing={false}
+      />,
+    );
+    expect(
+      screen.queryByRole("img", { name: "刺激点" }),
+    ).not.toBeInTheDocument();
   });
 
   it("holds completed current arcs with arrowheads until the next click", () => {
@@ -770,7 +859,7 @@ describe("action-potential shared-fiber components", () => {
     );
 
     expect(frame.phase).toBe("neighbor-excited");
-    expect(screen.getByText("相邻膜段形成动作电位")).toBeInTheDocument();
+    expect(screen.getByText("相邻部位形成动作电位")).toBeInTheDocument();
     expect(container.querySelectorAll('[data-segment-polarity="excited"]')).toHaveLength(3);
     expect(container.querySelectorAll('[data-ion-particle="sodium"]')).toHaveLength(0);
     expect(screen.queryByLabelText("局部电流方向")).not.toBeInTheDocument();
@@ -796,7 +885,8 @@ describe("action-potential shared-fiber components", () => {
     const card = screen.getByLabelText("当前模式知识卡");
     expect(card).toHaveTextContent("Na⁺通道开放");
     expect(card).toHaveTextContent("Na⁺内流");
-    expect(card).toHaveTextContent("外负内正");
+    expect(card).toHaveTextContent("受刺激部位膜外为负、膜内为正");
+    expect(card).not.toHaveTextContent(/中央|外负内正/);
     expect(card).not.toHaveTextContent(/K⁺|恢复/);
     expect(screen.getAllByRole("term")).toHaveLength(3);
   });

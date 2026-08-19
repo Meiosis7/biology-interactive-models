@@ -1,6 +1,7 @@
 import { Fragment } from "react";
 import type { ActionPotentialFrame, ActionPotentialMode } from "./types";
 import { IonChannel } from "./IonChannel";
+import { IonDistribution } from "./IonDistribution";
 import { IonStream } from "./IonStream";
 import { LocalCurrentFlow } from "./LocalCurrentFlow";
 
@@ -27,6 +28,10 @@ export function ActionPotentialScene({
     mode === "conduction" &&
     frame.segments.every((segment) => segment.polarity === "excited");
   const conductionComplete = mode === "conduction" && frame.phase === "conducted";
+  const showStimulus =
+    mode === "generation" &&
+    frame.phase === "stimulus" &&
+    frame.stimulusVisible;
 
   return (
     <section
@@ -41,7 +46,7 @@ export function ActionPotentialScene({
           {mode === "resting"
             ? "外正内负"
             : mode === "generation"
-              ? "局部外负内正"
+              ? "局部膜外为负、膜内为正"
               : "双向传导"}
         </b>
       </div>
@@ -69,6 +74,7 @@ export function ActionPotentialScene({
         ))}
 
         <div className="ap-fiber" data-testid="shared-fiber">
+          <IonDistribution />
           {frame.segments.map((segment) => (
             <div
               key={segment.id}
@@ -77,7 +83,7 @@ export function ActionPotentialScene({
               data-segment-id={segment.id}
               data-segment-polarity={segment.polarity}
               data-current-target={segment.currentTarget}
-              aria-label={`第${segment.id + 1}膜段${segment.polarity === "excited" ? "外负内正" : "外正内负"}`}
+              aria-label={`第${segment.id + 1}膜段${segment.polarity === "excited" ? "膜外为负、膜内为正" : "外正内负"}`}
             >
               {(
                 [
@@ -141,7 +147,7 @@ export function ActionPotentialScene({
                   </Fragment>
                 ))
               )}
-              {frame.stimulusVisible && segment.id === 3 && (
+              {showStimulus && segment.id === 3 && (
                 <i className="ap-stimulus" role="img" aria-label="刺激点">
                   <span>刺激</span>
                 </i>

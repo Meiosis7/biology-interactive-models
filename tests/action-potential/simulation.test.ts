@@ -6,7 +6,10 @@ import {
   getActionPotentialFrame,
   getConductionStepFrame,
 } from "../../components/action-potential/simulation";
-import type { ActionPotentialMode } from "../../components/action-potential/types";
+import type {
+  ActionPotentialMode,
+  ConductionStep,
+} from "../../components/action-potential/types";
 
 const excitedIds = (mode: ActionPotentialMode, progress: number) =>
   getActionPotentialFrame(mode, progress).segments
@@ -53,6 +56,57 @@ describe("action-potential shared-fiber frames", () => {
     expect(getConductionStepFrame(1, 1).instruction).toBe("形成局部电流");
     expect(getConductionStepFrame(3, 1).instruction).toBe("形成局部电流");
     expect(getConductionStepFrame(5, 1).instruction).toBe("形成局部电流");
+  });
+
+  it("shows the stimulus only in the first generation phase", () => {
+    expect(getActionPotentialFrame("generation", 0.05).stimulusVisible).toBe(
+      true,
+    );
+    for (const progress of [0.25, 0.55, 0.9]) {
+      expect(
+        getActionPotentialFrame("generation", progress).stimulusVisible,
+      ).toBe(false);
+    }
+    for (const step of [0, 1, 2, 3, 4, 5, 6] as const) {
+      expect(getConductionStepFrame(step, 1).stimulusVisible).toBe(false);
+    }
+  });
+
+  it("uses local rather than central generation and conduction copy", () => {
+    expect(getActionPotentialFrame("generation", 0.05).instruction).toBe(
+      "刺激局部神经纤维",
+    );
+    expect(getActionPotentialFrame("generation", 0.25).instruction).toBe(
+      "受刺激部位 Na⁺通道开放",
+    );
+    expect(getActionPotentialFrame("generation", 0.55).instruction).toBe(
+      "Na⁺从上下通道进入受刺激部位膜内",
+    );
+    expect(getActionPotentialFrame("generation", 0.9).instruction).toBe(
+      "受刺激部位兴奋，膜外为负、膜内为正",
+    );
+    expect(getConductionStepFrame(0, 1).instruction).toBe(
+      "受刺激部位已经形成动作电位",
+    );
+    expect(getConductionStepFrame(2, 0.1).instruction).toBe(
+      "局部电流使相邻部位 Na⁺通道开放",
+    );
+    expect(getConductionStepFrame(2, 0.5).instruction).toBe(
+      "Na⁺从上下通道进入相邻部位膜内",
+    );
+    expect(getConductionStepFrame(2, 1).instruction).toBe(
+      "相邻部位形成动作电位",
+    );
+    expect(
+      JSON.stringify([
+        getActionPotentialFrame("generation", 0.05),
+        getActionPotentialFrame("generation", 0.25),
+        getActionPotentialFrame("generation", 0.55),
+        getActionPotentialFrame("generation", 0.9),
+        getConductionStepFrame(0, 1),
+        getConductionStepFrame(2, 0.5),
+      ]),
+    ).not.toMatch(/中央/);
   });
 
   it.each([
@@ -118,6 +172,24 @@ describe("action-potential shared-fiber frames", () => {
     expect(firstExcited.localCurrentStep).toBeNull();
     expect(secondCurrent.segments.filter((item) => item.polarity === "excited").map((item) => item.id)).toEqual([2, 3, 4]);
     expect(secondCurrent.localCurrentStep).toBe(2);
+  });
+
+  it("alternates local current and adjacent action potential until conducted", () => {
+    const steps = [0, 1, 2, 3, 4, 5, 6] as const satisfies readonly ConductionStep[];
+    const frames = steps.map((step) => getConductionStepFrame(step, 1));
+
+    expect(frames.map((frame) => frame.phase)).toEqual([
+      "excited",
+      "local-current",
+      "neighbor-excited",
+      "local-current",
+      "neighbor-excited",
+      "local-current",
+      "conducted",
+    ]);
+    expect(JSON.stringify(frames.map((frame) => frame.instruction))).not.toMatch(
+      /中央|第[一二三123]轮|第\d+步/,
+    );
   });
 
   it("only accumulates excited segments during conduction", () => {
