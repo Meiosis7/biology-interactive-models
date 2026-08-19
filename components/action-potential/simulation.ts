@@ -73,7 +73,7 @@ export function getConductionStepFrame(
       segments: makeSegments([CENTER_SEGMENT]),
       potassiumChannelOpen: false,
       potassiumOutflow: false,
-      stimulusVisible: true,
+      stimulusVisible: false,
       localCurrentStep: null,
       instruction: "受刺激部位已经形成动作电位",
     };
@@ -86,7 +86,7 @@ export function getConductionStepFrame(
       segments: makeSegments(round.before, [], [], round.targets),
       potassiumChannelOpen: false,
       potassiumOutflow: false,
-      stimulusVisible: true,
+      stimulusVisible: false,
       localCurrentStep: round.currentStep,
       instruction: "形成局部电流",
     };
@@ -104,7 +104,7 @@ export function getConductionStepFrame(
       segments: makeSegments(round.before, round.targets),
       potassiumChannelOpen: false,
       potassiumOutflow: false,
-      stimulusVisible: true,
+      stimulusVisible: false,
       localCurrentStep: null,
       instruction: "局部电流使相邻部位 Na⁺通道开放",
     };
@@ -116,7 +116,7 @@ export function getConductionStepFrame(
       segments: makeSegments(round.before, round.targets, round.targets),
       potassiumChannelOpen: false,
       potassiumOutflow: false,
-      stimulusVisible: true,
+      stimulusVisible: false,
       localCurrentStep: null,
       instruction: "Na⁺从上下通道进入相邻部位膜内",
     };
@@ -127,7 +127,7 @@ export function getConductionStepFrame(
     segments: makeSegments(round.after, round.targets),
     potassiumChannelOpen: false,
     potassiumOutflow: false,
-    stimulusVisible: true,
+    stimulusVisible: false,
     localCurrentStep: null,
     instruction:
       finalRound && complete
@@ -180,9 +180,9 @@ export function getActionPotentialFrame(
       segments: makeSegments([], [CENTER_SEGMENT]),
       potassiumChannelOpen: false,
       potassiumOutflow: false,
-      stimulusVisible: true,
+      stimulusVisible: false,
       localCurrentStep: null,
-      instruction: "局部 Na⁺通道开放",
+      instruction: "受刺激部位 Na⁺通道开放",
     };
   }
 
@@ -192,9 +192,9 @@ export function getActionPotentialFrame(
       segments: makeSegments([], [CENTER_SEGMENT], [CENTER_SEGMENT]),
       potassiumChannelOpen: false,
       potassiumOutflow: false,
-      stimulusVisible: true,
+      stimulusVisible: false,
       localCurrentStep: null,
-      instruction: "Na⁺从膜外进入膜内",
+      instruction: "Na⁺从上下通道进入受刺激部位膜内",
     };
   }
 
@@ -203,7 +203,7 @@ export function getActionPotentialFrame(
     segments: makeSegments([CENTER_SEGMENT], [CENTER_SEGMENT]),
     potassiumChannelOpen: false,
     potassiumOutflow: false,
-    stimulusVisible: true,
+    stimulusVisible: false,
     localCurrentStep: null,
     instruction: "受刺激部位兴奋，膜外为负、膜内为正",
   };

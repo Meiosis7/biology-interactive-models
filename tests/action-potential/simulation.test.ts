@@ -58,15 +58,29 @@ describe("action-potential shared-fiber frames", () => {
     expect(getConductionStepFrame(5, 1).instruction).toBe("形成局部电流");
   });
 
+  it("shows the stimulus only in the first generation phase", () => {
+    expect(getActionPotentialFrame("generation", 0.05).stimulusVisible).toBe(
+      true,
+    );
+    for (const progress of [0.25, 0.55, 0.9]) {
+      expect(
+        getActionPotentialFrame("generation", progress).stimulusVisible,
+      ).toBe(false);
+    }
+    for (const step of [0, 1, 2, 3, 4, 5, 6] as const) {
+      expect(getConductionStepFrame(step, 1).stimulusVisible).toBe(false);
+    }
+  });
+
   it("uses local rather than central generation and conduction copy", () => {
     expect(getActionPotentialFrame("generation", 0.05).instruction).toBe(
       "刺激局部神经纤维",
     );
     expect(getActionPotentialFrame("generation", 0.25).instruction).toBe(
-      "局部 Na⁺通道开放",
+      "受刺激部位 Na⁺通道开放",
     );
     expect(getActionPotentialFrame("generation", 0.55).instruction).toBe(
-      "Na⁺从膜外进入膜内",
+      "Na⁺从上下通道进入受刺激部位膜内",
     );
     expect(getActionPotentialFrame("generation", 0.9).instruction).toBe(
       "受刺激部位兴奋，膜外为负、膜内为正",
