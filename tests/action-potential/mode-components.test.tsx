@@ -672,7 +672,9 @@ describe("action-potential shared-fiber components", () => {
     expect(
       screen.getByRole("img", { name: "Na⁺经第4膜段下膜进入膜内" }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "刺激点" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("img", { name: "刺激点" }),
+    ).not.toBeInTheDocument();
 
     rerender(
       <ActionPotentialScene
@@ -685,6 +687,46 @@ describe("action-potential shared-fiber components", () => {
     expect(current).toHaveAccessibleDescription(
       "膜内局部电流向两侧未兴奋区；膜外局部电流返回兴奋区",
     );
+  });
+
+  it("renders the stimulus only for the first generation frame", () => {
+    const stimulusFrame = getActionPotentialFrame("generation", 0.05);
+    const { rerender } = render(
+      <ActionPotentialScene
+        mode="generation"
+        frame={stimulusFrame}
+        playing={false}
+      />,
+    );
+
+    expect(screen.getByRole("img", { name: "刺激点" })).toBeInTheDocument();
+
+    for (const progress of [0.25, 0.55, 0.9]) {
+      rerender(
+        <ActionPotentialScene
+          mode="generation"
+          frame={getActionPotentialFrame("generation", progress)}
+          playing={false}
+        />,
+      );
+      expect(
+        screen.queryByRole("img", { name: "刺激点" }),
+      ).not.toBeInTheDocument();
+    }
+
+    rerender(
+      <ActionPotentialScene
+        mode="conduction"
+        frame={{
+          ...getConductionStepFrame(0, 1),
+          stimulusVisible: true,
+        }}
+        playing={false}
+      />,
+    );
+    expect(
+      screen.queryByRole("img", { name: "刺激点" }),
+    ).not.toBeInTheDocument();
   });
 
   it("holds completed current arcs with arrowheads until the next click", () => {

@@ -28,6 +28,10 @@ export function ActionPotentialScene({
     mode === "conduction" &&
     frame.segments.every((segment) => segment.polarity === "excited");
   const conductionComplete = mode === "conduction" && frame.phase === "conducted";
+  const showStimulus =
+    mode === "generation" &&
+    frame.phase === "stimulus" &&
+    frame.stimulusVisible;
 
   return (
     <section
@@ -143,7 +147,7 @@ export function ActionPotentialScene({
                   </Fragment>
                 ))
               )}
-              {frame.stimulusVisible && segment.id === 3 && (
+              {showStimulus && segment.id === 3 && (
                 <i className="ap-stimulus" role="img" aria-label="刺激点">
                   <span>刺激</span>
                 </i>
