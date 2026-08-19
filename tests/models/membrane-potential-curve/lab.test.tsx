@@ -1,5 +1,5 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { MembraneCurveLab } from "../../../models/03-membrane-potential-curve/MembraneCurveLab";
 
 describe("MembraneCurveLab", () => {
@@ -108,6 +108,32 @@ describe("MembraneCurveLab", () => {
     expect(screen.getByRole("button", { name: "暂停" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "暂停" }));
     expect(screen.getByRole("button", { name: "继续" })).toBeInTheDocument();
+  });
+
+  it("advances the curve after playback starts", () => {
+    const frames: FrameRequestCallback[] = [];
+    vi.stubGlobal(
+      "requestAnimationFrame",
+      vi.fn((callback: FrameRequestCallback) => {
+        frames.push(callback);
+        return frames.length;
+      }),
+    );
+    vi.stubGlobal("cancelAnimationFrame", vi.fn());
+
+    const { unmount } = render(<MembraneCurveLab />);
+    fireEvent.click(screen.getByRole("button", { name: "开始" }));
+
+    expect(screen.getByRole("button", { name: "暂停" })).toBeInTheDocument();
+    expect(frames).toHaveLength(1);
+
+    act(() => frames.shift()!(1000));
+    act(() => frames.shift()!(2000));
+
+    expect(screen.getByText("1.0")).toBeVisible();
+
+    unmount();
+    vi.unstubAllGlobals();
   });
 
   it("provides a clickable explanation for every action-potential step", () => {

@@ -56,9 +56,9 @@ describe("membrane potential single-viewport layout", () => {
     expect(curveSource).toContain('aria-label="对比结论"');
   });
 
-  it("restores a scrollable vertical layout on narrow screens", () => {
+  it("keeps the synchronized mobile model inside one viewport", () => {
     expect(styles).toMatch(
-      /@media\s*\(max-width:\s*800px\)[\s\S]*?\.membrane-shell\s*\{[^}]*height:\s*auto\s*;[^}]*overflow:\s*visible\s*;/,
+      /@media\s*\(max-width:\s*800px\)[\s\S]*?\.membrane-shell\s*\{[^}]*height:\s*100svh\s*;[^}]*overflow:\s*hidden\s*;/,
     );
   });
 });

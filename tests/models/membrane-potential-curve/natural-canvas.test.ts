@@ -46,9 +46,9 @@ describe("膜电位自然单画布结构", () => {
     expect(ruleBody(".membrane-view-card")).not.toMatch(/box-shadow|border:\s*1px/);
   });
 
-  it("窄屏恢复自然滚动", () => {
+  it("窄屏保持曲线、膜结构与控制台同屏", () => {
     expect(styles).toMatch(
-      /@media\s*\(max-width:\s*800px\)[\s\S]*?\.membrane-shell\s*\{[^}]*height:\s*auto\s*;[^}]*overflow:\s*visible\s*;/,
+      /@media\s*\(max-width:\s*800px\)[\s\S]*?\.membrane-shell\s*\{[^}]*height:\s*100svh\s*;[^}]*overflow:\s*hidden\s*;/,
     );
   });
 });
